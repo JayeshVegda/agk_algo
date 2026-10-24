@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { pb } from '../lib/pocketbase';
-import { Bell, Pin, Shield, Clock } from 'lucide-react';
+import { Bell, Pin, Shield, Clock, Plus, Trash2 } from 'lucide-react';
 
-export function BroadcastsTab() {
+export function BroadcastsTab({ user }) {
   const [broadcasts, setBroadcasts] = useState([]);
 
-  useEffect(() => {
+  const loadBroadcasts = () => {
     pb.collection('broadcasts').getFullList({ sort: '-pinned,-created' })
       .then(setBroadcasts)
       .catch((err) => console.error('Failed to load broadcasts:', err));
+  };
+
+  useEffect(() => {
+    loadBroadcasts();
 
     // Realtime SSE updates
     const unsubPromise = pb.collection('broadcasts').subscribe('*', (e) => {
@@ -26,6 +30,16 @@ export function BroadcastsTab() {
     };
   }, []);
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this announcement?')) return;
+    try {
+      await pb.collection('broadcasts').delete(id);
+      loadBroadcasts();
+    } catch (err) {
+      alert('Error deleting announcement: ' + err.message);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-5">
       <div className="p-6 rounded-2xl border border-border/80 bg-card/80 backdrop-blur shadow-sm">
@@ -33,7 +47,7 @@ export function BroadcastsTab() {
           <Bell className="h-3 w-3" />
           OFFICIAL TRADING DESK BROADCAST
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Live Announcements & Market Directives</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-white">Live Announcements & Directives</h1>
         <p className="text-xs text-slate-400 mt-1">
           Real-time broadcasts issued directly by lead algorithmic engineers and chief market analysts.
         </p>
@@ -58,9 +72,20 @@ export function BroadcastsTab() {
                 )}
                 <h3 className="text-base font-bold text-white">{b.title}</h3>
               </div>
-              <div className="text-[11px] font-mono text-slate-500 flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {new Date(b.created).toLocaleDateString()}
+              <div className="flex items-center gap-3">
+                <div className="text-[11px] font-mono text-slate-500 flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {new Date(b.created).toLocaleDateString()}
+                </div>
+                {user?.role === 'admin' && (
+                  <button
+                    onClick={() => handleDelete(b.id)}
+                    className="text-slate-500 hover:text-rose-400 p-1 rounded cursor-pointer"
+                    title="Delete announcement"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -69,11 +94,16 @@ export function BroadcastsTab() {
             </p>
 
             <div className="mt-4 pt-3 border-t border-border/30 flex items-center justify-between text-[10px] font-mono text-slate-500">
-              <span>Author: <span className="text-slate-400 font-semibold">{b.author || 'Desk Admin'}</span></span>
-              <span>Encrypted Feed Integrity Verified</span>
+              <span>Author: <span className="text-slate-400 font-semibold">{b.author || 'Lead Desk Admin'}</span></span>
+              <span>Encrypted Broadcast Stream Verified</span>
             </div>
           </div>
         ))}
+        {broadcasts.length === 0 && (
+          <div className="p-8 text-center text-slate-500 rounded-2xl border border-border/50 font-mono text-xs">
+            No active announcements.
+          </div>
+        )}
       </div>
     </div>
   );
