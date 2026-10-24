@@ -31,7 +31,7 @@ export function ChartsTab() {
           theme: 'dark',
           style: '1',
           locale: 'en',
-          toolbar_bg: '#070b12',
+          toolbar_bg: '#05070D',
           enable_publishing: false,
           allow_symbol_change: true,
           container_id: 'tradingview_widget_container',

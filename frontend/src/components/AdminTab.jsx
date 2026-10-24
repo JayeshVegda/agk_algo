@@ -5,7 +5,7 @@ import {
   Bell, Pin, Cpu, DollarSign, Users, RefreshCw, AlertCircle
 } from 'lucide-react';
 
-export function AdminTab({ user }) {
+export function AdminTab({ user, notify }) {
   const [activeSubTab, setActiveSubTab] = useState('signals');
   const [signals, setSignals] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -64,6 +64,13 @@ export function AdminTab({ user }) {
 
   const showNotification = (text, isError = false) => {
     setMsg({ text, isError });
+    if (notify) {
+      notify({
+        type: isError ? 'error' : 'success',
+        title: isError ? 'Admin Error' : 'Admin Operations',
+        message: text,
+      });
+    }
     setTimeout(() => setMsg(null), 4000);
   };
 
