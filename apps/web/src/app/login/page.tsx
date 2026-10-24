@@ -31,8 +31,7 @@ export default function LoginPage() {
           setError(res.error.message || "Invalid credentials");
         }
       } else {
-        router.push("/dashboard");
-        router.refresh();
+        window.location.href = "/dashboard";
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Authentication failed");
@@ -53,8 +52,7 @@ export default function LoginPage() {
         if (res.error) {
           setError(res.error.message || "Invalid two-factor authentication code");
         } else {
-          router.push("/dashboard");
-          router.refresh();
+          window.location.href = "/dashboard";
         }
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "2FA verification failed");

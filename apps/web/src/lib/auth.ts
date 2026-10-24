@@ -6,7 +6,8 @@ import { logger } from "./logger";
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || "default-secret-change-me-long-random-string",
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  baseURL: process.env.BETTER_AUTH_URL || "https://algo2.zayu.dev",
+  trustedOrigins: ["https://algo2.zayu.dev", "http://localhost:3000", "http://localhost:3002"],
   database: drizzleAdapter(getDb(), {
     provider: "pg",
     schema: {

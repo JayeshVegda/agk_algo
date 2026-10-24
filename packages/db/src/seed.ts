@@ -34,6 +34,12 @@ async function seed() {
     .insert(users)
     .values([
       {
+        id: "admin-jayesh",
+        name: "Jayesh Vegda",
+        email: "jayeshvegda@gmail.com",
+        emailVerified: true,
+      },
+      {
         id: "admin-system",
         name: "Lead Administrator",
         email: "admin@akgalgo.local",
@@ -51,6 +57,13 @@ async function seed() {
   await db
     .insert(accounts)
     .values([
+      {
+        id: "acc-jayesh",
+        accountId: "admin-jayesh",
+        providerId: "credential",
+        userId: "admin-jayesh",
+        password: passwordHash,
+      },
       {
         id: "acc-admin",
         accountId: "admin-system",
@@ -71,6 +84,13 @@ async function seed() {
   await db
     .insert(userProfiles)
     .values([
+      {
+        userId: "admin-jayesh",
+        role: "admin",
+        displayName: "Jayesh Vegda",
+        termsVersion: "1.0",
+        termsAcceptedAt: new Date(),
+      },
       {
         userId: "admin-system",
         role: "admin",
