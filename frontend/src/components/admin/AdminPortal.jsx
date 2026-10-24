@@ -8,7 +8,8 @@ import {
   LogOut, ArrowLeft, Menu, Activity, ShieldAlert, Clock, ChevronRight,
   ChevronDown, BarChart3, ChevronLeft, Lock, Link2, Download,
   MessageSquare, Send, Sparkles, Eye, Share2, Globe, Radio,
-  Copy, Image as ImageIcon, Server, Terminal, Laptop, Upload, HardDrive, Camera
+  Copy, Image as ImageIcon, Server, Terminal, Laptop, Upload, HardDrive, Camera,
+  LayoutGrid, Table
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -41,6 +42,15 @@ export function AdminPortal({ onNavigatePublic, notify }) {
   const [signalFilter, setSignalFilter] = useState('all');
   const [botPlatformFilter, setBotPlatformFilter] = useState('all');
   const [resourceCategoryFilter, setResourceCategoryFilter] = useState('all');
+
+  // Bots and Directives UI Enhancements
+  const [botViewMode, setBotViewMode] = useState('table'); // 'table' | 'grid'
+  const [fastBroadcastTitle, setFastBroadcastTitle] = useState('');
+  const [fastBroadcastBody, setFastBroadcastBody] = useState('');
+  const [fastBroadcastAuthor, setFastBroadcastAuthor] = useState('Infrastructure Desk');
+  const [fastBroadcastPinned, setFastBroadcastPinned] = useState(true);
+  const [fastBroadcastSending, setFastBroadcastSending] = useState(false);
+  const [copiedResourceId, setCopiedResourceId] = useState(null);
 
   // Modals state
   const [signalModal, setSignalModal] = useState(null); // { mode, data, entryMode: 'form' | 'chatbox', chatText: '' }
@@ -396,6 +406,43 @@ export function AdminPortal({ onNavigatePublic, notify }) {
     } catch (err) {
       toast('Error', err.message, 'error');
     }
+  };
+
+  const handleFastDispatchDirective = async (e) => {
+    e?.preventDefault();
+    if (!fastBroadcastTitle.trim() && !fastBroadcastBody.trim()) {
+      toast('Empty Directive', 'Please enter a title or directive body', 'error');
+      return;
+    }
+    setFastBroadcastSending(true);
+    try {
+      const title = fastBroadcastTitle.trim() || fastBroadcastBody.trim().slice(0, 70);
+      const body = fastBroadcastBody.trim() || fastBroadcastTitle.trim();
+
+      await pb.collection('broadcasts').create({
+        title,
+        body,
+        author: fastBroadcastAuthor || 'Infrastructure Desk',
+        pinned: fastBroadcastPinned ? 1 : 0
+      });
+      toast('Directive Dispatched', 'Flash bulletin broadcasted to subscriber dashboard');
+      setFastBroadcastTitle('');
+      setFastBroadcastBody('');
+      loadData();
+    } catch (err) {
+      toast('Dispatch Error', err.message, 'error');
+    } finally {
+      setFastBroadcastSending(false);
+    }
+  };
+
+  const handleCopyResourceUrl = (url, id) => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(url);
+    }
+    setCopiedResourceId(id);
+    toast('Link Copied', 'URL copied to clipboard');
+    setTimeout(() => setCopiedResourceId(null), 2000);
   };
 
   // --- BOTS WORKFLOW (Device Image Upload & Google Drive Downloads) ---
@@ -1597,11 +1644,68 @@ export function AdminPortal({ onNavigatePublic, notify }) {
             </div>
           )}
 
-          {/* ==================== TAB 3: TRADING BOTS CATALOG (With Dedicated Bot Detail Page!) ==================== */}
+          {/* ==================== TAB 3: TRADING BOTS CATALOG (Institutional Fleet & Dedicated Dossiers) ==================== */}
           {activeTab === 'bots' && !selectedBotId && (
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-2">
+              {/* High-Density Operational Control Bar */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                {/* Platform Filters */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[
+                    { id: 'all', label: `All Fleet (${bots.length})` },
+                    { id: 'MT4', label: `MT4 (${bots.filter(b => b.platform === 'MT4').length})` },
+                    { id: 'MT5', label: `MT5 (${bots.filter(b => b.platform === 'MT5').length})` },
+                    { id: 'MT4/MT5', label: `Dual MT4/MT5 (${bots.filter(b => b.platform?.includes('MT4/MT5')).length})` },
+                  ].map((pl) => (
+                    <button
+                      key={pl.id}
+                      onClick={() => setBotPlatformFilter(pl.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        botPlatformFilter === pl.id
+                          ? 'bg-slate-900 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {pl.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Search, View Switcher & Add Button */}
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                  <div className="relative w-full sm:w-56">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search algorithm, pairs..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600"
+                    />
+                  </div>
+
+                  {/* View Switcher: Table vs Grid */}
+                  <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 shrink-0">
+                    <button
+                      onClick={() => setBotViewMode('table')}
+                      title="Quantitative Fleet Table"
+                      className={`p-1.5 rounded-md cursor-pointer transition-all ${
+                        botViewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                      }`}
+                    >
+                      <Table className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setBotViewMode('grid')}
+                      title="Gallery Grid View"
+                      className={`p-1.5 rounded-md cursor-pointer transition-all ${
+                        botViewMode === 'grid' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+                      }`}
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </button>
+                  </div>
+
                   <Button
                     onClick={() => setBotModal({
                       mode: 'create',
@@ -1610,156 +1714,290 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                         platform: 'MT5',
                         price: 299,
                         version: 'v1.0',
-                        recommended_deposit: '$500+',
-                        win_rate: '80%',
-                        drawdown: '4.5% Max DD',
-                        profit_factor: '2.50 PF',
+                        recommended_deposit: '$1,000+',
+                        win_rate: '82%',
+                        drawdown: '5.2% Max DD',
+                        profit_factor: '2.60 PF',
                         pairs: 'XAUUSD, EURUSD',
-                        strategy_type: 'London Breakout',
-                        features: 'Auto Lot Sizing\nStop-Loss Protection',
+                        strategy_type: 'Session Liquidity Sweep',
+                        features: 'Auto Lot Sizing\\nStop-Loss Protection\\nZero Martingale',
                         image_url: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop&q=80',
+                        download_url: 'https://drive.google.com/file/d/1AKG_SAMPLE_EA/view?usp=sharing',
                         description: ''
                       }
                     })}
-                    className="gap-2 font-bold"
+                    className="gap-1.5 font-bold text-xs h-9 shrink-0"
                   >
                     <Plus className="h-4 w-4" />
-                    <span>Add Bot to Store</span>
+                    <span>Add Bot</span>
                   </Button>
-
-                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-xs">
-                    {['all', 'MT4', 'MT5'].map((pl) => (
-                      <button
-                        key={pl}
-                        onClick={() => setBotPlatformFilter(pl)}
-                        className={`px-2.5 py-1 rounded font-semibold capitalize cursor-pointer ${
-                          botPlatformFilter === pl ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
-                        }`}
-                      >
-                        {pl === 'all' ? 'All Platforms' : pl}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search bot name, pairs..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600"
-                  />
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredBots.map((bot) => (
-                  <Card key={bot.id} className="flex flex-col justify-between shadow-sm bg-white overflow-hidden group">
-                    <div>
-                      {/* Bot Image Preview */}
-                      {bot.image_url ? (
+              {/* VIEW 1: QUANTITATIVE HIGH-DENSITY FLEET TABLE (Default Anti-Slop View) */}
+              {botViewMode === 'table' && (
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs font-sans">
+                      <thead className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        <tr>
+                          <th className="py-3 px-4">Algorithm & Version</th>
+                          <th className="py-3 px-3">Platform</th>
+                          <th className="py-3 px-3">Traded Pairs</th>
+                          <th className="py-3 px-3">Win Rate</th>
+                          <th className="py-3 px-3">Drawdown</th>
+                          <th className="py-3 px-3">Profit Factor</th>
+                          <th className="py-3 px-3">USDT Price</th>
+                          <th className="py-3 px-3">Package Link</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {filteredBots.map((bot) => (
+                          <tr 
+                            key={bot.id} 
+                            className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
+                            onClick={() => setSelectedBotId(bot.id)}
+                          >
+                            {/* Algorithm details & thumbnail */}
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-lg overflow-hidden bg-slate-900 shrink-0 border border-slate-200 relative">
+                                  <img 
+                                    src={bot.image_url || 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop&q=80'} 
+                                    alt={bot.name}
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                  />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors truncate">
+                                      {bot.name}
+                                    </span>
+                                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                      {bot.version || 'v2.0'}
+                                    </span>
+                                  </div>
+                                  <div className="text-[11px] text-slate-400 truncate max-w-xs">
+                                    {bot.strategy_type || bot.description || 'Automated algorithm'}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Platform Badge */}
+                            <td className="py-3 px-3 whitespace-nowrap">
+                              <span className={`px-2 py-0.5 rounded font-bold text-[10px] ${
+                                bot.platform === 'MT4' 
+                                  ? 'bg-blue-100 text-blue-800 border border-blue-200' 
+                                  : bot.platform === 'MT5' 
+                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                                  : 'bg-purple-100 text-purple-800 border border-purple-200'
+                              }`}>
+                                {bot.platform}
+                              </span>
+                            </td>
+
+                            {/* Traded Pairs */}
+                            <td className="py-3 px-3 whitespace-nowrap">
+                              <span className="font-mono text-slate-700 font-semibold text-[11px] bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                                {bot.pairs || 'XAUUSD'}
+                              </span>
+                            </td>
+
+                            {/* Win Rate */}
+                            <td className="py-3 px-3 whitespace-nowrap">
+                              <span className="font-mono font-bold text-emerald-700">
+                                {bot.win_rate || '80%'}
+                              </span>
+                            </td>
+
+                            {/* Drawdown */}
+                            <td className="py-3 px-3 whitespace-nowrap">
+                              <div className="flex items-center gap-1.5 font-mono text-emerald-700 font-bold">
+                                <span className="h-1.5 w-8 rounded-full bg-slate-200 overflow-hidden inline-block">
+                                  <span className="h-full bg-emerald-500 block" style={{ width: `${Math.min(parseFloat(bot.drawdown || '5') * 10, 100)}%` }} />
+                                </span>
+                                <span>{bot.drawdown || '4.5%'}</span>
+                              </div>
+                            </td>
+
+                            {/* Profit Factor */}
+                            <td className="py-3 px-3 whitespace-nowrap">
+                              <span className="font-mono font-bold text-amber-700">
+                                {bot.profit_factor || '2.50 PF'}
+                              </span>
+                            </td>
+
+                            {/* Price */}
+                            <td className="py-3 px-3 whitespace-nowrap">
+                              <span className="font-extrabold text-slate-900 text-sm font-mono">
+                                ${bot.price}
+                              </span>
+                              <span className="text-[10px] text-slate-400 ml-1">USDT</span>
+                            </td>
+
+                            {/* Package Link */}
+                            <td className="py-3 px-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                              {bot.download_url ? (
+                                <a
+                                  href={bot.download_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-md border border-blue-200 transition-colors"
+                                >
+                                  <HardDrive className="h-3 w-3 text-blue-600" />
+                                  <span>Drive File</span>
+                                  <ExternalLink className="h-2.5 w-2.5" />
+                                </a>
+                              ) : (
+                                <span className="text-slate-400 text-[11px]">—</span>
+                              )}
+                            </td>
+
+                            {/* Actions */}
+                            <td className="py-3 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-end gap-1.5">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setSelectedBotId(bot.id)}
+                                  className="h-7 text-xs font-bold px-2.5 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300"
+                                >
+                                  Dossier
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setBotModal({ mode: 'edit', data: bot })}
+                                  className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900"
+                                >
+                                  <Edit3 className="h-3.5 w-3.5" />
+                                </Button>
+                                <button
+                                  onClick={() => handleDeleteBot(bot.id)}
+                                  className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-rose-600 rounded cursor-pointer"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* VIEW 2: GALLERY GRID (Cover Images & Algorithmic Badges) */}
+              {botViewMode === 'grid' && (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {filteredBots.map((bot) => (
+                    <Card key={bot.id} className="flex flex-col justify-between shadow-sm bg-white overflow-hidden group border border-slate-200">
+                      <div>
+                        {/* Bot Image Preview */}
                         <div 
-                          className="h-36 w-full relative overflow-hidden bg-slate-900 cursor-pointer"
+                          className="h-40 w-full relative overflow-hidden bg-slate-900 cursor-pointer"
                           onClick={() => setSelectedBotId(bot.id)}
                         >
                           <img 
-                            src={bot.image_url} 
+                            src={bot.image_url || 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop&q=80'} 
                             alt={bot.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
-                          <div className="absolute top-2.5 left-2.5 flex items-center gap-1">
-                            <Badge variant="secondary" className="bg-black/60 text-white backdrop-blur-md">
+                          <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                            <Badge className="bg-black/70 text-white backdrop-blur-md text-[10px]">
                               {bot.platform}
+                            </Badge>
+                            <Badge className="bg-emerald-600 text-white text-[10px]">
+                              {bot.version || 'v2.4'}
                             </Badge>
                           </div>
                         </div>
-                      ) : null}
 
-                      <div className="p-4 space-y-2.5">
-                        <div 
-                          className="cursor-pointer"
-                          onClick={() => setSelectedBotId(bot.id)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                              {bot.name}
-                            </h4>
-                            <span className="text-xs text-slate-400 font-mono">Ver {bot.version || 'v2.4'}</span>
+                        <div className="p-4 space-y-2.5">
+                          <div 
+                            className="cursor-pointer"
+                            onClick={() => setSelectedBotId(bot.id)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <h4 className="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                                {bot.name}
+                              </h4>
+                            </div>
+                            <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mt-1">
+                              {bot.description || 'Automated trading algorithm.'}
+                            </p>
                           </div>
 
-                          <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mt-1">
-                            {bot.description || 'Automated trading algorithm.'}
-                          </p>
+                          <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-100 font-mono">
+                            <div>
+                              <div className="text-[10px] text-slate-400">Drawdown</div>
+                              <div className="font-bold text-emerald-700 mt-0.5">{bot.drawdown || '4.2% Max DD'}</div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] text-slate-400">Profit Factor</div>
+                              <div className="font-bold text-amber-700 mt-0.5">{bot.profit_factor || '2.65 PF'}</div>
+                            </div>
+                          </div>
+
+                          {bot.pairs && (
+                            <div className="text-[11px] text-slate-600 font-mono flex items-center gap-1 truncate">
+                              <span className="text-slate-400">Pairs:</span>
+                              <span className="font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded">{bot.pairs}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 pt-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <div className="text-base font-black text-slate-900 tabular-nums">
+                          ${bot.price} <span className="text-xs font-normal text-slate-500">USDT</span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-100 font-mono">
-                          <div>
-                            <div className="text-[10px] text-slate-400">Drawdown</div>
-                            <div className="font-bold text-emerald-700 mt-0.5">{bot.drawdown || '4.2% Max DD'}</div>
-                          </div>
-                          <div>
-                            <div className="text-[10px] text-slate-400">Profit Factor</div>
-                            <div className="font-bold text-amber-700 mt-0.5">{bot.profit_factor || '2.65 PF'}</div>
-                          </div>
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSelectedBotId(bot.id)}
+                            className="h-8 text-xs font-bold"
+                          >
+                            Dossier
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setBotModal({ mode: 'edit', data: bot })}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit3 className="h-3.5 w-3.5 text-slate-600" />
+                          </Button>
+                          <button
+                            onClick={() => handleDeleteBot(bot.id)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
-
-                        {bot.pairs && (
-                          <div className="text-[11px] text-slate-500 font-mono flex items-center gap-1 truncate">
-                            <span className="text-slate-400">Traded:</span>
-                            <span className="font-bold text-slate-800">{bot.pairs}</span>
-                          </div>
-                        )}
                       </div>
-                    </div>
-
-                    <div className="p-4 pt-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
-                      <div className="text-base font-black text-slate-900 tabular-nums">
-                        ${bot.price} <span className="text-xs font-normal text-slate-500">USDT</span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setSelectedBotId(bot.id)}
-                          className="h-8 text-xs font-semibold"
-                        >
-                          View Details
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setBotModal({ mode: 'edit', data: bot })}
-                          className="h-8 text-xs px-2"
-                        >
-                          <Edit3 className="h-3.5 w-3.5" />
-                        </Button>
-                        <button
-                          onClick={() => handleDeleteBot(bot.id)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {/* ==================== DEDICATED BOT DETAIL PAGE ==================== */}
           {activeTab === 'bots' && selectedBotId && currentSelectedBot && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
+            <div className="space-y-5">
+              <div className="flex items-center justify-between bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
                 <button
                   onClick={() => setSelectedBotId(null)}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 cursor-pointer transition-colors"
                 >
-                  <ArrowLeft className="h-4 w-4" />
-                  <span>Back to Bot Catalog</span>
+                  <ChevronLeft className="h-4 w-4" />
+                  <span>← Back to Fleet Catalog</span>
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -1767,10 +2005,10 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                     size="sm"
                     variant="outline"
                     onClick={() => setBotModal({ mode: 'edit', data: currentSelectedBot })}
-                    className="text-xs gap-1.5"
+                    className="text-xs gap-1.5 font-bold"
                   >
                     <Edit3 className="h-3.5 w-3.5" />
-                    <span>Edit Bot Parameters</span>
+                    <span>Edit Parameters</span>
                   </Button>
                   <Button
                     size="sm"
@@ -1784,10 +2022,10 @@ export function AdminPortal({ onNavigatePublic, notify }) {
               </div>
 
               {/* Bot Dossier Card */}
-              <Card className="overflow-hidden bg-white shadow-sm space-y-6 p-6">
+              <Card className="overflow-hidden bg-white shadow-sm space-y-6 p-6 border border-slate-200">
                 <div className="grid md:grid-cols-3 gap-6">
                   {/* Hero Photo */}
-                  <div className="h-56 md:h-full rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 relative">
+                  <div className="h-60 md:h-full rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 relative group">
                     <img 
                       src={currentSelectedBot.image_url || 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop&q=80'} 
                       alt={currentSelectedBot.name}
@@ -1801,13 +2039,24 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                         {currentSelectedBot.version || 'v2.4'}
                       </Badge>
                     </div>
+
+                    <div className="absolute bottom-3 right-3">
+                      <Button
+                        size="sm"
+                        onClick={() => setBotModal({ mode: 'edit', data: currentSelectedBot })}
+                        className="h-7 text-[11px] gap-1 bg-black/70 hover:bg-black text-white backdrop-blur-md"
+                      >
+                        <Camera className="h-3 w-3" />
+                        <span>Update Image</span>
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Main Info */}
                   <div className="md:col-span-2 space-y-4">
                     <div>
                       <h2 className="text-2xl font-black text-slate-900">{currentSelectedBot.name}</h2>
-                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                         {currentSelectedBot.description || 'Institutional-grade automated execution algorithm.'}
                       </p>
                     </div>
@@ -1820,7 +2069,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                       </div>
                       <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                         <div className="text-[10px] text-slate-400">Min Capital</div>
-                        <div className="text-base font-bold text-slate-900 mt-0.5">{currentSelectedBot.recommended_deposit || '$500+'}</div>
+                        <div className="text-base font-bold text-slate-900 mt-0.5">{currentSelectedBot.recommended_deposit || '$1,000+'}</div>
                       </div>
                       <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
                         <div className="text-[10px] text-emerald-700">Drawdown</div>
@@ -1843,26 +2092,37 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                       </p>
                       <div className="pt-1 flex items-center gap-2">
                         <span className="text-slate-400 font-semibold">Traded Pairs:</span>
-                        <span className="font-bold text-emerald-700 font-mono">{currentSelectedBot.pairs || 'XAUUSD, EURUSD'}</span>
+                        <span className="font-bold text-emerald-700 font-mono bg-white px-2 py-0.5 rounded border border-slate-200">
+                          {currentSelectedBot.pairs || 'XAUUSD, EURUSD'}
+                        </span>
                       </div>
                     </div>
 
                     {/* Google Drive EA Download Link */}
                     {currentSelectedBot.download_url && (
-                      <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
-                        <div className="flex items-center gap-2.5 text-blue-800 font-bold min-w-0">
+                      <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+                        <div className="flex items-center gap-2.5 text-blue-900 font-bold min-w-0">
                           <HardDrive className="h-4 w-4 text-blue-600 shrink-0" />
                           <span className="truncate">Google Drive Package: {currentSelectedBot.download_url}</span>
                         </div>
-                        <a
-                          href={currentSelectedBot.download_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors w-fit text-xs shrink-0"
-                        >
-                          <span>Open in Drive</span>
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => handleCopyResourceUrl(currentSelectedBot.download_url, currentSelectedBot.id)}
+                            className="px-2.5 py-1.5 rounded-lg bg-white border border-blue-200 text-blue-700 font-bold hover:bg-blue-100 transition-colors text-xs flex items-center gap-1"
+                          >
+                            <Copy className="h-3 w-3" />
+                            <span>Copy</span>
+                          </button>
+                          <a
+                            href={currentSelectedBot.download_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors text-xs"
+                          >
+                            <span>Open Drive</span>
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1924,194 +2184,332 @@ export function AdminPortal({ onNavigatePublic, notify }) {
             </div>
           )}
 
-          {/* ==================== TAB 4: DIRECTIVES FEED ==================== */}
+          {/* ==================== TAB 4: DIRECTIVES FEED (Flash Terminal Dispatch & Bulletin Stream) ==================== */}
           {activeTab === 'broadcasts' && !selectedBotId && !selectedUserId && !selectedConnectorId && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900">Directives & Operational Bulletins</h3>
-                  <p className="text-xs text-slate-500">Official memos broadcasted to active subscriber dashboards.</p>
+            <div className="space-y-5">
+              {/* Operational Flash Dispatch Console (Direct On-Page Compose — No Repetitive Header!) */}
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-900 font-mono">
+                      Flash Directive Dispatch Terminal
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    {broadcasts.length} Directives Dispatched ({broadcasts.filter(b => b.pinned).length} Pinned)
+                  </span>
                 </div>
-                <Button
-                  onClick={() => setBroadcastModal({
-                    mode: 'create',
-                    data: { title: '', body: '', pinned: false, author: currentUser?.name || 'Desk Admin' }
-                  })}
-                  className="gap-2 font-bold"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>New Bulletin</span>
-                </Button>
-              </div>
 
-              <div className="space-y-3">
-                {broadcasts.map((b) => (
-                  <Card key={b.id} className="p-5 shadow-sm bg-white space-y-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-base font-bold text-slate-900">{b.title}</h4>
-                          {b.pinned && (
-                            <Badge variant="default" className="text-[10px] gap-1">
-                              <Pin className="h-3 w-3" /> Pinned
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-xs text-slate-400">
-                          By <span className="font-semibold text-slate-600">{b.author || 'Desk'}</span>
-                        </div>
+                <form onSubmit={handleFastDispatchDirective} className="space-y-3 text-xs">
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Directive Headline / Subject (e.g. US Core PCE Volatility Protocol)..."
+                      value={fastBroadcastTitle}
+                      onChange={(e) => setFastBroadcastTitle(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 text-xs bg-slate-50/50"
+                    />
+                  </div>
+                  <div>
+                    <textarea
+                      rows={3}
+                      placeholder="Directive instructions, risk lot sizing adjustments, session levels, or infrastructure maintenance memo..."
+                      value={fastBroadcastBody}
+                      onChange={(e) => setFastBroadcastBody(e.target.value)}
+                      className="w-full p-3 rounded-lg border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 text-xs bg-slate-50/50 resize-y"
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
+                        <span className="text-slate-400">Author:</span>
+                        <select
+                          value={fastBroadcastAuthor}
+                          onChange={(e) => setFastBroadcastAuthor(e.target.value)}
+                          className="bg-slate-100 border border-slate-200 rounded-md px-2 py-1 text-xs font-semibold text-slate-800 focus:outline-none"
+                        >
+                          <option value="Infrastructure Desk">Infrastructure Desk</option>
+                          <option value="Chief Risk Officer">Chief Risk Officer</option>
+                          <option value="Institutional Lead">Institutional Lead</option>
+                          <option value="Core Dev Operations">Core Dev Operations</option>
+                          <option value="Chief Analyst">Chief Analyst</option>
+                          <option value="System Admin">System Admin</option>
+                        </select>
                       </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleTogglePinBroadcast(b)}
-                          className="h-8 text-xs gap-1"
-                        >
-                          <Pin className="h-3 w-3" />
-                          <span>{b.pinned ? 'Unpin' : 'Pin'}</span>
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setBroadcastModal({ mode: 'edit', data: b })}
-                          className="h-8 text-xs"
-                        >
-                          <Edit3 className="h-3.5 w-3.5" />
-                        </Button>
-                        <button
-                          onClick={() => handleDeleteBroadcast(b.id)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                      <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-700 font-semibold">
+                        <input
+                          type="checkbox"
+                          checked={fastBroadcastPinned}
+                          onChange={(e) => setFastBroadcastPinned(e.target.checked)}
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span>Pin to Member Dashboard</span>
+                      </label>
                     </div>
 
-                    <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap bg-slate-50 p-3 rounded-xl border border-slate-100">
-                      {b.body}
-                    </p>
-                  </Card>
-                ))}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBroadcastModal({
+                          mode: 'create',
+                          data: { title: '', body: '', pinned: false, author: currentUser?.name || 'Desk Admin' }
+                        })}
+                        className="h-8 text-xs font-semibold"
+                      >
+                        Advanced Modal
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={fastBroadcastSending}
+                        className="h-8 text-xs font-bold gap-1.5"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                        <span>{fastBroadcastSending ? 'Dispatching...' : 'Dispatch Directive'}</span>
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+              {/* Feed Stream */}
+              <div className="space-y-3">
+                {broadcasts.map((b) => {
+                  const isPinned = !!b.pinned;
+                  return (
+                    <div
+                      key={b.id}
+                      className={`p-4 rounded-xl border transition-all ${
+                        isPinned 
+                          ? 'bg-amber-50/40 border-amber-300/80 shadow-xs' 
+                          : 'bg-white border-slate-200 shadow-xs'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {isPinned && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-white tracking-wide">
+                                <Pin className="h-2.5 w-2.5" />
+                                <span>PINNED DIRECTIVE</span>
+                              </span>
+                            )}
+                            <h4 className="text-sm font-bold text-slate-900 leading-snug">
+                              {b.title}
+                            </h4>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono">
+                            <span className="font-semibold text-slate-700">{b.author || 'Desk Lead'}</span>
+                            <span>•</span>
+                            <span>{b.created ? new Date(b.created).toUTCString().slice(0, 22) : 'Active UTC'}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleTogglePinBroadcast(b)}
+                            className={`h-7 px-2 text-[11px] font-semibold gap-1 ${
+                              isPinned ? 'text-amber-800 border-amber-300 bg-amber-100/60' : 'text-slate-600'
+                            }`}
+                          >
+                            <Pin className="h-3 w-3" />
+                            <span>{isPinned ? 'Unpin' : 'Pin'}</span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setBroadcastModal({ mode: 'edit', data: b })}
+                            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900"
+                          >
+                            <Edit3 className="h-3 w-3" />
+                          </Button>
+                          <button
+                            onClick={() => handleDeleteBroadcast(b.id)}
+                            className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-rose-600 rounded cursor-pointer"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 p-3 rounded-lg bg-white/80 border border-slate-200/80 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-sans">
+                        {b.body}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* ==================== TAB 5: RESOURCES, DOWNLOADS & USEFUL LINKS ==================== */}
+          {/* ==================== TAB 5: RESOURCES & DOWNLOADS (Segmented Kit & Direct Links) ==================== */}
           {activeTab === 'resources' && !selectedBotId && !selectedUserId && !selectedConnectorId && (
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              {/* Category Segment Selector & Actions Strip (No Repetitive Header!) */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[
+                    { id: 'all', label: `All Resources (${resources.length})` },
+                    { id: 'software', label: `Software & EAs (${resources.filter(r => r.category === 'software').length})` },
+                    { id: 'useful_link', label: `Brokers & VPS (${resources.filter(r => r.category === 'useful_link').length})` },
+                    { id: 'social', label: `Official Channels (${resources.filter(r => r.category === 'social').length})` },
+                  ].map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => setResourceCategoryFilter(c.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                        resourceCategoryFilter === c.id
+                          ? 'bg-slate-900 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="flex items-center gap-2">
+                  <div className="relative w-full sm:w-56">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search title, URL..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600"
+                    />
+                  </div>
+
                   <Button
                     onClick={() => setResourceModal({
                       mode: 'create',
                       data: {
                         title: '',
-                        category: 'software',
+                        category: resourceCategoryFilter !== 'all' ? resourceCategoryFilter : 'software',
                         url: '',
                         description: '',
                         icon: 'download',
                         badge: 'v2.4 Production',
-                        sort_order: 1,
+                        sort_order: resources.length + 1,
                         is_active: true
                       }
                     })}
-                    className="gap-2 font-bold"
+                    className="gap-1.5 font-bold text-xs h-9 shrink-0"
                   >
                     <Plus className="h-4 w-4" />
-                    <span>Add Resource / Download</span>
+                    <span>Add Item</span>
                   </Button>
-
-                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-xs">
-                    {[
-                      { id: 'all', label: `All (${resources.length})` },
-                      { id: 'software', label: 'Software/EAs' },
-                      { id: 'useful_link', label: 'Brokers/VPS' },
-                      { id: 'social', label: 'Socials' },
-                    ].map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => setResourceCategoryFilter(c.id)}
-                        className={`px-2.5 py-1 rounded font-semibold cursor-pointer ${
-                          resourceCategoryFilter === c.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
-                        }`}
-                      >
-                        {c.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search title, URL..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600"
-                  />
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {filteredResources.map((res) => (
-                  <Card key={res.id} className="p-4 shadow-sm bg-white flex flex-col justify-between space-y-3">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="capitalize text-[10px]">
-                          {res.category.replace('_', ' ')}
-                        </Badge>
-                        <button
-                          onClick={() => handleToggleResourceActive(res)}
-                          className={`text-[10px] px-2 py-0.5 rounded font-bold cursor-pointer ${
-                            res.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
-                          }`}
-                        >
-                          {res.is_active ? 'Active' : 'Disabled'}
-                        </button>
+              {/* High-Density Segmented Kit Cards */}
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredResources.map((res) => {
+                  const isSoftware = res.category === 'software';
+                  const isBroker = res.category === 'useful_link';
+                  const isSocial = res.category === 'social';
+
+                  return (
+                    <div 
+                      key={res.id} 
+                      className={`p-4 rounded-xl border bg-white shadow-xs flex flex-col justify-between space-y-3 transition-all ${
+                        !res.is_active ? 'opacity-60 border-slate-200' : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="space-y-2.5">
+                        {/* Header badge & active toggle */}
+                        <div className="flex items-center justify-between">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                            isSoftware 
+                              ? 'bg-blue-100 text-blue-800 border border-blue-200' 
+                              : isBroker 
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                              : 'bg-purple-100 text-purple-800 border border-purple-200'
+                          }`}>
+                            {res.category.replace('_', ' ')}
+                          </span>
+
+                          <button
+                            onClick={() => handleToggleResourceActive(res)}
+                            className={`text-[10px] px-2 py-0.5 rounded font-bold cursor-pointer transition-colors ${
+                              res.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+                            }`}
+                          >
+                            {res.is_active ? '● Active' : '○ Hidden'}
+                          </button>
+                        </div>
+
+                        {/* Title and Description */}
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900 leading-snug">
+                            {res.title}
+                          </h4>
+                          <p className="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">
+                            {res.description || 'Verified official asset provided by AKG ALGO.'}
+                          </p>
+                        </div>
+
+                        {/* Link display & quick test */}
+                        <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-mono text-slate-600 flex items-center justify-between gap-2">
+                          <span className="truncate">{res.url}</span>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => handleCopyResourceUrl(res.url, res.id)}
+                              title="Copy URL"
+                              className="p-1 text-slate-400 hover:text-slate-800 rounded cursor-pointer"
+                            >
+                              {copiedResourceId === res.id ? (
+                                <Check className="h-3 w-3 text-emerald-600" />
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </button>
+                            <a 
+                              href={res.url} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              title="Open in new tab"
+                              className="p-1 text-emerald-700 hover:text-emerald-900"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                        </div>
                       </div>
 
-                      <h4 className="text-base font-bold text-slate-900 mt-2">{res.title}</h4>
-                      <p className="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">
-                        {res.description || 'Official resource provided by AKG ALGO.'}
-                      </p>
+                      {/* Footer Actions */}
+                      <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {res.badge ? `Badge: ${res.badge}` : 'Standard Kit'}
+                        </span>
 
-                      <div className="mt-3 p-2 rounded bg-slate-50 border border-slate-100 font-mono text-[11px] text-slate-600 truncate flex items-center justify-between">
-                        <span className="truncate">{res.url}</span>
-                        <a 
-                          href={res.url} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="text-emerald-700 hover:text-emerald-900 p-1"
-                        >
-                          <ExternalLink className="h-3 w-3 shrink-0" />
-                        </a>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setResourceModal({ mode: 'edit', data: res })}
+                            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900"
+                          >
+                            <Edit3 className="h-3 w-3" />
+                          </Button>
+                          <button
+                            onClick={() => handleDeleteResource(res.id)}
+                            className="h-7 w-7 flex items-center justify-center text-slate-400 hover:text-rose-600 rounded cursor-pointer"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-xs text-slate-400 font-mono">Badge: {res.badge || '—'}</span>
-                      <div className="flex items-center gap-1.5">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setResourceModal({ mode: 'edit', data: res })}
-                          className="h-7 text-xs px-2"
-                        >
-                          <Edit3 className="h-3 w-3" />
-                        </Button>
-                        <button
-                          onClick={() => handleDeleteResource(res.id)}
-                          className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
