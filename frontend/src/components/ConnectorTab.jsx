@@ -166,7 +166,7 @@ export function ConnectorTab({ user, onOpenAuth, notify }) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 font-sans text-[#E7E9EF]">
+    <div className="w-full space-y-6 font-sans text-[#E7E9EF]">
       {/* Header */}
       <div className="p-6 rounded-2xl border border-white/10 bg-[#10141B] shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

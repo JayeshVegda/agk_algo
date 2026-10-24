@@ -4,7 +4,7 @@ import {
   Cpu, Download, CheckCircle2, ShieldCheck, 
   KeyRound, Copy, Check, Info, ArrowRight, X,
   Layers, ExternalLink, Image as ImageIcon, BarChart3,
-  TrendingUp, Shield, Sparkles
+  TrendingUp, Shield, Sparkles, HardDrive
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
@@ -319,6 +319,24 @@ export function BotsTab({ user, onOpenPricing, notify }) {
                   </div>
                 </div>
               )}
+              {/* Google Drive Direct Download Link */}
+              {selectedBotDetail.download_url && (
+                <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+                  <div className="flex items-center gap-2.5 text-blue-400 font-bold">
+                    <HardDrive className="h-4 w-4 shrink-0" />
+                    <span>Google Drive Expert Advisor Package</span>
+                  </div>
+                  <a
+                    href={selectedBotDetail.download_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-500 transition-colors w-fit"
+                  >
+                    <span>Open in Drive</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              )}
             </CardContent>
 
             <CardFooter className="p-6 border-t border-white/10 flex items-center justify-between bg-black/30">
@@ -428,6 +446,24 @@ export function BotsTab({ user, onOpenPricing, notify }) {
                   </div>
                 </div>
               )}
+              {/* Google Drive Direct Download Link */}
+              {selectedBotDetail.download_url && (
+                <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+                  <div className="flex items-center gap-2.5 text-blue-400 font-bold">
+                    <HardDrive className="h-4 w-4 shrink-0" />
+                    <span>Google Drive Expert Advisor Package</span>
+                  </div>
+                  <a
+                    href={selectedBotDetail.download_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-500 transition-colors w-fit"
+                  >
+                    <span>Open in Drive</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              )}
             </CardContent>
 
             <CardFooter className="flex justify-between border-t border-white/10 pt-3">
@@ -439,14 +475,26 @@ export function BotsTab({ user, onOpenPricing, notify }) {
                 Close Desk
               </Button>
 
-              <a
-                href={`/downloads/${licenseModalBot.name.toLowerCase().replace(/\s+/g, '_')}_${licenseModalBot.platform.toLowerCase()}.ex5`}
-                download
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00D878] text-[#07090D] text-xs font-bold hover:bg-[#00F09A] transition-all"
-              >
-                <Download className="h-3.5 w-3.5" />
-                <span>Download EA Binary</span>
-              </a>
+              {licenseModalBot.download_url ? (
+                <a
+                  href={licenseModalBot.download_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#00D878] text-[#07090D] text-xs font-bold hover:bg-[#00F09A] transition-all"
+                >
+                  <HardDrive className="h-3.5 w-3.5" />
+                  <span>Download from Google Drive</span>
+                </a>
+              ) : (
+                <a
+                  href={`/downloads/${licenseModalBot.name.toLowerCase().replace(/\s+/g, '_')}_${licenseModalBot.platform.toLowerCase()}.ex5`}
+                  download
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00D878] text-[#07090D] text-xs font-bold hover:bg-[#00F09A] transition-all"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Download EA Binary</span>
+                </a>
+              )}
             </CardFooter>
           </Card>
         </div>

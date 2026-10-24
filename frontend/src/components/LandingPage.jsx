@@ -82,10 +82,10 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
   ];
 
   return (
-    <div className="space-y-20 py-6 font-sans text-[#E7E9EF] max-w-5xl mx-auto">
+    <div className="space-y-20 py-6 font-sans text-[#E7E9EF] w-full">
       
       {/* 1. HERO — Official AKG ALGO Brand Kit Showcase */}
-      <section className="text-center space-y-6 pt-4">
+      <section className="text-center space-y-6 pt-4 max-w-5xl mx-auto">
         
         {/* Brand Symbol Artwork from Web Kit */}
         <div className="flex justify-center mb-2">
@@ -239,7 +239,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
           {/* SR Box */}
           <Card className="flex flex-col justify-between bg-[#10141B] border border-white/10 hover:border-white/20 transition-all">
             <div>

@@ -8,7 +8,7 @@ import {
   LogOut, ArrowLeft, Menu, Activity, ShieldAlert, Clock, ChevronRight,
   ChevronDown, BarChart3, ChevronLeft, Lock, Link2, Download,
   MessageSquare, Send, Sparkles, Eye, Share2, Globe, Radio,
-  Copy, Image as ImageIcon, Server, Terminal, Laptop
+  Copy, Image as ImageIcon, Server, Terminal, Laptop, Upload, HardDrive, Camera
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -398,7 +398,28 @@ export function AdminPortal({ onNavigatePublic, notify }) {
     }
   };
 
-  // --- BOTS WORKFLOW ---
+  // --- BOTS WORKFLOW (Device Image Upload & Google Drive Downloads) ---
+  const handleDeviceImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+      toast('File Too Large', 'Please select an image under 8MB', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const dataUrl = uploadEvent.target?.result;
+      setBotModal(prev => ({
+        ...prev,
+        data: { ...prev.data, image_url: dataUrl }
+      }));
+      toast('Photo Uploaded', `Loaded ${file.name} from device`);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSaveBot = async (e) => {
     e.preventDefault();
     const data = botModal.data;
@@ -971,8 +992,37 @@ export function AdminPortal({ onNavigatePublic, notify }) {
           </div>
         </header>
 
-        {/* Content Workspace */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
+        {/* Mobile Fast Tab Switcher (One-touch momentum scrolling for phone screens) */}
+        <div className="lg:hidden flex items-center gap-1.5 overflow-x-auto no-scrollbar py-2 px-3 border-b border-slate-200 bg-white sticky top-16 z-20 shadow-xs">
+          {navigationGroups.flatMap(g => g.items).map(item => (
+            <button
+              key={item.id}
+              onClick={() => {
+                setActiveTab(item.id);
+                setSelectedBotId(null);
+                setSelectedUserId(null);
+                setSelectedConnectorId(null);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 shrink-0 ${
+                activeTab === item.id
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <span>{item.label}</span>
+              {item.badge !== undefined && item.badge > 0 ? (
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  activeTab === item.id ? 'bg-white text-emerald-800' : 'bg-amber-500 text-white'
+                }`}>
+                  {item.badge}
+                </span>
+              ) : null}
+            </button>
+          ))}
+        </div>
+
+        {/* Content Workspace (Fluid 90-95% width, high information density, anti-slop) */}
+        <main className="flex-1 p-3 sm:p-5 lg:p-7 space-y-5 w-[96%] max-w-[1850px] mx-auto">
           
           {/* ==================== TAB 0: EXECUTIVE OVERVIEW ==================== */}
           {activeTab === 'overview' && !selectedBotId && !selectedUserId && !selectedConnectorId && (
@@ -1796,6 +1846,25 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                         <span className="font-bold text-emerald-700 font-mono">{currentSelectedBot.pairs || 'XAUUSD, EURUSD'}</span>
                       </div>
                     </div>
+
+                    {/* Google Drive EA Download Link */}
+                    {currentSelectedBot.download_url && (
+                      <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+                        <div className="flex items-center gap-2.5 text-blue-800 font-bold min-w-0">
+                          <HardDrive className="h-4 w-4 text-blue-600 shrink-0" />
+                          <span className="truncate">Google Drive Package: {currentSelectedBot.download_url}</span>
+                        </div>
+                        <a
+                          href={currentSelectedBot.download_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors w-fit text-xs shrink-0"
+                        >
+                          <span>Open in Drive</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -2882,18 +2951,85 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Main Photo / Hero Banner URL</label>
+                {/* Bot Picture: Upload from Device or Paste Link */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-slate-700 font-bold text-xs">Bot Picture / Main Photo</label>
+                    <span className="text-[10px] text-slate-400">Upload from camera/library or paste link</span>
+                  </div>
+
+                  {botModal.data.image_url ? (
+                    <div className="relative rounded-xl overflow-hidden h-36 bg-slate-900 border border-slate-300">
+                      <img 
+                        src={botModal.data.image_url} 
+                        alt="Bot Preview" 
+                        className="w-full h-full object-cover" 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setBotModal(prev => ({
+                          ...prev,
+                          data: { ...prev.data, image_url: '' }
+                        }))}
+                        className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/70 text-white hover:bg-black/90 cursor-pointer"
+                        title="Remove Photo"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : null}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <label 
+                      htmlFor="adminDeviceBotPhotoInput"
+                      className="flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-emerald-400 bg-emerald-50/50 hover:bg-emerald-50 cursor-pointer text-emerald-800 font-bold transition-all text-xs"
+                    >
+                      <Camera className="h-4 w-4 text-emerald-600" />
+                      <span>Upload from Device / Gallery</span>
+                      <input 
+                        type="file" 
+                        id="adminDeviceBotPhotoInput" 
+                        accept="image/*" 
+                        onChange={handleDeviceImageUpload}
+                        className="hidden" 
+                      />
+                    </label>
+
+                    <input
+                      type="url"
+                      placeholder="Or paste external image URL..."
+                      value={botModal.data.image_url || ''}
+                      onChange={(e) => setBotModal({
+                        ...botModal,
+                        data: { ...botModal.data, image_url: e.target.value }
+                      })}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 text-xs focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Google Drive / Cloud EA Download Link */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-slate-700 font-bold text-xs flex items-center gap-1.5">
+                      <HardDrive className="h-3.5 w-3.5 text-blue-600" />
+                      <span>Google Drive / Cloud EA Download Link</span>
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-mono">Folder or .ex4/.ex5 setup link</span>
+                  </div>
                   <input
                     type="url"
-                    placeholder="https://images.unsplash.com/photo-..."
-                    value={botModal.data.image_url || ''}
+                    placeholder="https://drive.google.com/drive/folders/... or direct link"
+                    value={botModal.data.download_url || ''}
                     onChange={(e) => setBotModal({
                       ...botModal,
-                      data: { ...botModal.data, image_url: e.target.value }
+                      data: { ...botModal.data, download_url: e.target.value }
                     })}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-emerald-600 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 font-mono text-xs focus:border-emerald-600 focus:outline-none"
                   />
+                  <p className="text-[10px] text-slate-400">
+                    Traders who unlock licenses can download the EA from this Google Drive link.
+                  </p>
                 </div>
 
                 <div>

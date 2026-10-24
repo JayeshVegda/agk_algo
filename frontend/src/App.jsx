@@ -97,7 +97,7 @@ export default function App() {
           onNavigateAdmin={() => navigateTo('/admin')}
         />
 
-        <main className="max-w-7xl mx-auto px-4 py-8">
+        <main className="w-[94%] max-w-[1750px] mx-auto px-2 sm:px-4 lg:px-6 py-6">
           {activeTab === 'home' && (
             <LandingPage
               onNavigate={(tab) => {
@@ -161,7 +161,7 @@ export default function App() {
 
       {/* Global Brand Kit Consumer Footer */}
       <footer className="border-t border-white/10 bg-[#07090D] py-12 text-xs text-[#A6ADB9] mt-20">
-        <div className="max-w-7xl mx-auto px-4 space-y-8">
+        <div className="w-[94%] max-w-[1750px] mx-auto px-2 sm:px-4 space-y-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-2">
               <img 

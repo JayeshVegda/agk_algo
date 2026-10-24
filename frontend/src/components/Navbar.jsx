@@ -119,7 +119,7 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAd
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#07090D]/90 backdrop-blur-md transition-all">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+      <div className="w-[94%] max-w-[1750px] mx-auto px-2 sm:px-4 h-16 flex items-center justify-between gap-4">
         
         {/* Left: Official Brand Header Logo from Web Kit */}
         <div className="flex items-center gap-8">

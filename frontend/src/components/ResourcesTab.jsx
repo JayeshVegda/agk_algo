@@ -63,7 +63,7 @@ export function ResourcesTab({ notify }) {
   };
 
   return (
-    <div className="space-y-8 font-sans text-[#E7E9EF] max-w-6xl mx-auto">
+    <div className="space-y-8 font-sans text-[#E7E9EF] w-full">
       {/* Header Banner */}
       <div className="p-6 md:p-8 rounded-2xl border border-white/10 bg-[#10141B] flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl">
         <div className="space-y-2">
