@@ -1,27 +1,14 @@
 {
   "name": "akg-algo",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "type": "module",
+  "description": "Institutional Precision Algorithmic Trading Systems & Membership Platform",
   "scripts": {
-    "dev": "pnpm --filter @akg/web dev",
-    "dev:worker": "pnpm --filter @akg/worker dev",
-    "build": "pnpm --recursive run build",
-    "typecheck": "pnpm --recursive run typecheck",
-    "lint": "eslint .",
-    "format": "prettier --check .",
-    "test": "pnpm --recursive run test",
-    "test:e2e": "pnpm --filter @akg/web test:e2e",
-    "db:generate": "pnpm --filter @akg/db db:generate",
-    "db:migrate": "pnpm --filter @akg/db db:migrate",
-    "db:seed": "pnpm --filter @akg/db db:seed"
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "serve": "./bin/pocketbase serve --dir=pb_data --publicDir=pb_public --http=0.0.0.0:8095",
+    "setup:db": "python3 scripts/setup_pb.py"
   },
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "eslint": "^9.39.5",
-    "prettier": "^3.5.3",
-    "typescript": "^5.8.2",
-    "typescript-eslint": "^8.72.0"
-  },
-  "packageManager": "pnpm@11.3.0"
+  "author": "AKG ALGO",
+  "license": "PROPRIETARY"
 }
