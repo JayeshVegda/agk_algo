@@ -1,0 +1,22 @@
+/* AKG ALGO brand tokens — website-ready */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+:root {
+  --akg-bg: #07090D;
+  --akg-bg-elevated: #10141B;
+  --akg-gold: #F3C653;
+  --akg-gold-deep: #A87927;
+  --akg-silver: #E7E9EF;
+  --akg-silver-dark: #282D36;
+  --akg-green: #00D878;
+  --akg-muted: #A6ADB9;
+  --akg-font: 'Montserrat', Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+html { color-scheme: dark; }
+body { margin: 0; background: var(--akg-bg); color: var(--akg-silver); font-family: var(--akg-font); }
+.akg-accent { color: var(--akg-gold); }
+.akg-positive { color: var(--akg-green); }
+.akg-surface { background: var(--akg-bg-elevated); border: 1px solid rgba(243,198,83,.16); border-radius: 16px; }
+.akg-button { display:inline-flex; align-items:center; justify-content:center; gap:.55rem; padding:.8rem 1.15rem; border:1px solid var(--akg-gold); border-radius:10px; background:var(--akg-gold); color:#111318; font:700 0.95rem var(--akg-font); text-decoration:none; }
+.akg-button:hover { filter:brightness(1.06); }
+/* Recommended header logo sizing */
+.akg-header-logo { display:block; width:min(260px, 42vw); height:auto; }

@@ -3,41 +3,72 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
+  --akg-bg: #07090D;
+  --akg-bg-elevated: #10141B;
+  --akg-gold: #F3C653;
+  --akg-gold-deep: #A87927;
+  --akg-silver: #E7E9EF;
+  --akg-silver-dark: #282D36;
+  --akg-green: #00D878;
+  --akg-muted: #A6ADB9;
+  --akg-font: 'Montserrat', Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 body {
-  background-color: #FFFFFF;
-  color: #0F172A;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  background-color: var(--akg-bg);
+  color: var(--akg-silver);
+  font-family: var(--akg-font);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Tabular figures for financial numbers */
+/* Financial Tabular Numbers */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
 
-/* Clean precision scrollbar */
+/* Custom Brand Utilities */
+.akg-accent {
+  color: var(--akg-gold);
+}
+
+.akg-positive {
+  color: var(--akg-green);
+}
+
+.akg-surface {
+  background: var(--akg-bg-elevated);
+  border: 1px solid rgba(243, 198, 83, 0.16);
+  border-radius: 16px;
+}
+
+.akg-header-logo {
+  display: block;
+  height: 36px;
+  width: auto;
+}
+
+/* Sleek Dark Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #F8FAFC;
+  background: #07090D;
 }
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: #1E2530;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: #2D3748;
 }
 
-/* Focus outline with emerald accent */
+/* Focus Outline with Gold Accent */
 :focus-visible {
-  outline: 2px solid #16A34A;
+  outline: 2px solid #F3C653;
   outline-offset: 1px;
 }

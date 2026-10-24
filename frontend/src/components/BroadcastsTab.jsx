@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { pb } from '../lib/pocketbase';
 import { Bell, Pin, Shield, Clock, Plus, Trash2, Radio, CheckCircle, Tag } from 'lucide-react';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
 
 export function BroadcastsTab({ user, notify }) {
   const [broadcasts, setBroadcasts] = useState([]);
@@ -15,7 +17,6 @@ export function BroadcastsTab({ user, notify }) {
   useEffect(() => {
     loadBroadcasts();
 
-    // Realtime SSE updates
     const unsubPromise = pb.collection('broadcasts').subscribe('*', (e) => {
       if (e.action === 'create') {
         setBroadcasts((prev) => [e.record, ...prev]);
@@ -61,19 +62,19 @@ export function BroadcastsTab({ user, notify }) {
   });
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6 font-sans text-[#E7E9EF]">
       {/* Header */}
-      <div className="p-6 rounded-2xl border border-border bg-surface shadow-sm">
+      <div className="p-6 rounded-2xl border border-white/10 bg-[#10141B] shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-mono font-semibold mb-2">
+            <Badge variant="gold" className="gap-2 mb-2 font-mono">
               <Bell className="h-3.5 w-3.5" />
-              OFFICIAL TRADING DESK BROADCAST
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white font-sans">
+              <span>OFFICIAL TRADING DESK BROADCAST</span>
+            </Badge>
+            <h1 className="text-2xl font-bold tracking-tight text-white">
               Live Announcements & Directives
             </h1>
-            <p className="text-xs text-slate-500 font-mono mt-1">
+            <p className="text-xs text-[#A6ADB9] font-mono mt-1">
               Real-time directives issued directly by algorithmic engineers and chief market analysts.
             </p>
           </div>
@@ -83,8 +84,8 @@ export function BroadcastsTab({ user, notify }) {
               onClick={() => setFilter('all')}
               className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
                 filter === 'all'
-                  ? 'bg-blue-600/20 border-blue-500/40 text-blue-300 font-bold'
-                  : 'border-border bg-slate-50 text-slate-500'
+                  ? 'bg-[#F3C653]/15 border-[#F3C653] text-[#F3C653] font-bold'
+                  : 'border-white/10 bg-white/5 text-[#A6ADB9] hover:text-white'
               }`}
             >
               All ({broadcasts.length})
@@ -93,12 +94,12 @@ export function BroadcastsTab({ user, notify }) {
               onClick={() => setFilter('pinned')}
               className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1 ${
                 filter === 'pinned'
-                  ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 font-bold'
-                  : 'border-border bg-slate-50 text-slate-500'
+                  ? 'bg-[#F3C653]/15 border-[#F3C653] text-[#F3C653] font-bold'
+                  : 'border-white/10 bg-white/5 text-[#A6ADB9] hover:text-white'
               }`}
             >
               <Pin className="h-3 w-3" />
-              Pinned
+              <span>Pinned</span>
             </button>
           </div>
         </div>
@@ -109,31 +110,31 @@ export function BroadcastsTab({ user, notify }) {
         {filteredBroadcasts.map((b) => (
           <div
             key={b.id}
-            className={`p-6 rounded-2xl border transition-all shadow-md font-mono ${
+            className={`p-6 rounded-2xl border transition-all shadow-xl font-mono ${
               b.pinned
-                ? 'border-amber-500/40 bg-[#120D05]'
-                : 'border-border bg-card hover:border-slate-600'
+                ? 'border-[#F3C653]/40 bg-[#171D26]'
+                : 'border-white/10 bg-[#10141B] hover:border-white/20'
             }`}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-border/50">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2">
                 {b.pinned && (
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">
-                    <Pin className="h-3 w-3" /> CRITICAL DESK DIRECTIVE
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-[#F3C653] bg-[#F3C653]/20 px-2 py-0.5 rounded border border-[#F3C653]/30">
+                    <Pin className="h-3 w-3" /> CRITICAL DIRECTIVE
                   </span>
                 )}
                 <h3 className="text-base font-bold text-white font-sans">{b.title}</h3>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="text-[11px] text-slate-500 flex items-center gap-1 tabular-nums">
+                <div className="text-[11px] text-[#A6ADB9] flex items-center gap-1 tabular-nums">
                   <Clock className="h-3 w-3" />
                   {new Date(b.created).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                 </div>
                 {user?.role === 'admin' && (
                   <button
                     onClick={() => handleDelete(b.id)}
-                    className="text-slate-500 hover:text-rose-400 p-1 rounded cursor-pointer"
+                    className="text-[#A6ADB9] hover:text-rose-400 p-1 rounded cursor-pointer"
                     title="Delete announcement"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -142,15 +143,15 @@ export function BroadcastsTab({ user, notify }) {
               </div>
             </div>
 
-            <p className="text-xs text-slate-700 leading-relaxed pt-3 font-mono whitespace-pre-line">
+            <p className="text-xs text-[#E7E9EF] leading-relaxed pt-3 font-mono whitespace-pre-line">
               {b.body}
             </p>
 
-            <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-[10px] text-slate-500">
+            <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[10px] text-[#A6ADB9]">
               <span>
-                Desk Lead: <span className="text-slate-700 font-semibold">{b.author || 'Chief Quantitative Strategist'}</span>
+                Desk Lead: <span className="text-white font-semibold">{b.author || 'Chief Quantitative Strategist'}</span>
               </span>
-              <span className="flex items-center gap-1 text-emerald-400">
+              <span className="flex items-center gap-1 text-[#00D878]">
                 <CheckCircle className="h-3 w-3" />
                 Verified Institutional Stream
               </span>
@@ -159,7 +160,7 @@ export function BroadcastsTab({ user, notify }) {
         ))}
 
         {filteredBroadcasts.length === 0 && (
-          <div className="p-12 text-center text-slate-500 rounded-2xl border border-border bg-card/50 font-mono text-xs">
+          <div className="p-12 text-center text-[#A6ADB9] rounded-2xl border border-white/10 bg-[#10141B] font-mono text-xs">
             No active directives found matching criteria.
           </div>
         )}

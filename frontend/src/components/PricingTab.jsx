@@ -107,19 +107,19 @@ export function PricingTab({ user, onOpenAuth, notify }) {
   ];
 
   return (
-    <div className="space-y-10 max-w-5xl mx-auto font-sans text-slate-800">
+    <div className="space-y-10 max-w-5xl mx-auto font-sans text-[#E7E9EF]">
       {/* Title */}
       <div className="text-center space-y-3">
         <div className="flex justify-center">
-          <Badge variant="default" className="gap-1.5 py-1 px-3 text-xs">
+          <Badge variant="gold" className="gap-1.5 py-1 px-3 text-xs">
             <Zap className="h-3.5 w-3.5" />
             <span>Structured 30-Day Cycles</span>
           </Badge>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
           Signal Subscriptions & Memberships
         </h1>
-        <p className="text-sm text-slate-600 max-w-lg mx-auto leading-relaxed">
+        <p className="text-sm text-[#A6ADB9] max-w-lg mx-auto leading-relaxed">
           Predictable cycle renewals. Zero automated credit card charges or recurring fees. Direct crypto settlement in USDT.
         </p>
       </div>
@@ -132,66 +132,65 @@ export function PricingTab({ user, onOpenAuth, notify }) {
           return (
             <Card
               key={plan.id}
-              className={`flex flex-col justify-between transition-all ${
+              className={`flex flex-col justify-between transition-all bg-[#10141B] ${
                 plan.popular
-                  ? 'border-emerald-500 ring-1 ring-emerald-500/20 shadow-md'
-                  : 'hover:border-slate-300'
+                  ? 'border-[#F3C653] ring-1 ring-[#F3C653]/30 shadow-xl shadow-[#F3C653]/10'
+                  : 'border-white/10 hover:border-white/20'
               }`}
             >
               <div>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <Badge variant={plan.popular ? 'default' : 'secondary'}>
+                    <Badge variant={plan.popular ? 'gold' : 'secondary'}>
                       {plan.tag}
                     </Badge>
                     {isCurrentPlan && (
-                      <Badge variant="success">
-                        Active Plan
-                      </Badge>
+                      <span className="text-xs font-bold text-[#00D878] flex items-center gap-1">
+                        <Check className="h-3 w-3" /> Active Plan
+                      </span>
                     )}
                   </div>
-                  <CardTitle className="mt-3 text-2xl font-bold">
+
+                  <CardTitle className="mt-3 text-2xl font-bold text-white">
                     {plan.name}
                   </CardTitle>
-                  <div className="mt-4 flex items-baseline gap-1.5">
-                    <span className="text-4xl sm:text-5xl font-black text-slate-900 tabular-nums">
-                      ${plan.price}
-                    </span>
-                    <span className="text-xs text-slate-500">USDT / 30-day cycle</span>
+
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="text-4xl font-black text-white tabular-nums">${plan.price}</span>
+                    <span className="text-xs text-[#F3C653] font-bold">USDT</span>
+                    <span className="text-xs text-[#A6ADB9] ml-1">/ {plan.period}</span>
                   </div>
+
+                  <CardDescription className="mt-2 text-xs text-[#A6ADB9]">
+                    Fixed cycle duration. Extend or pause manually anytime.
+                  </CardDescription>
                 </CardHeader>
 
-                <CardContent className="space-y-4 pt-2">
-                  <div className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                    Package Inclusions
+                <CardContent className="space-y-3 pt-2">
+                  <div className="text-[10px] font-bold text-[#A6ADB9] uppercase tracking-wider mb-2">
+                    Included Benefits
                   </div>
-                  <ul className="space-y-3 text-xs text-slate-600">
-                    {plan.features.map((f, i) => (
-                      <li key={i} className="flex items-start gap-2.5">
-                        <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <span className="leading-relaxed">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {plan.features.map((feature, i) => (
+                    <div key={i} className="flex items-start gap-2.5 text-xs text-[#E7E9EF]">
+                      <Check className="h-4 w-4 text-[#00D878] shrink-0 mt-0.5" />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
                 </CardContent>
               </div>
 
-              <CardFooter className="pt-6 border-t border-slate-100">
+              <CardFooter className="pt-6 border-t border-white/10 mt-6">
                 <Button
                   variant={plan.popular ? 'default' : 'outline'}
                   size="lg"
                   onClick={() => {
-                    if (!user) {
-                      onOpenAuth();
-                    } else {
-                      setSelectedPlan(plan);
-                      setSubmitted(false);
-                      setTxid('');
-                    }
+                    setSelectedPlan(plan);
+                    setSubmitted(false);
+                    setTxid('');
                   }}
                   className="w-full justify-center gap-2"
                 >
-                  <span>{!user ? 'Sign In to Subscribe' : isCurrentPlan ? 'Extend 30-Day Cycle' : `Enroll in ${plan.name}`}</span>
+                  <span>Select {plan.name}</span>
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </CardFooter>
@@ -201,8 +200,8 @@ export function PricingTab({ user, onOpenAuth, notify }) {
       </div>
 
       {/* Risk Notice */}
-      <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-600 flex items-start gap-3">
-        <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+      <div className="p-4 rounded-2xl border border-white/10 bg-[#10141B] text-xs text-[#A6ADB9] flex items-start gap-3">
+        <ShieldAlert className="h-5 w-5 text-[#F3C653] shrink-0 mt-0.5" />
         <p className="leading-relaxed">
           Regulatory Risk Disclaimer: Algorithmic trading and foreign exchange execution carry significant risk of capital loss. Past algorithmic performance does not guarantee future results. Signals provided are for educational and analytical purposes.
         </p>
@@ -210,21 +209,21 @@ export function PricingTab({ user, onOpenAuth, notify }) {
 
       {/* USDT Payment Modal */}
       {selectedPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <Card className="w-full max-w-lg shadow-2xl space-y-4">
-            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <Card className="w-full max-w-lg shadow-2xl space-y-4 bg-[#10141B] border-white/10">
+            <CardHeader className="pb-3 border-b border-white/10 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-emerald-600" />
+                <CardTitle className="text-lg flex items-center gap-2 text-white">
+                  <CreditCard className="h-5 w-5 text-[#F3C653]" />
                   USDT Checkout · {selectedPlan.name}
                 </CardTitle>
-                <CardDescription className="mt-1">
+                <CardDescription className="mt-1 text-[#A6ADB9]">
                   Transfer exact USDT amount to the official deposit address.
                 </CardDescription>
               </div>
               <button 
                 onClick={() => setSelectedPlan(null)} 
-                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg cursor-pointer"
+                className="text-[#A6ADB9] hover:text-white p-1 rounded-lg cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -233,14 +232,14 @@ export function PricingTab({ user, onOpenAuth, notify }) {
             <CardContent className="space-y-4">
               {submitted ? (
                 <div className="text-center py-6 space-y-4">
-                  <div className="h-12 w-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                  <div className="h-12 w-12 rounded-full bg-[#00D878]/15 text-[#00D878] flex items-center justify-center mx-auto border border-[#00D878]/30">
                     <CheckCircle2 className="h-8 w-8" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900">Payment Submitted for Verification</h3>
-                  <p className="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
-                    Your TXID has been logged. Transactions are verified on-chain within 5-15 minutes to activate your 30-day membership access.
+                  <h3 className="text-xl font-bold text-white">Payment Submitted for Verification</h3>
+                  <p className="text-xs text-[#A6ADB9] leading-relaxed max-w-sm mx-auto">
+                    Your TXID has been logged. Transactions are verified on-chain to activate your 30-day membership access.
                   </p>
-                  <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 text-xs font-mono text-slate-700 break-all select-all">
+                  <div className="p-3 rounded-xl border border-white/10 bg-[#07090D] text-xs font-mono text-[#F3C653] break-all select-all">
                     TXID: {txid}
                   </div>
                   <Button
@@ -254,17 +253,17 @@ export function PricingTab({ user, onOpenAuth, notify }) {
                 <div className="space-y-4 text-xs">
                   {/* Network Picker */}
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1.5">Select Settlement Network</label>
+                    <label className="block text-[#E7E9EF] font-semibold mb-1.5">Select Settlement Network</label>
                     <div className="grid grid-cols-3 gap-2">
                       {['USDT-TRC20', 'USDT-BEP20', 'USDT-ERC20'].map((net) => (
                         <button
                           key={net}
                           type="button"
                           onClick={() => setNetwork(net)}
-                          className={`py-2 px-3 rounded-lg border text-center transition-all cursor-pointer font-bold ${
+                          className={`py-2 px-3 rounded-xl border text-center transition-all cursor-pointer font-bold ${
                             network === net
-                              ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-                              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                              ? 'border-[#F3C653] bg-[#F3C653]/15 text-[#F3C653]'
+                              : 'border-white/10 bg-white/5 text-[#A6ADB9] hover:bg-white/10'
                           }`}
                         >
                           {net.replace('USDT-', '')}
@@ -274,12 +273,12 @@ export function PricingTab({ user, onOpenAuth, notify }) {
                   </div>
 
                   {/* Amount to send */}
-                  <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between">
+                  <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 flex items-center justify-between">
                     <div>
-                      <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Exact Amount to Transfer</div>
-                      <div className="text-2xl font-bold text-slate-900 mt-0.5 tabular-nums">${selectedPlan.price}.00 USDT</div>
+                      <div className="text-[10px] text-[#A6ADB9] uppercase tracking-wider font-semibold">Exact Amount to Transfer</div>
+                      <div className="text-2xl font-bold text-white mt-0.5 tabular-nums">${selectedPlan.price}.00 USDT</div>
                     </div>
-                    <Badge variant="default">
+                    <Badge variant="positive">
                       Zero Fees
                     </Badge>
                   </div>
@@ -287,17 +286,17 @@ export function PricingTab({ user, onOpenAuth, notify }) {
                   {/* Deposit Address Box */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-700 font-semibold">Official Deposit Address ({network})</span>
+                      <span className="text-[#E7E9EF] font-semibold">Official Deposit Address ({network})</span>
                       <button
                         type="button"
                         onClick={handleCopy}
-                        className="text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer font-semibold"
+                        className="text-[#F3C653] hover:underline flex items-center gap-1 cursor-pointer font-semibold"
                       >
                         {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                         <span>{copied ? 'Copied!' : 'Copy'}</span>
                       </button>
                     </div>
-                    <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 break-all select-all font-mono text-xs">
+                    <div className="p-3 rounded-xl border border-white/10 bg-[#07090D] text-[#F3C653] break-all select-all font-mono text-xs">
                       {WALLETS[network]}
                     </div>
                   </div>
@@ -305,7 +304,7 @@ export function PricingTab({ user, onOpenAuth, notify }) {
                   {/* TXID Submission Form */}
                   <form onSubmit={handleSubmitTxid} className="space-y-3 pt-2">
                     <div>
-                      <label className="block text-slate-700 font-semibold mb-1">
+                      <label className="block text-[#E7E9EF] font-semibold mb-1">
                         Transaction Hash / TXID
                       </label>
                       <input
@@ -314,14 +313,14 @@ export function PricingTab({ user, onOpenAuth, notify }) {
                         value={txid}
                         onChange={(e) => setTxid(e.target.value)}
                         placeholder="Paste your blockchain transaction hash here..."
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none text-xs"
+                        className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-white placeholder:text-[#A6ADB9] focus:border-[#F3C653] focus:outline-none text-xs"
                       />
                     </div>
 
                     <Button
                       type="submit"
                       disabled={submitting}
-                      className="w-full justify-center gap-2"
+                      className="w-full justify-center gap-2 font-bold"
                     >
                       <span>{submitting ? 'Confirming...' : 'Submit Payment for Verification'}</span>
                       <ArrowRight className="h-4 w-4" />

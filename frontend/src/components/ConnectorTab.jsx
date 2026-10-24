@@ -4,6 +4,9 @@ import {
   Network, ShieldCheck, CheckCircle2, Lock, AlertTriangle, 
   Activity, Wifi, Terminal, Zap, Play, RefreshCw, Cpu
 } from 'lucide-react';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
+import { Card } from './ui/Card';
 
 export function ConnectorTab({ user, onOpenAuth, notify }) {
   const [accountNumber, setAccountNumber] = useState('');
@@ -15,7 +18,6 @@ export function ConnectorTab({ user, onOpenAuth, notify }) {
   const [simulationLogs, setSimulationLogs] = useState([]);
   const [simulatingOrder, setSimulatingOrder] = useState(false);
 
-  // Fluctuating real-time latency pulse
   useEffect(() => {
     const interval = setInterval(() => {
       setLatency(Number((0.7 + Math.random() * 0.5).toFixed(2)));
@@ -89,28 +91,28 @@ export function ConnectorTab({ user, onOpenAuth, notify }) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 font-sans text-[#E7E9EF]">
       {/* Header */}
-      <div className="p-6 rounded-2xl border border-border bg-surface shadow-sm">
+      <div className="p-6 rounded-2xl border border-white/10 bg-[#10141B] shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-mono font-semibold mb-2">
+            <Badge variant="gold" className="gap-2 mb-2 font-mono">
               <Network className="h-3.5 w-3.5" />
-              SIMULATED TERMINAL BRIDGE (DEMO PROTOCOL)
-            </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight font-sans">
+              <span>SIMULATED TERMINAL BRIDGE (DEMO PROTOCOL)</span>
+            </Badge>
+            <h1 className="text-2xl font-bold text-white tracking-tight">
               MetaTrader Low-Latency Bridge
             </h1>
-            <p className="text-xs text-slate-500 font-mono mt-1">
+            <p className="text-xs text-[#A6ADB9] font-mono mt-1">
               Test sub-millisecond execution packet routing into MT4 / MT5 demo terminals.
             </p>
           </div>
 
           <div className="flex items-center gap-3 font-mono text-xs">
-            <div className="p-3 rounded-xl border border-border bg-slate-50 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-slate-500">Gateway:</span>
-              <span className="text-emerald-400 font-bold tabular-nums">{latency}ms (LD4)</span>
+            <div className="p-3 rounded-xl border border-white/10 bg-white/5 flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[#00D878] animate-pulse" />
+              <span className="text-[#A6ADB9]">Gateway:</span>
+              <span className="text-[#00D878] font-bold tabular-nums">{latency}ms (LD4)</span>
             </div>
           </div>
         </div>
@@ -118,14 +120,14 @@ export function ConnectorTab({ user, onOpenAuth, notify }) {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Bridge Configuration Form */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-xl space-y-5">
-          <h3 className="text-base font-bold text-white font-sans flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-blue-400" />
+        <div className="rounded-2xl border border-white/10 bg-[#10141B] p-6 shadow-xl space-y-5">
+          <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <Cpu className="h-4 w-4 text-[#F3C653]" />
             Terminal Connection Parameters
           </h3>
 
-          <div className="flex items-start gap-3 p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs font-mono text-amber-300">
-            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
+          <div className="flex items-start gap-3 p-3.5 rounded-xl border border-[#F3C653]/30 bg-[#F3C653]/10 text-xs font-mono text-[#F3C653]">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-[#F3C653] mt-0.5" />
             <p className="leading-relaxed">
               Demo Isolation Protocol: Credentials are never transmitted to live financial brokers. Strictly sandbox execution for latency verification.
             </p>
@@ -134,30 +136,31 @@ export function ConnectorTab({ user, onOpenAuth, notify }) {
           {submitted ? (
             <div className="text-center py-6 space-y-3 font-mono">
               <div className="relative inline-flex mb-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50"></span>
-                <CheckCircle2 className="h-12 w-12 text-emerald-400 relative" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00D878] opacity-50"></span>
+                <CheckCircle2 className="h-12 w-12 text-[#00D878] relative" />
               </div>
               <h3 className="text-lg font-bold text-white">Bridge Link Established!</h3>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-                Simulated WebSocket bridge to {platform} server ({server}) is active. Round-trip ping: <span className="text-emerald-400 font-bold tabular-nums">{latency}ms</span>.
+              <p className="text-xs text-[#A6ADB9] max-w-sm mx-auto leading-relaxed">
+                Simulated WebSocket bridge to {platform} server ({server}) is active. Round-trip ping: <span className="text-[#00D878] font-bold tabular-nums">{latency}ms</span>.
               </p>
               <div className="pt-3">
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => setSubmitted(false)}
-                  className="px-4 py-2 rounded-xl border border-border bg-slate-800 text-xs text-slate-700 hover:bg-slate-700 transition-colors cursor-pointer"
+                  className="text-xs"
                 >
                   Configure Another Terminal
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4 text-xs font-mono">
               <div>
-                <label className="block text-slate-500 mb-1">Terminal Platform</label>
+                <label className="block text-[#A6ADB9] mb-1">Terminal Platform</label>
                 <select
                   value={platform}
                   onChange={(e) => setPlatform(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2.5 text-white cursor-pointer"
+                  className="w-full rounded-xl border border-white/10 bg-[#171D26] px-3.5 py-2.5 text-white cursor-pointer"
                 >
                   <option value="MT4">MetaTrader 4 (MT4 EA Bridge)</option>
                   <option value="MT5">MetaTrader 5 (MT5 EA Bridge)</option>
@@ -165,88 +168,89 @@ export function ConnectorTab({ user, onOpenAuth, notify }) {
               </div>
 
               <div>
-                <label className="block text-slate-500 mb-1">Demo Account Number</label>
+                <label className="block text-[#A6ADB9] mb-1">Demo Account Number</label>
                 <input
                   type="text"
                   required
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-white placeholder:text-[#A6ADB9] focus:border-[#F3C653] focus:outline-none"
                   placeholder="e.g. 50928192"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-500 mb-1">Broker Demo Server</label>
+                <label className="block text-[#A6ADB9] mb-1">Broker Demo Server</label>
                 <input
                   type="text"
                   required
                   value={server}
                   onChange={(e) => setServer(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-white placeholder:text-[#A6ADB9] focus:border-[#F3C653] focus:outline-none"
                   placeholder="e.g. ICMarkets-Demo01"
                 />
               </div>
 
-              <button
+              <Button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-glow-blue cursor-pointer disabled:opacity-50"
+                className="w-full justify-center text-xs font-bold"
               >
                 {submitting ? 'Authenticating IPC Gateway...' : 'Initialize Demo Connection'}
-              </button>
+              </Button>
             </form>
           )}
         </div>
 
         {/* Live Packet Sandbox & Simulation Console */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-xl flex flex-col justify-between font-mono text-xs space-y-4">
+        <div className="rounded-2xl border border-white/10 bg-[#10141B] p-6 shadow-xl flex flex-col justify-between font-mono text-xs space-y-4">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-border">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h3 className="font-bold text-white flex items-center gap-2">
-                <Terminal className="h-4 w-4 text-emerald-400" />
+                <Terminal className="h-4 w-4 text-[#00D878]" />
                 Live Execution Console
               </h3>
-              <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-bold">
+              <span className="text-[10px] text-[#00D878] flex items-center gap-1 font-bold">
                 <Wifi className="h-3 w-3" />
                 FIBER ONLINE
               </span>
             </div>
 
-            <div className="mt-4 rounded-xl bg-slate-50 border border-border p-3.5 h-48 overflow-y-auto space-y-2 text-[11px] font-mono">
-              <div className="text-slate-500">--- Real-time IPC Packet Trace ---</div>
-              <div className="text-slate-500">[SYSTEM] Bridge daemon listening on 127.0.0.1:8095</div>
-              <div className="text-slate-500">[CLOCK] Precision hardware timestamping (TSC) sync</div>
+            <div className="mt-4 rounded-xl bg-[#07090D] border border-white/10 p-3.5 h-48 overflow-y-auto space-y-2 text-[11px] font-mono">
+              <div className="text-[#A6ADB9]">--- Real-time IPC Packet Trace ---</div>
+              <div className="text-[#A6ADB9]">[SYSTEM] Bridge daemon listening on 127.0.0.1:8095</div>
+              <div className="text-[#A6ADB9]">[CLOCK] Precision hardware timestamping (TSC) sync</div>
               
               {simulationLogs.map((log, idx) => (
-                <div key={idx} className="text-emerald-400 flex items-start gap-2 animate-fadeIn">
-                  <span className="text-slate-500 tabular-nums">{log.time}</span>
+                <div key={idx} className="text-[#00D878] flex items-start gap-2">
+                  <span className="text-[#A6ADB9] tabular-nums">{log.time}</span>
                   <span>{log.text}</span>
                 </div>
               ))}
 
               {simulatingOrder && (
-                <div className="text-blue-400 flex items-center gap-2 animate-pulse">
-                  <span className="h-1.5 w-1.5 rounded-full bg-blue-400"></span>
+                <div className="text-[#F3C653] flex items-center gap-2 animate-pulse">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#F3C653]"></span>
                   <span>Routing liquidity packet...</span>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="space-y-3 pt-2 border-t border-border/60">
-            <button
+          <div className="space-y-3 pt-2 border-t border-white/10">
+            <Button
+              variant="positive"
               onClick={handleSimulateExecution}
               disabled={simulatingOrder}
-              className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-glow-emerald cursor-pointer disabled:opacity-50"
+              className="w-full justify-center gap-2 text-xs font-bold"
             >
               <Play className="h-3.5 w-3.5 fill-current" />
-              Dispatch 0.01 Lot Demo Order (XAUUSD)
-            </button>
+              <span>Dispatch 0.01 Lot Demo Order (XAUUSD)</span>
+            </Button>
 
-            <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-500">
-              <div>Protocol: <span className="text-slate-700">FIX 4.4 / WS</span></div>
-              <div>Fill Slippage: <span className="text-emerald-400">0.0 pips</span></div>
+            <div className="grid grid-cols-2 gap-2 text-[10px] text-[#A6ADB9]">
+              <div>Protocol: <span className="text-white">FIX 4.4 / WS</span></div>
+              <div>Fill Slippage: <span className="text-[#00D878]">0.0 pips</span></div>
             </div>
           </div>
         </div>

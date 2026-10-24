@@ -3,15 +3,17 @@ import { cva } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center rounded-lg text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer select-none',
+  'inline-flex items-center justify-center rounded-xl text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F3C653] focus-visible:ring-offset-2 focus-visible:ring-offset-[#07090D] disabled:pointer-events-none disabled:opacity-50 cursor-pointer select-none',
   {
     variants: {
       variant: {
-        default: 'bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 shadow-sm',
-        secondary: 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200',
-        outline: 'border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 hover:border-slate-300 shadow-sm',
-        ghost: 'text-slate-700 hover:bg-slate-100 hover:text-slate-900',
-        link: 'text-emerald-600 underline-offset-4 hover:underline p-0 h-auto',
+        default: 'bg-[#F3C653] text-[#07090D] hover:bg-[#FFE58A] active:bg-[#A87927] shadow-md shadow-[#F3C653]/15',
+        gold: 'bg-[#F3C653] text-[#07090D] hover:bg-[#FFE58A] active:bg-[#A87927] shadow-md shadow-[#F3C653]/15',
+        positive: 'bg-[#00D878] text-[#07090D] hover:bg-[#00F09A] shadow-md shadow-[#00D878]/15',
+        secondary: 'bg-[#171D26] text-[#E7E9EF] hover:bg-[#202733] border border-white/10',
+        outline: 'border border-white/15 bg-transparent text-[#E7E9EF] hover:bg-white/5 hover:border-[#F3C653]/40',
+        ghost: 'text-[#A6ADB9] hover:bg-white/5 hover:text-[#E7E9EF]',
+        link: 'text-[#F3C653] underline-offset-4 hover:underline p-0 h-auto',
       },
       size: {
         sm: 'h-8 px-3 text-xs gap-1.5',

@@ -86,7 +86,7 @@ export default function App() {
   // Full consumer experience with market ticker, public navbar, and catalog
   // =========================================================================
   return (
-    <div className="min-h-screen bg-white text-slate-800 flex flex-col justify-between selection:bg-emerald-100 selection:text-emerald-900 font-sans">
+    <div className="min-h-screen bg-[#07090D] text-[#E7E9EF] flex flex-col justify-between selection:bg-[#F3C653]/20 selection:text-[#F3C653] font-sans">
       <div>
         <Navbar
           activeTab={activeTab}
@@ -152,50 +152,50 @@ export default function App() {
         </main>
       </div>
 
-      {/* Global Clean White-Green Consumer Footer */}
-      <footer className="border-t border-slate-200 bg-slate-50 py-10 text-xs text-slate-500 mt-20">
-        <div className="max-w-7xl mx-auto px-4 space-y-6">
+      {/* Global Brand Kit Consumer Footer */}
+      <footer className="border-t border-white/10 bg-[#07090D] py-12 text-xs text-[#A6ADB9] mt-20">
+        <div className="max-w-7xl mx-auto px-4 space-y-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-slate-900 text-sm tracking-tight">AKG ALGO</span>
-                <span className="text-slate-400">·</span>
-                <span className="text-slate-600 font-medium">MetaTrader Algorithmic Trading Systems</span>
-              </div>
-              <p className="text-xs text-slate-500 max-w-lg leading-relaxed">
-                Automated Expert Advisors and real-time execution signals with strict stop-loss protection.
+            <div className="space-y-2">
+              <img 
+                src="/assets/logos/akg-algo-header.svg" 
+                alt="AKG ALGO — Trade Smarter" 
+                className="h-7 w-auto"
+              />
+              <p className="text-xs text-[#A6ADB9] max-w-lg leading-relaxed">
+                Automated MetaTrader Expert Advisors and institutional execution signals with strict stop-loss protection.
               </p>
             </div>
 
-            <div className="flex items-center gap-6 text-xs">
+            <div className="flex items-center gap-6 text-xs flex-wrap">
               <button 
                 onClick={() => { setActiveTab('signals'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className="text-slate-600 hover:text-emerald-700 transition-colors cursor-pointer font-medium"
+                className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium"
               >
                 Signals
               </button>
               <button 
                 onClick={() => { setActiveTab('bots'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className="text-slate-600 hover:text-emerald-700 transition-colors cursor-pointer font-medium"
+                className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium"
               >
                 Trading Bots
               </button>
               <button 
                 onClick={() => { setActiveTab('connector'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className="text-slate-600 hover:text-emerald-700 transition-colors cursor-pointer font-medium"
+                className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium"
               >
                 Connector Demo
               </button>
               <button 
                 onClick={() => { setActiveTab('pricing'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className="text-slate-600 hover:text-emerald-700 transition-colors cursor-pointer font-medium"
+                className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium"
               >
-                Pricing Plans
+                Plans & Pricing
               </button>
               {user?.role === 'admin' && (
                 <button
                   onClick={() => navigateTo('/admin')}
-                  className="text-emerald-700 font-bold hover:underline cursor-pointer flex items-center gap-1"
+                  className="text-[#F3C653] font-bold hover:underline cursor-pointer flex items-center gap-1"
                 >
                   Admin Console →
                 </button>
@@ -203,15 +203,15 @@ export default function App() {
             </div>
           </div>
 
-          <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
-            <div className="flex items-center gap-4 text-slate-600">
-              <span>Platform: <span className="text-emerald-700 font-semibold">MT4 & MT5</span></span>
+          <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
+            <div className="flex items-center gap-4 text-[#A6ADB9]">
+              <span>Platform: <span className="text-[#00D878] font-semibold">MT4 & MT5</span></span>
               <span>•</span>
-              <span>Settlement: <span className="text-emerald-700 font-semibold">USDT Direct</span></span>
+              <span>Settlement: <span className="text-[#F3C653] font-semibold">USDT Direct</span></span>
               <span>•</span>
-              <span>Zero Card Rebills</span>
+              <span>Perpetual Licenses & 30D Cycles</span>
             </div>
-            <div className="text-slate-400">
+            <div className="text-white/40">
               © 2026 AKG ALGO. All rights reserved.
             </div>
           </div>

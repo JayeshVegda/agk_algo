@@ -28,7 +28,7 @@ NavigationMenuList.displayName = NavigationMenuPrimitive.List.displayName;
 const NavigationMenuItem = NavigationMenuPrimitive.Item;
 
 const navigationMenuTriggerStyle = cva(
-  'group inline-flex h-9 w-max items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus:bg-slate-100 focus:text-slate-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-emerald-50 data-[active]:text-emerald-800 data-[state=open]:bg-slate-100 cursor-pointer'
+  'group inline-flex h-9 w-max items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold text-[#A6ADB9] transition-colors hover:bg-white/5 hover:text-[#E7E9EF] focus:bg-white/10 focus:text-[#E7E9EF] focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-[#F3C653]/15 data-[active]:text-[#F3C653] data-[state=open]:bg-white/10 data-[state=open]:text-white cursor-pointer'
 );
 
 const NavigationMenuTrigger = React.forwardRef(({ className, children, ...props }, ref) => (
@@ -39,7 +39,7 @@ const NavigationMenuTrigger = React.forwardRef(({ className, children, ...props 
   >
     {children}
     <ChevronDown
-      className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180 text-slate-400 group-hover:text-slate-700"
+      className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180 text-[#A6ADB9] group-hover:text-white"
       aria-hidden="true"
     />
   </NavigationMenuPrimitive.Trigger>
@@ -64,7 +64,7 @@ const NavigationMenuViewport = React.forwardRef(({ className, ...props }, ref) =
   <div className={cn('absolute left-0 top-full flex justify-center')}>
     <NavigationMenuPrimitive.Viewport
       className={cn(
-        'origin-top-center relative mt-2 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-800 shadow-xl shadow-slate-900/10 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)]',
+        'origin-top-center relative mt-2 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-2xl border border-white/10 bg-[#10141B] text-[#E7E9EF] shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 md:w-[var(--radix-navigation-menu-viewport-width)]',
         className
       )}
       ref={ref}
