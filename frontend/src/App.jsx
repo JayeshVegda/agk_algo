@@ -49,7 +49,7 @@ export default function App() {
   }, [notify]);
 
   return (
-    <div className="min-h-screen bg-[#05070D] text-slate-100 flex flex-col justify-between selection:bg-blue-600/30 selection:text-blue-400 bg-grid-pattern">
+    <div className="min-h-screen bg-[#06080F] text-slate-100 flex flex-col justify-between selection:bg-blue-600/30 selection:text-blue-400">
       <div>
         <TickerBar />
         <Navbar
