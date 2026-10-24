@@ -478,7 +478,7 @@ export function AdminTab({ user, notify }) {
             { id: 'broadcasts', label: 'Announcements', icon: Bell, count: broadcasts.length },
             { id: 'bots', label: 'Trading Bots', icon: Cpu, count: bots.length },
             { id: 'users', label: 'Users & Subscriptions', icon: Users, count: allUsers.length },
-            { id: 'connectors', label: 'Connector Demose', icon: Network, count: connectors.length },
+            { id: 'connectors', label: 'Connector Inquiries', icon: Network, count: connectors.length },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeSubTab === tab.id;

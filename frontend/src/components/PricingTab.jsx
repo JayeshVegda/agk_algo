@@ -209,9 +209,9 @@ export function PricingTab({ user, onOpenAuth, notify }) {
 
       {/* USDT Payment Modal */}
       {selectedPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <Card className="w-full max-w-lg shadow-2xl space-y-4 bg-[#10141B] border-white/10">
-            <CardHeader className="pb-3 border-b border-white/10 flex flex-row items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+          <Card className="w-full max-w-lg shadow-2xl bg-[#10141B] border border-white/10 max-h-[92vh] flex flex-col overflow-hidden my-auto">
+            <CardHeader className="p-4 sm:p-6 pb-3 border-b border-white/10 shrink-0 flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-lg flex items-center gap-2 text-white">
                   <CreditCard className="h-5 w-5 text-[#F3C653]" />
@@ -229,7 +229,7 @@ export function PricingTab({ user, onOpenAuth, notify }) {
               </button>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-4">
               {submitted ? (
                 <div className="text-center py-6 space-y-4">
                   <div className="h-12 w-12 rounded-full bg-[#00D878]/15 text-[#00D878] flex items-center justify-center mx-auto border border-[#00D878]/30">

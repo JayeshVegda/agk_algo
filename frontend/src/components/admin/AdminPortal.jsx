@@ -834,7 +834,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
       group: 'USERS & CONNECTORS',
       items: [
         { id: 'users', label: 'Traders & Access', icon: Users, count: allUsers.length },
-        { id: 'connectors', label: 'Connector Demose', icon: Network, badge: pendingConnectors.length, count: connectors.length },
+        { id: 'connectors', label: 'Connector Inquiries', icon: Network, badge: pendingConnectors.length, count: connectors.length },
       ]
     }
   ];
@@ -1032,7 +1032,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                  activeTab === 'broadcasts' ? 'Directives Feed' :
                  activeTab === 'bots' ? 'Trading Bots Catalog' :
                  activeTab === 'resources' ? 'Resources & Downloads' :
-                 activeTab === 'users' ? 'Traders & Access' : 'Connector Demose'}
+                 activeTab === 'users' ? 'Traders & Access' : 'Connector Inquiries'}
               </span>
             </div>
           </div>
@@ -1366,7 +1366,17 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-900 truncate">{p.user_email}</span>
-                            <span className="font-bold text-slate-900 tabular-nums">${p.amount} USDT</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-900 tabular-nums">${p.amount} USDT</span>
+                              {p.status === 'pending' && (
+                                <button
+                                  onClick={() => handleApprovePayment(p)}
+                                  className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] cursor-pointer"
+                                >
+                                  Approve
+                                </button>
+                              )}
+                            </div>
                           </div>
                           <div className="text-[11px] text-slate-400 flex items-center justify-between mt-0.5">
                             <span>{p.network} • {p.plan}</span>
@@ -1446,85 +1456,83 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                 </Card>
               ) : (
                 <div className="space-y-3">
-                  <div className="hidden md:block">
-                    <Card className="overflow-hidden shadow-sm bg-white">
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs">
-                          <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
-                            <tr>
-                              <th className="p-3.5">Trader Email</th>
-                              <th className="p-3.5">Amount</th>
-                              <th className="p-3.5">Network</th>
-                              <th className="p-3.5">TxID / Blockchain</th>
-                              <th className="p-3.5">Plan</th>
-                              <th className="p-3.5">Status</th>
-                              <th className="p-3.5 text-right">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {filteredPayments.map((p) => (
-                              <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
-                                <td className="p-3.5 font-bold text-slate-900">{p.user_email}</td>
-                                <td className="p-3.5 font-black text-slate-900 tabular-nums">${p.amount} USDT</td>
-                                <td className="p-3.5 font-mono text-slate-600">{p.network}</td>
-                                <td className="p-3.5 font-mono">
-                                  {p.txid ? (
-                                    <a
-                                      href={getExplorerUrl(p.network, p.txid)}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-emerald-700 hover:underline flex items-center gap-1"
-                                      title={p.txid}
-                                    >
-                                      <span>{p.txid.slice(0, 8)}...{p.txid.slice(-6)}</span>
-                                      <ExternalLink className="h-3 w-3 shrink-0" />
-                                    </a>
-                                  ) : (
-                                    <span className="text-slate-400">—</span>
+                  <Card className="overflow-hidden shadow-sm bg-white">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs min-w-[850px]">
+                        <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
+                          <tr>
+                            <th className="p-3.5">Trader Email</th>
+                            <th className="p-3.5">Amount</th>
+                            <th className="p-3.5">Network</th>
+                            <th className="p-3.5">TxID / Blockchain</th>
+                            <th className="p-3.5">Plan</th>
+                            <th className="p-3.5">Status</th>
+                            <th className="p-3.5 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {filteredPayments.map((p) => (
+                            <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
+                              <td className="p-3.5 font-bold text-slate-900">{p.user_email}</td>
+                              <td className="p-3.5 font-black text-slate-900 tabular-nums">${p.amount} USDT</td>
+                              <td className="p-3.5 font-mono text-slate-600">{p.network}</td>
+                              <td className="p-3.5 font-mono">
+                                {p.txid ? (
+                                  <a
+                                    href={getExplorerUrl(p.network, p.txid)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-emerald-700 hover:underline flex items-center gap-1"
+                                    title={p.txid}
+                                  >
+                                    <span>{p.txid.slice(0, 8)}...{p.txid.slice(-6)}</span>
+                                    <ExternalLink className="h-3 w-3 shrink-0" />
+                                  </a>
+                                ) : (
+                                  <span className="text-slate-400">—</span>
+                                )}
+                              </td>
+                              <td className="p-3.5 font-semibold text-slate-800">{p.plan}</td>
+                              <td className="p-3.5">
+                                <Badge variant={p.status === 'confirmed' ? 'default' : p.status === 'pending' ? 'secondary' : 'destructive'}>
+                                  {p.status.toUpperCase()}
+                                </Badge>
+                              </td>
+                              <td className="p-3.5 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  {p.status === 'pending' && (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        onClick={() => handleApprovePayment(p)}
+                                        className="h-7 text-xs px-2.5 bg-emerald-600 hover:bg-emerald-700"
+                                      >
+                                        Approve
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleRejectPayment(p)}
+                                        className="h-7 text-xs px-2 text-rose-600 hover:bg-rose-50"
+                                      >
+                                        Reject
+                                      </Button>
+                                    </>
                                   )}
-                                </td>
-                                <td className="p-3.5 font-semibold text-slate-800">{p.plan}</td>
-                                <td className="p-3.5">
-                                  <Badge variant={p.status === 'confirmed' ? 'default' : p.status === 'pending' ? 'secondary' : 'destructive'}>
-                                    {p.status.toUpperCase()}
-                                  </Badge>
-                                </td>
-                                <td className="p-3.5 text-right">
-                                  <div className="flex items-center justify-end gap-1.5">
-                                    {p.status === 'pending' && (
-                                      <>
-                                        <Button
-                                          size="sm"
-                                          onClick={() => handleApprovePayment(p)}
-                                          className="h-7 text-xs px-2.5 bg-emerald-600 hover:bg-emerald-700"
-                                        >
-                                          Approve
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          onClick={() => handleRejectPayment(p)}
-                                          className="h-7 text-xs px-2 text-rose-600 hover:bg-rose-50"
-                                        >
-                                          Reject
-                                        </Button>
-                                      </>
-                                    )}
-                                    <button
-                                      onClick={() => handleDeletePayment(p.id)}
-                                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </Card>
-                  </div>
+                                  <button
+                                    onClick={() => handleDeletePayment(p.id)}
+                                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </Card>
                 </div>
               )}
             </div>
@@ -1754,7 +1762,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
               {signalViewMode === 'table' && (
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs font-sans">
+                    <table className="w-full text-left text-xs font-sans min-w-[980px]">
                       <thead className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                         <tr>
                           <th className="py-3 px-4">Status</th>
@@ -2108,7 +2116,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
               {botViewMode === 'table' && (
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs font-sans">
+                    <table className="w-full text-left text-xs font-sans min-w-[960px]">
                       <thead className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                         <tr>
                           <th className="py-3 px-4">Algorithm & Version</th>
@@ -2907,7 +2915,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
 
               <Card className="overflow-hidden shadow-sm bg-white">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-left text-xs min-w-[820px]">
                     <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
                       <tr>
                         <th className="p-3.5">Trader Details</th>
@@ -3176,7 +3184,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  <span>Back to Connector Demose</span>
+                  <span>Back to Connector Inquiries</span>
                 </button>
               </div>
 
@@ -3327,9 +3335,9 @@ export function AdminPortal({ onNavigatePublic, notify }) {
 
       {/* ===================== MODAL: DUAL-MODE SIGNAL PUBLISHER ===================== */}
       {signalModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <Card className="w-full max-w-xl shadow-2xl bg-white overflow-hidden">
-            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+          <Card className="w-full max-w-xl shadow-2xl bg-white max-h-[92vh] flex flex-col overflow-hidden my-auto">
+            <CardHeader className="p-4 sm:p-5 pb-3 border-b border-slate-100 shrink-0 flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
                   <Zap className="h-4 w-4 text-emerald-600" />
@@ -3348,7 +3356,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
             </CardHeader>
 
             {/* Mode Switcher Tabs */}
-            <div className="px-6 pt-3 flex items-center gap-2 border-b border-slate-100 bg-slate-50/50">
+            <div className="px-4 sm:px-6 pt-3 shrink-0 flex items-center gap-2 border-b border-slate-100 bg-slate-50/50">
               <button
                 type="button"
                 onClick={() => setSignalModal({ ...signalModal, entryMode: 'chatbox' })}
@@ -3377,45 +3385,47 @@ export function AdminPortal({ onNavigatePublic, notify }) {
 
             {/* Mode A: WhatsApp / Chatbox Mode */}
             {signalModal.entryMode === 'chatbox' ? (
-              <div className="p-6 space-y-4 text-xs font-sans">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="font-semibold text-slate-700">Type or Paste Signal Message</label>
-                    <span className="text-[10px] text-slate-400 font-mono">Format: Symbol, Entry, SL, TP</span>
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 text-xs font-sans flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-semibold text-slate-700">Type or Paste Signal Message</label>
+                      <span className="text-[10px] text-slate-400 font-mono">Format: Symbol, Entry, SL, TP</span>
+                    </div>
+                    <textarea
+                      rows={5}
+                      value={signalModal.chatText || ''}
+                      onChange={(e) => setSignalModal({ ...signalModal, chatText: e.target.value })}
+                      className="w-full rounded-xl border border-slate-300 p-3 font-mono text-xs text-slate-900 focus:border-emerald-600 focus:outline-none leading-relaxed bg-slate-50/50"
+                      placeholder={`BUY XAUUSD @ 2724.50\nSL: 2715.00\nTP1: 2735.00\nTP2: 2750.00\nNotes: London liquidity sweep retest`}
+                    />
                   </div>
-                  <textarea
-                    rows={6}
-                    value={signalModal.chatText || ''}
-                    onChange={(e) => setSignalModal({ ...signalModal, chatText: e.target.value })}
-                    className="w-full rounded-xl border border-slate-300 p-3 font-mono text-xs text-slate-900 focus:border-emerald-600 focus:outline-none leading-relaxed bg-slate-50/50"
-                    placeholder={`BUY XAUUSD @ 2724.50\nSL: 2715.00\nTP1: 2735.00\nTP2: 2750.00\nNotes: London liquidity sweep retest`}
-                  />
+
+                  {/* Live Parsed Preview */}
+                  {(() => {
+                    const parsed = parseSignalChatText(signalModal.chatText);
+                    if (!parsed) return null;
+
+                    return (
+                      <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2">
+                        <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                          <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                          <span>Real-Time Parser Extraction</span>
+                        </div>
+                        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 font-mono text-[11px]">
+                          <div>Symbol: <span className="font-bold text-slate-900">{parsed.symbol}</span></div>
+                          <div>Side: <span className="font-bold text-emerald-700">{parsed.direction}</span></div>
+                          <div>Entry: <span className="font-bold text-slate-900">{parsed.entry || '—'}</span></div>
+                          <div>SL: <span className="font-bold text-rose-700">{parsed.stop_loss || '—'}</span></div>
+                          <div>TP1: <span className="font-bold text-emerald-700">{parsed.take_profit_1 || '—'}</span></div>
+                          <div>TP2: <span className="font-bold text-emerald-700">{parsed.take_profit_2 || '—'}</span></div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
-                {/* Live Parsed Preview */}
-                {(() => {
-                  const parsed = parseSignalChatText(signalModal.chatText);
-                  if (!parsed) return null;
-
-                  return (
-                    <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2">
-                      <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
-                        <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
-                        <span>Real-Time Parser Extraction</span>
-                      </div>
-                      <div className="grid grid-cols-4 gap-2 font-mono text-[11px]">
-                        <div>Symbol: <span className="font-bold text-slate-900">{parsed.symbol}</span></div>
-                        <div>Side: <span className="font-bold text-emerald-700">{parsed.direction}</span></div>
-                        <div>Entry: <span className="font-bold text-slate-900">{parsed.entry || '—'}</span></div>
-                        <div>SL: <span className="font-bold text-rose-700">{parsed.stop_loss || '—'}</span></div>
-                        <div>TP1: <span className="font-bold text-emerald-700">{parsed.take_profit_1 || '—'}</span></div>
-                        <div>TP2: <span className="font-bold text-emerald-700">{parsed.take_profit_2 || '—'}</span></div>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 shrink-0">
                   <Button
                     type="button"
                     variant="outline"
@@ -3423,7 +3433,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                     className="text-xs text-blue-700 border-blue-300 gap-1.5"
                   >
                     <Send className="h-3.5 w-3.5" />
-                    <span>Send as Chat Directive Message</span>
+                    <span>Send Directive Message</span>
                   </Button>
 
                   <div className="flex items-center gap-2">
@@ -3432,15 +3442,15 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                     </Button>
                     <Button type="button" onClick={handleSaveSignal} className="font-bold gap-1.5">
                       <Zap className="h-3.5 w-3.5" />
-                      <span>Broadcast as Trade Signal</span>
+                      <span>Broadcast Signal</span>
                     </Button>
                   </div>
                 </div>
               </div>
             ) : (
               /* Mode B: Structured Form Mode */
-              <form onSubmit={handleSaveSignal}>
-                <CardContent className="space-y-3.5 pt-4 text-xs font-sans">
+              <form onSubmit={handleSaveSignal} className="flex flex-col flex-1 min-h-0">
+                <CardContent className="space-y-3.5 p-4 sm:p-6 flex-1 overflow-y-auto text-xs font-sans">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-slate-700 font-semibold mb-1">Pair / Symbol</label>
@@ -3576,7 +3586,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                   </div>
                 </CardContent>
 
-                <CardFooter className="border-t border-slate-100 pt-3 flex justify-end gap-2">
+                <CardFooter className="shrink-0 border-t border-slate-100 p-4 sm:p-5 pt-3 flex justify-end gap-2 bg-slate-50/50">
                   <Button type="button" variant="outline" onClick={() => setSignalModal(null)}>
                     Cancel
                   </Button>
@@ -3592,9 +3602,9 @@ export function AdminPortal({ onNavigatePublic, notify }) {
 
       {/* ===================== MODAL: BOT CRUD (With Photo & Parameters) ===================== */}
       {botModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <Card className="w-full max-w-xl shadow-2xl bg-white my-8">
-            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+          <Card className="w-full max-w-xl shadow-2xl bg-white max-h-[92vh] flex flex-col overflow-hidden my-auto">
+            <CardHeader className="p-4 sm:p-5 pb-3 border-b border-slate-100 shrink-0 flex flex-row items-center justify-between">
               <CardTitle className="text-base font-bold text-slate-900">
                 {botModal.mode === 'create' ? 'Add Bot to Catalog' : 'Edit Bot Settings & Photos'}
               </CardTitle>
@@ -3603,8 +3613,8 @@ export function AdminPortal({ onNavigatePublic, notify }) {
               </button>
             </CardHeader>
 
-            <form onSubmit={handleSaveBot}>
-              <CardContent className="space-y-3.5 pt-4 text-xs font-sans">
+            <form onSubmit={handleSaveBot} className="flex flex-col flex-1 min-h-0">
+              <CardContent className="space-y-3.5 p-4 sm:p-6 flex-1 overflow-y-auto text-xs font-sans">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-slate-700 font-semibold mb-1">Bot Name</label>
@@ -3828,7 +3838,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                 </div>
               </CardContent>
 
-              <CardFooter className="border-t border-slate-100 pt-3 flex justify-end gap-2">
+              <CardFooter className="shrink-0 border-t border-slate-100 p-4 sm:p-5 pt-3 flex justify-end gap-2 bg-slate-50/50">
                 <Button type="button" variant="outline" onClick={() => setBotModal(null)}>
                   Cancel
                 </Button>
@@ -3843,9 +3853,9 @@ export function AdminPortal({ onNavigatePublic, notify }) {
 
       {/* ===================== MODAL: ANNOUNCEMENT ===================== */}
       {broadcastModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <Card className="w-full max-w-lg shadow-2xl bg-white">
-            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+          <Card className="w-full max-w-lg shadow-2xl bg-white max-h-[92vh] flex flex-col overflow-hidden my-auto">
+            <CardHeader className="p-4 sm:p-5 pb-3 border-b border-slate-100 shrink-0 flex flex-row items-center justify-between">
               <CardTitle className="text-base font-bold text-slate-900">
                 {broadcastModal.mode === 'create' ? 'Compose Directive Bulletin' : 'Edit Directive'}
               </CardTitle>
@@ -3854,8 +3864,8 @@ export function AdminPortal({ onNavigatePublic, notify }) {
               </button>
             </CardHeader>
 
-            <form onSubmit={handleSaveBroadcast}>
-              <CardContent className="space-y-4 pt-4 text-xs font-sans">
+            <form onSubmit={handleSaveBroadcast} className="flex flex-col flex-1 min-h-0">
+              <CardContent className="space-y-4 p-4 sm:p-6 flex-1 overflow-y-auto text-xs font-sans">
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">Title</label>
                   <input
@@ -3903,7 +3913,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                 </div>
               </CardContent>
 
-              <CardFooter className="border-t border-slate-100 pt-3 flex justify-end gap-2">
+              <CardFooter className="shrink-0 border-t border-slate-100 p-4 sm:p-5 pt-3 flex justify-end gap-2 bg-slate-50/50">
                 <Button type="button" variant="outline" onClick={() => setBroadcastModal(null)}>
                   Cancel
                 </Button>
@@ -3918,9 +3928,9 @@ export function AdminPortal({ onNavigatePublic, notify }) {
 
       {/* ===================== MODAL: RESOURCE CRUD (Links & Downloads) ===================== */}
       {resourceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <Card className="w-full max-w-lg shadow-2xl bg-white">
-            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+          <Card className="w-full max-w-lg shadow-2xl bg-white max-h-[92vh] flex flex-col overflow-hidden my-auto">
+            <CardHeader className="p-4 sm:p-5 pb-3 border-b border-slate-100 shrink-0 flex flex-row items-center justify-between">
               <CardTitle className="text-base font-bold text-slate-900">
                 {resourceModal.mode === 'create' ? 'Add Member Resource / Link' : 'Edit Resource'}
               </CardTitle>
@@ -3929,8 +3939,8 @@ export function AdminPortal({ onNavigatePublic, notify }) {
               </button>
             </CardHeader>
 
-            <form onSubmit={handleSaveResource}>
-              <CardContent className="space-y-3.5 pt-4 text-xs font-sans">
+            <form onSubmit={handleSaveResource} className="flex flex-col flex-1 min-h-0">
+              <CardContent className="space-y-3.5 p-4 sm:p-6 flex-1 overflow-y-auto text-xs font-sans">
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">Resource Title</label>
                   <input
@@ -4024,7 +4034,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                 </div>
               </CardContent>
 
-              <CardFooter className="border-t border-slate-100 pt-3 flex justify-end gap-2">
+              <CardFooter className="shrink-0 border-t border-slate-100 p-4 sm:p-5 pt-3 flex justify-end gap-2 bg-slate-50/50">
                 <Button type="button" variant="outline" onClick={() => setResourceModal(null)}>
                   Cancel
                 </Button>
@@ -4039,9 +4049,9 @@ export function AdminPortal({ onNavigatePublic, notify }) {
 
       {/* ===================== MODAL: EDIT USER ACCESS ===================== */}
       {userModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <Card className="w-full max-w-md shadow-2xl bg-white">
-            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+          <Card className="w-full max-w-md shadow-2xl bg-white max-h-[92vh] flex flex-col overflow-hidden my-auto">
+            <CardHeader className="p-4 sm:p-5 pb-3 border-b border-slate-100 shrink-0 flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold text-slate-900">Edit Trader Access</CardTitle>
                 <CardDescription className="text-xs text-slate-500">{userModal.data.email}</CardDescription>
@@ -4051,8 +4061,8 @@ export function AdminPortal({ onNavigatePublic, notify }) {
               </button>
             </CardHeader>
 
-            <form onSubmit={handleSaveUser}>
-              <CardContent className="space-y-4 pt-4 text-xs font-sans">
+            <form onSubmit={handleSaveUser} className="flex flex-col flex-1 min-h-0">
+              <CardContent className="space-y-4 p-4 sm:p-6 flex-1 overflow-y-auto text-xs font-sans">
                 <div>
                   <label className="block text-slate-700 font-semibold mb-1">Subscription Plan</label>
                   <select
@@ -4099,7 +4109,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                 </div>
               </CardContent>
 
-              <CardFooter className="border-t border-slate-100 pt-3 flex justify-end gap-2">
+              <CardFooter className="shrink-0 border-t border-slate-100 p-4 sm:p-5 pt-3 flex justify-end gap-2 bg-slate-50/50">
                 <Button type="button" variant="outline" onClick={() => setUserModal(null)}>
                   Cancel
                 </Button>

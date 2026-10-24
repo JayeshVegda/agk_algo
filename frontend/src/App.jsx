@@ -66,6 +66,28 @@ export default function App() {
     return () => unsub();
   }, [notify]);
 
+  // Real-time synchronization for current user record (plan upgrades, cycle expiration, role changes)
+  useEffect(() => {
+    if (!user?.id) return;
+    const unsubPromise = pb.collection('users').subscribe(user.id, (e) => {
+      if (e.action === 'update') {
+        setUser(e.record);
+        pb.authStore.save(pb.authStore.token, e.record);
+        notify({
+          type: 'success',
+          title: 'Membership Tier Synced',
+          message: `Your account was updated: ${e.record.plan === 'PERFECT_SIGNAL_BOX' ? '⚡ Perfect Signal VIP' : e.record.plan === 'SR_SIGNAL_BOX' ? 'SR Signal Box' : 'Standard'}`
+        });
+      }
+    }).catch((err) => {
+      console.warn('Realtime user subscription warning:', err);
+    });
+
+    return () => {
+      unsubPromise.then((unsub) => unsub && unsub()).catch(() => {});
+    };
+  }, [user?.id, notify]);
+
   // =========================================================================
   // DEDICATED STANDALONE ADMIN PORTAL (/admin)
   // Completely separate page, template, and layout without public navigation

@@ -631,7 +631,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
         /* Table View */
         <div className="rounded-2xl border border-white/10 bg-[#10141B] overflow-hidden shadow-xl text-xs font-mono">
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left min-w-[840px]">
               <thead className="bg-white/5 text-[#A6ADB9] border-b border-white/10 font-semibold">
                 <tr>
                   <th className="p-3">Symbol</th>
@@ -695,133 +695,135 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
 
       {/* Admin Post/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#10141B] p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#10141B] max-h-[92vh] flex flex-col overflow-hidden shadow-2xl my-auto">
+            <div className="p-4 sm:p-5 border-b border-white/10 shrink-0 flex items-center justify-between">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <Zap className="h-4 w-4 text-[#F3C653]" />
                 <span>{editingSignal ? 'Edit Signal' : 'Broadcast Signal'}</span>
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-[#A6ADB9] hover:text-white p-1 rounded-lg"
+                className="text-[#A6ADB9] hover:text-white p-1 rounded-lg cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleCreateOrUpdateSignal} className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[#E7E9EF] font-semibold mb-1">Symbol</label>
-                  <input
-                    type="text"
-                    required
-                    value={form.symbol}
-                    onChange={(e) => setForm({ ...form, symbol: e.target.value.toUpperCase() })}
-                    placeholder="e.g. XAUUSD"
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white focus:outline-none focus:border-[#F3C653]"
-                  />
+            <form onSubmit={handleCreateOrUpdateSignal} className="flex flex-col flex-1 min-h-0">
+              <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-3.5 text-xs">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[#E7E9EF] font-semibold mb-1">Symbol</label>
+                    <input
+                      type="text"
+                      required
+                      value={form.symbol}
+                      onChange={(e) => setForm({ ...form, symbol: e.target.value.toUpperCase() })}
+                      placeholder="e.g. XAUUSD"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white focus:outline-none focus:border-[#F3C653]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[#E7E9EF] font-semibold mb-1">Direction</label>
+                    <select
+                      value={form.direction}
+                      onChange={(e) => setForm({ ...form, direction: e.target.value })}
+                      className="w-full rounded-xl border border-white/10 bg-[#171D26] px-3 py-2 text-white cursor-pointer"
+                    >
+                      <option value="BUY">BUY (Long)</option>
+                      <option value="SELL">SELL (Short)</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[#E7E9EF] font-semibold mb-1">Direction</label>
-                  <select
-                    value={form.direction}
-                    onChange={(e) => setForm({ ...form, direction: e.target.value })}
-                    className="w-full rounded-xl border border-white/10 bg-[#171D26] px-3 py-2 text-white cursor-pointer"
-                  >
-                    <option value="BUY">BUY (Long)</option>
-                    <option value="SELL">SELL (Short)</option>
-                  </select>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[#E7E9EF] font-semibold mb-1">Entry</label>
+                    <input
+                      type="text"
+                      required
+                      value={form.entry}
+                      onChange={(e) => setForm({ ...form, entry: e.target.value })}
+                      placeholder="e.g. 2,748.50"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[#E7E9EF] font-semibold mb-1">Stop Loss (SL)</label>
+                    <input
+                      type="text"
+                      required
+                      value={form.stop_loss}
+                      onChange={(e) => setForm({ ...form, stop_loss: e.target.value })}
+                      placeholder="e.g. 2,735.00"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-rose-400"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[#E7E9EF] font-semibold mb-1">Take Profit 1</label>
+                    <input
+                      type="text"
+                      required
+                      value={form.take_profit_1}
+                      onChange={(e) => setForm({ ...form, take_profit_1: e.target.value })}
+                      placeholder="e.g. 2,765.00"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[#00D878]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[#E7E9EF] font-semibold mb-1">Take Profit 2 (Optional)</label>
+                    <input
+                      type="text"
+                      value={form.take_profit_2}
+                      onChange={(e) => setForm({ ...form, take_profit_2: e.target.value })}
+                      placeholder="e.g. 2,780.00"
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[#00D878]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[#E7E9EF] font-semibold mb-1">Plan Tier</label>
+                    <select
+                      value={form.plan_tier}
+                      onChange={(e) => setForm({ ...form, plan_tier: e.target.value })}
+                      className="w-full rounded-xl border border-white/10 bg-[#171D26] px-3 py-2 text-white cursor-pointer"
+                    >
+                      <option value="PERFECT_SIGNAL_BOX">Perfect Signal Box ($20)</option>
+                      <option value="SR_SIGNAL_BOX">SR Signal Box ($10)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[#E7E9EF] font-semibold mb-1">Status</label>
+                    <select
+                      value={form.status}
+                      onChange={(e) => setForm({ ...form, status: e.target.value })}
+                      className="w-full rounded-xl border border-white/10 bg-[#171D26] px-3 py-2 text-white cursor-pointer"
+                    >
+                      <option value="active">Active</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-[#E7E9EF] font-semibold mb-1">Entry</label>
-                  <input
-                    type="text"
-                    required
-                    value={form.entry}
-                    onChange={(e) => setForm({ ...form, entry: e.target.value })}
-                    placeholder="e.g. 2,748.50"
+                  <label className="block text-[#E7E9EF] font-semibold mb-1">Technical Rationale</label>
+                  <textarea
+                    rows="2"
+                    value={form.notes}
+                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                    placeholder="e.g. Invalidation above 2,752 liquidity sweep."
                     className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white"
                   />
                 </div>
-                <div>
-                  <label className="block text-[#E7E9EF] font-semibold mb-1">Stop Loss (SL)</label>
-                  <input
-                    type="text"
-                    required
-                    value={form.stop_loss}
-                    onChange={(e) => setForm({ ...form, stop_loss: e.target.value })}
-                    placeholder="e.g. 2,735.00"
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-rose-400"
-                  />
-                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[#E7E9EF] font-semibold mb-1">Take Profit 1</label>
-                  <input
-                    type="text"
-                    required
-                    value={form.take_profit_1}
-                    onChange={(e) => setForm({ ...form, take_profit_1: e.target.value })}
-                    placeholder="e.g. 2,765.00"
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[#00D878]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[#E7E9EF] font-semibold mb-1">Take Profit 2 (Optional)</label>
-                  <input
-                    type="text"
-                    value={form.take_profit_2}
-                    onChange={(e) => setForm({ ...form, take_profit_2: e.target.value })}
-                    placeholder="e.g. 2,780.00"
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[#00D878]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[#E7E9EF] font-semibold mb-1">Plan Tier</label>
-                  <select
-                    value={form.plan_tier}
-                    onChange={(e) => setForm({ ...form, plan_tier: e.target.value })}
-                    className="w-full rounded-xl border border-white/10 bg-[#171D26] px-3 py-2 text-white cursor-pointer"
-                  >
-                    <option value="PERFECT_SIGNAL_BOX">Perfect Signal Box ($20)</option>
-                    <option value="SR_SIGNAL_BOX">SR Signal Box ($10)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[#E7E9EF] font-semibold mb-1">Status</label>
-                  <select
-                    value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value })}
-                    className="w-full rounded-xl border border-white/10 bg-[#171D26] px-3 py-2 text-white cursor-pointer"
-                  >
-                    <option value="active">Active</option>
-                    <option value="closed">Closed</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[#E7E9EF] font-semibold mb-1">Technical Rationale</label>
-                <textarea
-                  rows="2"
-                  value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  placeholder="e.g. Invalidation above 2,752 liquidity sweep."
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end gap-2">
+              <div className="p-4 sm:p-5 pt-3 border-t border-white/10 shrink-0 flex justify-end gap-2 bg-white/[0.02]">
                 <Button
                   type="button"
                   variant="outline"

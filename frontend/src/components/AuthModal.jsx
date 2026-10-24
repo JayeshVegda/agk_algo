@@ -68,20 +68,20 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <Card className="w-full max-w-md shadow-2xl relative bg-[#10141B] border-white/10 text-[#E7E9EF]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+      <Card className="w-full max-w-md shadow-2xl relative bg-[#10141B] border border-white/10 text-[#E7E9EF] max-h-[92vh] flex flex-col overflow-hidden my-auto">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-[#A6ADB9] hover:text-white p-1 rounded cursor-pointer"
+          className="absolute right-4 top-4 text-[#A6ADB9] hover:text-white p-1 rounded cursor-pointer z-10"
         >
           <X className="h-5 w-5" />
         </button>
 
-        <CardHeader className="space-y-2 pb-4 text-center items-center">
+        <CardHeader className="space-y-2 p-4 sm:p-5 pb-2 text-center items-center shrink-0">
           <img 
             src="/assets/logos/akg-algo-symbol-transparent.png" 
             alt="AKG ALGO" 
-            className="h-12 w-auto mx-auto object-contain mb-1"
+            className="h-10 sm:h-12 w-auto mx-auto object-contain mb-1"
           />
           <div className="flex justify-center">
             <Badge variant="gold" className="gap-1.5 py-0.5 px-2.5 text-[11px]">
@@ -89,7 +89,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               <span>Terminal Authentication</span>
             </Badge>
           </div>
-          <CardTitle className="text-xl font-bold text-white pt-1">
+          <CardTitle className="text-lg sm:text-xl font-bold text-white pt-1">
             {isRegister ? 'Create Trader Account' : 'Sign In to Terminal'}
           </CardTitle>
           <CardDescription className="text-xs text-[#A6ADB9]">
@@ -99,7 +99,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3.5 p-4 sm:p-5 pt-1 flex-1 overflow-y-auto">
           {error && (
             <div className="rounded-xl border border-rose-500/30 bg-rose-500/15 p-3 text-xs text-rose-300">
               ⚠ {error}

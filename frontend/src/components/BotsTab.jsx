@@ -220,52 +220,54 @@ export function BotsTab({ user, onOpenPricing, notify }) {
 
       {/* DEDICATED BOT DETAIL MODAL */}
       {selectedBotDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-          <Card className="w-full max-w-2xl bg-[#10141B] border-white/10 shadow-2xl overflow-hidden my-8">
-            {/* Modal Hero Image */}
-            {selectedBotDetail.image_url && (
-              <div className="h-64 w-full relative overflow-hidden bg-black">
-                <img 
-                  src={selectedBotDetail.image_url} 
-                  alt={selectedBotDetail.name} 
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#10141B] via-transparent to-black/40" />
-                <button
-                  onClick={() => setSelectedBotDetail(null)}
-                  className="absolute top-4 right-4 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 cursor-pointer"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            )}
-
-            <CardHeader className="p-6 pb-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="font-mono">{selectedBotDetail.platform}</Badge>
-                  <Badge variant="gold" className="font-mono">{selectedBotDetail.version || 'v2.4'}</Badge>
-                  <Badge variant="positive" className="font-mono">Audited Strategy</Badge>
-                </div>
-                {!selectedBotDetail.image_url && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+          <Card className="w-full max-w-2xl bg-[#10141B] border border-white/10 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col my-auto">
+            {/* Scrollable Modal Content */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Modal Hero Image */}
+              {selectedBotDetail.image_url && (
+                <div className="h-56 sm:h-64 w-full relative overflow-hidden bg-black">
+                  <img 
+                    src={selectedBotDetail.image_url} 
+                    alt={selectedBotDetail.name} 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#10141B] via-transparent to-black/40" />
                   <button
                     onClick={() => setSelectedBotDetail(null)}
-                    className="p-1 text-[#A6ADB9] hover:text-white cursor-pointer"
+                    className="absolute top-4 right-4 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 cursor-pointer"
                   >
                     <X className="h-5 w-5" />
                   </button>
-                )}
-              </div>
+                </div>
+              )}
 
-              <CardTitle className="text-2xl font-black text-white mt-2">
-                {selectedBotDetail.name}
-              </CardTitle>
-              <CardDescription className="text-xs text-[#A6ADB9] leading-relaxed mt-1">
-                {selectedBotDetail.description || 'Institutional-grade automated trading algorithm.'}
-              </CardDescription>
-            </CardHeader>
+              <CardHeader className="p-4 sm:p-6 pb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="font-mono">{selectedBotDetail.platform}</Badge>
+                    <Badge variant="gold" className="font-mono">{selectedBotDetail.version || 'v2.4'}</Badge>
+                    <Badge variant="positive" className="font-mono">Audited Strategy</Badge>
+                  </div>
+                  {!selectedBotDetail.image_url && (
+                    <button
+                      onClick={() => setSelectedBotDetail(null)}
+                      className="p-1 text-[#A6ADB9] hover:text-white cursor-pointer"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
 
-            <CardContent className="p-6 pt-0 space-y-5 text-xs font-mono">
+                <CardTitle className="text-xl sm:text-2xl font-black text-white mt-2">
+                  {selectedBotDetail.name}
+                </CardTitle>
+                <CardDescription className="text-xs text-[#A6ADB9] leading-relaxed mt-1">
+                  {selectedBotDetail.description || 'Institutional-grade automated trading algorithm.'}
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="p-4 sm:p-6 pt-0 space-y-5 text-xs font-mono">
               {/* Key Metrics Matrix */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
@@ -338,11 +340,12 @@ export function BotsTab({ user, onOpenPricing, notify }) {
                 </div>
               )}
             </CardContent>
+            </div>
 
-            <CardFooter className="p-6 border-t border-white/10 flex items-center justify-between bg-black/30">
+            <CardFooter className="p-4 sm:p-6 border-t border-white/10 shrink-0 flex items-center justify-between bg-black/40">
               <div>
                 <div className="text-[10px] text-[#A6ADB9] uppercase tracking-wider font-mono">Perpetual EA Binary</div>
-                <div className="text-2xl font-black text-white tabular-nums font-mono">
+                <div className="text-xl sm:text-2xl font-black text-white tabular-nums font-mono">
                   ${selectedBotDetail.price} <span className="text-xs text-[#F3C653]">USDT</span>
                 </div>
               </div>
@@ -377,9 +380,9 @@ export function BotsTab({ user, onOpenPricing, notify }) {
 
       {/* License Key Generator / Download Modal */}
       {licenseModalBot && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <Card className="w-full max-w-lg shadow-2xl space-y-4 bg-[#10141B] border-white/10">
-            <CardHeader className="pb-3 border-b border-white/10 flex flex-row items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+          <Card className="w-full max-w-lg shadow-2xl bg-[#10141B] border border-white/10 max-h-[92vh] flex flex-col overflow-hidden my-auto">
+            <CardHeader className="p-4 sm:p-6 pb-3 border-b border-white/10 shrink-0 flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-lg flex items-center gap-2 text-white">
                   <ShieldCheck className="h-5 w-5 text-[#00D878]" />
@@ -397,7 +400,7 @@ export function BotsTab({ user, onOpenPricing, notify }) {
               </button>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-4">
               <form onSubmit={handleGenerateKey} className="space-y-3 text-xs">
                 <div>
                   <label className="block text-[#A6ADB9] font-mono mb-1">
