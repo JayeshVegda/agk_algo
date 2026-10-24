@@ -9,6 +9,9 @@ import {
   signals,
   signalOutcomes,
   messages,
+  users,
+  userProfiles,
+  accounts,
 } from "./schema/index";
 import * as dotenv from "dotenv";
 import * as path from "node:path";
@@ -22,12 +25,75 @@ async function seed() {
 
   console.log("Seeding base database records...");
 
+  // Better-Auth hashed password for "root"
+  const passwordHash =
+    "097cd27233e32cae3ee92667a47f80b3:1c10fa9dfdb460bac72a7a6a0146d41cb2030d88e08f007475944118eb140c742327a468c20a19f4154a5bfe8be41df5f93583d2aaf1404e4001002ac52f592a";
+
+  // 0. Seed Admin & Demo User Accounts
+  await db
+    .insert(users)
+    .values([
+      {
+        id: "admin-system",
+        name: "Lead Administrator",
+        email: "admin@akgalgo.local",
+        emailVerified: true,
+      },
+      {
+        id: "trader-demo",
+        name: "Alex Trader",
+        email: "user@akgalgo.local",
+        emailVerified: true,
+      },
+    ])
+    .onConflictDoNothing();
+
+  await db
+    .insert(accounts)
+    .values([
+      {
+        id: "acc-admin",
+        accountId: "admin-system",
+        providerId: "credential",
+        userId: "admin-system",
+        password: passwordHash,
+      },
+      {
+        id: "acc-trader",
+        accountId: "trader-demo",
+        providerId: "credential",
+        userId: "trader-demo",
+        password: passwordHash,
+      },
+    ])
+    .onConflictDoNothing();
+
+  await db
+    .insert(userProfiles)
+    .values([
+      {
+        userId: "admin-system",
+        role: "admin",
+        displayName: "Lead Administrator",
+        termsVersion: "1.0",
+        termsAcceptedAt: new Date(),
+      },
+      {
+        userId: "trader-demo",
+        role: "user",
+        displayName: "Alex Trader",
+        termsVersion: "1.0",
+        termsAcceptedAt: new Date(),
+      },
+    ])
+    .onConflictDoNothing();
+
   // 1. Settings
   await db
     .insert(settings)
     .values([
       { key: "business_timezone", value: "UTC" },
-      { key: "allow_mid_cycle_join", value: false },
+      { key: "allow_mid_cycle_join", value: true },
       { key: "archive_visible_when_inactive", value: true },
       { key: "reminder_days", value: [7, 3, 1] },
       {
@@ -89,9 +155,6 @@ async function seed() {
     .onConflictDoNothing();
 
   // 5. Cycles (Worked Example from docs/02-BUSINESS-RULES.md)
-  // C1: 2026-09-08 to 2026-10-08
-  // Gap: 2026-10-09 to 2026-10-19
-  // C2: 2026-10-20 to 2026-11-20
   await db
     .insert(cycles)
     .values([
@@ -102,13 +165,13 @@ async function seed() {
         status: "closed",
       },
       {
-        name: "Cycle 2 (Oct - Nov Running)",
+        name: "Cycle 2 (Active Market Cycle)",
         startsOn: "2026-10-20",
         endsOn: "2026-11-20",
         status: "running",
       },
       {
-        name: "Cycle 3 (Nov - Dec Upcoming)",
+        name: "Cycle 3 (Next Cycle)",
         startsOn: "2026-11-25",
         endsOn: "2026-12-25",
         status: "renewal_open",

@@ -3,6 +3,8 @@ import { getDb, messages, messageReads } from "@akg/db";
 import { eq, desc, isNull } from "drizzle-orm";
 import MessagesFeedClient from "./messages-feed";
 
+export const dynamic = "force-dynamic";
+
 export default async function BroadcastFeedPage() {
   await requireUser();
   const db = getDb();
@@ -26,12 +28,17 @@ export default async function BroadcastFeedPage() {
     .orderBy(desc(messages.pinned), desc(messages.createdAt));
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 font-mono">
-      <div>
-        <div className="text-xs uppercase text-primary tracking-widest">Official Channel</div>
-        <h1 className="text-2xl font-bold mt-1">Admin Broadcast Feed</h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          Direct institutional updates, cycle schedules, and priority algorithmic advisories.
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="border-b border-border/40 pb-5">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-400 border border-blue-500/20">
+          <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
+          Live SSE Feed
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mt-1">
+          Official Broadcast Stream
+        </h1>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Real-time institutional announcements, cycle schedules, and priority risk advisories pushed via Server-Sent Events
         </p>
       </div>
 

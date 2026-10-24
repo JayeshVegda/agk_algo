@@ -1,6 +1,9 @@
 import { requireUser } from "@/lib/guards";
 import { getDb, newsPosts } from "@akg/db";
 import { desc } from "drizzle-orm";
+import { TradingViewChart } from "@/components/TradingViewChart";
+
+export const dynamic = "force-dynamic";
 
 export default async function ChartsAndNewsPage() {
   await requireUser();
@@ -12,86 +15,102 @@ export default async function ChartsAndNewsPage() {
     .limit(5);
 
   return (
-    <div className="space-y-8 font-mono">
-      <div>
-        <div className="text-xs uppercase text-primary tracking-widest">Market Intelligence</div>
-        <h1 className="text-2xl font-bold mt-1">Live Charts & Economic News</h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          TradingView terminal widgets, economic event calendar, and broker announcements.
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="border-b border-border/40 pb-5">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-400 border border-blue-500/20">
+          <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
+          Realtime Market Feed
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mt-1">
+          Interactive Charts & Market Intelligence
+        </h1>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Live institutional candlestick analysis, multi-timeframe overlays, and macroeconomic news
         </p>
       </div>
 
-      {/* External Link-Out Cards */}
-      <div className="grid md:grid-cols-2 gap-4">
+      {/* Embedded Live Chart */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-foreground">Advanced TradingView Terminal</h2>
+          <span className="text-xs text-muted-foreground font-mono">Real-time Stream · 15M Interval</span>
+        </div>
+        <TradingViewChart initialSymbol="OANDA:XAUUSD" />
+      </div>
+
+      {/* External Resources & Calendars */}
+      <div className="grid md:grid-cols-2 gap-4 pt-2">
         <a
           href="https://www.forexfactory.com/calendar"
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-xl border border-border bg-card p-5 flex items-center justify-between hover:bg-accent/40 transition-colors group"
+          className="rounded-2xl border border-border/80 bg-card/80 p-6 flex flex-col justify-between hover:border-blue-500/40 hover:bg-card transition-all group shadow-sm"
         >
-          <div>
-            <div className="font-bold text-sm group-hover:text-primary transition-colors">
-              Forex Factory Economic Calendar ↗
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-foreground group-hover:text-blue-400 transition-colors">
+                Forex Factory Economic Calendar ↗
+              </span>
+              <span className="rounded bg-secondary px-2 py-0.5 text-[10px] font-bold text-muted-foreground uppercase">
+                External Link
+              </span>
             </div>
-            <div className="text-[11px] text-muted-foreground mt-1">
-              High-impact macroeconomic releases, central bank interest rates, and NFP data.
-            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Track Tier 1 high-impact macroeconomic data releases, non-farm payrolls (NFP), FOMC rate decisions, and central bank commentary.
+            </p>
           </div>
-          <span className="text-xs text-primary">External Link</span>
+          <div className="text-xs font-semibold text-blue-400 pt-4 flex items-center gap-1">
+            Open Economic Calendar →
+          </div>
         </a>
 
         <a
           href="https://www.tradingview.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-xl border border-border bg-card p-5 flex items-center justify-between hover:bg-accent/40 transition-colors group"
+          className="rounded-2xl border border-border/80 bg-card/80 p-6 flex flex-col justify-between hover:border-blue-500/40 hover:bg-card transition-all group shadow-sm"
         >
-          <div>
-            <div className="font-bold text-sm group-hover:text-primary transition-colors">
-              TradingView Advanced Screener ↗
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-foreground group-hover:text-blue-400 transition-colors">
+                TradingView Market Screener ↗
+              </span>
+              <span className="rounded bg-secondary px-2 py-0.5 text-[10px] font-bold text-muted-foreground uppercase">
+                External Link
+              </span>
             </div>
-            <div className="text-[11px] text-muted-foreground mt-1">
-              Multi-timeframe technical indicator scanner and heatmaps.
-            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Scan forex pairs, indices, and precious metals across multi-timeframe volume profiles, RSI divergences, and moving averages.
+            </p>
           </div>
-          <span className="text-xs text-primary">External Link</span>
+          <div className="text-xs font-semibold text-blue-400 pt-4 flex items-center gap-1">
+            Open Market Screener →
+          </div>
         </a>
       </div>
 
-      {/* Embedded Chart Area */}
-      <div className="rounded-xl border border-border bg-card p-6 space-y-4">
-        <div className="flex justify-between items-center pb-3 border-b border-border/20">
-          <span className="font-bold text-sm">Interactive Market Chart</span>
-          <span className="text-[11px] text-muted-foreground">Symbol: EURUSD / XAUUSD</span>
-        </div>
-        <div className="w-full h-96 bg-background/80 rounded border border-border/40 flex items-center justify-center text-center p-6 text-xs text-muted-foreground">
-          <div className="space-y-2">
-            <div className="text-primary font-bold text-base">TradingView Chart Viewport</div>
-            <p className="max-w-md">
-              Embeddable TradingView widget renders real-time financial candlestick data and volume profiles.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Latest Market News */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-bold">Latest Algo & Market Bulletins</h2>
+      {/* Internal News Posts Feed */}
+      <div className="space-y-4 pt-2">
+        <h2 className="text-lg font-bold text-foreground">Desk Announcements & Macro Notes</h2>
         {posts.length === 0 ? (
-          <div className="rounded-xl border border-border bg-card p-6 text-xs text-muted-foreground">
-            No market bulletins published at this time.
+          <div className="rounded-2xl border border-border/80 bg-card/40 p-8 text-center text-xs text-muted-foreground">
+            No macroeconomic announcements logged today.
           </div>
         ) : (
           <div className="space-y-3">
             {posts.map((post) => (
-              <div key={post.id} className="rounded-xl border border-border bg-card p-5 space-y-2 text-xs">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-bold text-sm text-foreground">{post.title}</h3>
-                  <span className="text-[10px] text-muted-foreground">
-                    {new Date(post.publishedAt).toLocaleDateString()}
+              <div
+                key={post.id}
+                className="rounded-2xl border border-border/80 bg-card/80 p-5 space-y-2"
+              >
+                <div className="flex justify-between items-center text-xs text-muted-foreground">
+                  <span className="font-semibold text-foreground">{post.title}</span>
+                  <span className="font-mono text-[10px]">
+                    {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : ""}
                   </span>
                 </div>
-                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{post.body}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{post.body}</p>
               </div>
             ))}
           </div>

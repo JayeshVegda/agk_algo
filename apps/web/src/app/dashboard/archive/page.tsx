@@ -4,6 +4,8 @@ import { eq, desc } from "drizzle-orm";
 import { computeMonthlySignalSummary } from "@akg/core";
 import { getSetting } from "@/lib/settings";
 
+export const dynamic = "force-dynamic";
+
 export default async function ArchivePage() {
   await requireUser();
   const db = getDb();
@@ -48,135 +50,148 @@ export default async function ArchivePage() {
   const summary = computeMonthlySignalSummary(signalsWithOutcomes);
 
   return (
-    <div className="space-y-8 font-mono">
-      <div>
-        <div className="text-xs uppercase text-primary tracking-widest">Historical Performance</div>
-        <h1 className="text-2xl font-bold mt-1">Monthly Signal Archive</h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          Verifiable mathematical summaries computed directly from closed signal records.
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="border-b border-border/40 pb-5">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-400 border border-blue-500/20">
+          <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
+          Mathematical Transparency
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mt-1">
+          Monthly Signal Performance Archive
+        </h1>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Verifiable mathematical summaries computed deterministically from closed trade records
         </p>
       </div>
 
       {/* Computed Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-lg border border-border bg-card p-4 space-y-1">
-          <div className="text-[10px] text-muted-foreground uppercase">Win Rate</div>
-          <div className="text-2xl font-bold text-primary">{summary.winRatePercent}%</div>
-          <div className="text-[10px] text-muted-foreground">
-            {summary.wins}W - {summary.losses}L
+        <div className="rounded-2xl border border-border/80 bg-card/80 p-5 space-y-1">
+          <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Total Setups
+          </div>
+          <div className="text-3xl font-extrabold font-mono text-foreground tabular-nums">
+            {summary.totalCount}
+          </div>
+          <div className="text-[11px] text-muted-foreground">Published algorithmic setups</div>
+        </div>
+
+        <div className="rounded-2xl border border-border/80 bg-card/80 p-5 space-y-1">
+          <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Win Rate
+          </div>
+          <div className="text-3xl font-extrabold font-mono text-emerald-400 tabular-nums">
+            {summary.winRatePercent.toFixed(1)}%
+          </div>
+          <div className="text-[11px] text-muted-foreground">
+            {summary.wins} Wins · {summary.losses} Losses
           </div>
         </div>
 
-        <div className="rounded-lg border border-border bg-card p-4 space-y-1">
-          <div className="text-[10px] text-muted-foreground uppercase">Net Pips</div>
+        <div className="rounded-2xl border border-border/80 bg-card/80 p-5 space-y-1">
+          <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Net Pips
+          </div>
           <div
-            className={`text-2xl font-bold ${
-              summary.totalPips >= 0 ? "text-green-400" : "text-destructive"
+            className={`text-3xl font-extrabold font-mono tabular-nums ${
+              summary.totalPips >= 0 ? "text-emerald-400" : "text-rose-400"
             }`}
           >
-            {summary.totalPips > 0 ? `+${summary.totalPips}` : summary.totalPips}
+            {summary.totalPips >= 0 ? `+${summary.totalPips}` : summary.totalPips}
           </div>
-          <div className="text-[10px] text-muted-foreground">Accumulated pips</div>
+          <div className="text-[11px] text-muted-foreground">Total accumulated pips</div>
         </div>
 
-        <div className="rounded-lg border border-border bg-card p-4 space-y-1">
-          <div className="text-[10px] text-muted-foreground uppercase">Total R (Risk Multiple)</div>
-          <div className="text-2xl font-bold text-foreground">
-            {summary.totalR > 0 ? `+${summary.totalR}R` : `${summary.totalR}R`}
+        <div className="rounded-2xl border border-border/80 bg-card/80 p-5 space-y-1">
+          <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Net Risk:Reward
           </div>
-          <div className="text-[10px] text-muted-foreground">Net risk:reward</div>
-        </div>
-
-        <div className="rounded-lg border border-border bg-card p-4 space-y-1">
-          <div className="text-[10px] text-muted-foreground uppercase">Closed / Total</div>
-          <div className="text-2xl font-bold text-foreground">
-            {summary.closedCount} / {summary.totalCount}
+          <div
+            className={`text-3xl font-extrabold font-mono tabular-nums ${
+              summary.totalR >= 0 ? "text-emerald-400" : "text-rose-400"
+            }`}
+          >
+            {summary.totalR >= 0 ? `+${summary.totalR.toFixed(2)}R` : `${summary.totalR.toFixed(2)}R`}
           </div>
-          <div className="text-[10px] text-muted-foreground">
-            {summary.breakeven} BE, {summary.cancelled} Cancelled
-          </div>
+          <div className="text-[11px] text-muted-foreground">Cumulative realized return</div>
         </div>
       </div>
 
-      {/* Signals Table */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="p-4 border-b border-border/40 font-bold text-sm">Signal History</div>
-        {signalRows.length === 0 ? (
-          <div className="p-8 text-center text-xs text-muted-foreground">
-            No historical signals recorded in this period.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-accent/40 text-muted-foreground uppercase text-[10px]">
-                <tr>
-                  <th className="p-3">Symbol</th>
-                  <th className="p-3">Direction</th>
-                  <th className="p-3">Tier</th>
-                  <th className="p-3">Outcome</th>
-                  <th className="p-3">Pips</th>
-                  <th className="p-3">R-Multiple</th>
-                  <th className="p-3">Date</th>
+      {/* Signal Archive Table */}
+      <div className="rounded-2xl border border-border/80 bg-card/90 backdrop-blur overflow-hidden shadow-lg">
+        <div className="p-5 border-b border-border/40">
+          <h2 className="font-bold text-sm text-foreground">Executed Trade Records</h2>
+          <p className="text-[11px] text-muted-foreground">
+            Audit-ready log of all closed and active signals
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left">
+            <thead className="bg-secondary/40 text-muted-foreground uppercase text-[10px] font-mono">
+              <tr>
+                <th className="p-3.5">Asset</th>
+                <th className="p-3.5">Direction</th>
+                <th className="p-3.5">Plan Tier</th>
+                <th className="p-3.5">Outcome</th>
+                <th className="p-3.5">Result (Pips)</th>
+                <th className="p-3.5">Result (R)</th>
+                <th className="p-3.5">Published Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/30">
+              {signalRows.map((s) => (
+                <tr key={s.id} className="hover:bg-secondary/30 transition-colors">
+                  <td className="p-3.5 font-bold font-mono text-foreground">{s.symbol}</td>
+                  <td className="p-3.5">
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono ${
+                        s.direction === "BUY"
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                          : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                      }`}
+                    >
+                      {s.direction}
+                    </span>
+                  </td>
+                  <td className="p-3.5 text-muted-foreground">
+                    {s.planTier === "SR_SIGNAL_BOX" ? "SR Tier" : "Perfect Tier"}
+                  </td>
+                  <td className="p-3.5">
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono ${
+                        s.outcome === "win"
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                          : s.outcome === "loss"
+                            ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                            : "bg-secondary text-muted-foreground"
+                      }`}
+                    >
+                      {s.outcome || "Pending"}
+                    </span>
+                  </td>
+                  <td className="p-3.5 font-mono tabular-nums">
+                    {s.resultPips !== null
+                      ? s.resultPips > 0
+                        ? `+${s.resultPips}`
+                        : s.resultPips
+                      : "—"}
+                  </td>
+                  <td className="p-3.5 font-mono tabular-nums">
+                    {s.resultR !== null
+                      ? s.resultR > 0
+                        ? `+${Number(s.resultR).toFixed(2)}R`
+                        : `${Number(s.resultR).toFixed(2)}R`
+                      : "—"}
+                  </td>
+                  <td className="p-3.5 text-muted-foreground text-[11px] font-mono">
+                    {s.publishedAt ? new Date(s.publishedAt).toLocaleDateString() : "—"}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-border/20">
-                {signalRows.map((s) => (
-                  <tr key={s.id} className="hover:bg-accent/20">
-                    <td className="p-3 font-bold">{s.symbol}</td>
-                    <td className="p-3">
-                      <span
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                          s.direction === "BUY"
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-red-500/20 text-red-400"
-                        }`}
-                      >
-                        {s.direction}
-                      </span>
-                    </td>
-                    <td className="p-3 text-[11px] text-muted-foreground">
-                      {s.planTier === "SR_SIGNAL_BOX" ? "SR" : "Perfect"}
-                    </td>
-                    <td className="p-3 font-semibold uppercase">
-                      {s.outcome ? (
-                        <span
-                          className={
-                            s.outcome === "win"
-                              ? "text-green-400"
-                              : s.outcome === "loss"
-                                ? "text-destructive"
-                                : "text-muted-foreground"
-                          }
-                        >
-                          {s.outcome}
-                        </span>
-                      ) : (
-                        <span className="text-yellow-500">OPEN</span>
-                      )}
-                    </td>
-                    <td className="p-3 font-mono">
-                      {s.resultPips != null
-                        ? s.resultPips > 0
-                          ? `+${s.resultPips}`
-                          : s.resultPips
-                        : "—"}
-                    </td>
-                    <td className="p-3 font-mono">
-                      {s.resultR != null
-                        ? s.resultR > 0
-                          ? `+${s.resultR}R`
-                          : `${s.resultR}R`
-                        : "—"}
-                    </td>
-                    <td className="p-3 text-muted-foreground text-[11px]">
-                      {s.publishedAt ? new Date(s.publishedAt).toLocaleDateString() : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
