@@ -1,0 +1,61 @@
+export const strings = {
+  common: {
+    brandName: "AKG ALGO",
+    tagline: "Institutional Precision Algorithms & Trading Intelligence",
+    riskDisclaimer:
+      "Risk Disclaimer: Trading foreign exchange and algorithmic financial products carries high risk and may not be suitable for all investors. Past performance is no guarantee of future results. Signals and bot parameters provided are strictly for informational and educational purposes and do not constitute financial advice.",
+    copyright: "© 2026 AKG ALGO. All rights reserved.",
+    loading: "Loading...",
+    save: "Save",
+    cancel: "Cancel",
+    confirm: "Confirm",
+    back: "Back",
+  },
+  auth: {
+    loginTitle: "Sign In to Terminal",
+    registerTitle: "Create Membership Account",
+    emailLabel: "Email address",
+    passwordLabel: "Password",
+    agreeToTerms: "I have read and agree to the Terms of Service and Risk Disclosures",
+    signInButton: "Sign In",
+    registerButton: "Register Account",
+    logoutButton: "Sign Out",
+    twoFactorTitle: "Two-Factor Authentication",
+    twoFactorPrompt: "Enter the 6-digit TOTP code from your authenticator app",
+    verifyButton: "Verify Code",
+  },
+  navigation: {
+    dashboard: "Dashboard",
+    signals: "Signals",
+    archive: "Monthly Archive",
+    bots: "Bot Store",
+    connector: "Connector Demo",
+    resources: "Resources",
+    account: "Account",
+    admin: "Admin Control",
+  },
+  cycles: {
+    statusRunning: "Active Cycle Running",
+    statusPaused: "Cycle Paused",
+    statusRenewal: "Renewal Open",
+    statusClosed: "Cycle Concluded",
+    renewNow: "Renew Subscription",
+    pausedDefaultText: "The current cycle has concluded. The next trading cycle opens soon.",
+  },
+  plans: {
+    srSignalBox: "SR Signal Box",
+    perfectSignalBox: "Perfect Signal Box",
+    srDescription: "High-probability Support & Resistance visual signals for active cycle.",
+    perfectDescription: "Institutional algorithmic precision signal tier for active cycle.",
+  },
+  connector: {
+    warning:
+      "DEMO ONLY: This Connector interface is strictly a simulated paper-trading demonstration. It does not execute live trades on external broker servers.",
+  },
+  errors: {
+    unauthorized: "You must be signed in to access this page.",
+    forbidden: "Access Denied: You do not have permission to view this resource.",
+    noSignalAccess: "An active paid subscription is required to access live signals.",
+    genericError: "An unexpected error occurred. Please try again or contact support.",
+  },
+} as const;
