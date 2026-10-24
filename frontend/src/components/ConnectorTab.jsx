@@ -101,15 +101,15 @@ export function ConnectorTab({ user, onOpenAuth, notify }) {
             <h1 className="text-2xl font-bold text-white tracking-tight font-sans">
               MetaTrader Low-Latency Bridge
             </h1>
-            <p className="text-xs text-slate-400 font-mono mt-1">
+            <p className="text-xs text-slate-500 font-mono mt-1">
               Test sub-millisecond execution packet routing into MT4 / MT5 demo terminals.
             </p>
           </div>
 
           <div className="flex items-center gap-3 font-mono text-xs">
-            <div className="p-3 rounded-xl border border-border bg-[#05070D] flex items-center gap-2">
+            <div className="p-3 rounded-xl border border-border bg-slate-50 flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-slate-400">Gateway:</span>
+              <span className="text-slate-500">Gateway:</span>
               <span className="text-emerald-400 font-bold tabular-nums">{latency}ms (LD4)</span>
             </div>
           </div>
@@ -138,13 +138,13 @@ export function ConnectorTab({ user, onOpenAuth, notify }) {
                 <CheckCircle2 className="h-12 w-12 text-emerald-400 relative" />
               </div>
               <h3 className="text-lg font-bold text-white">Bridge Link Established!</h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+              <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
                 Simulated WebSocket bridge to {platform} server ({server}) is active. Round-trip ping: <span className="text-emerald-400 font-bold tabular-nums">{latency}ms</span>.
               </p>
               <div className="pt-3">
                 <button
                   onClick={() => setSubmitted(false)}
-                  className="px-4 py-2 rounded-xl border border-border bg-slate-800 text-xs text-slate-300 hover:bg-slate-700 transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-border bg-slate-800 text-xs text-slate-700 hover:bg-slate-700 transition-colors cursor-pointer"
                 >
                   Configure Another Terminal
                 </button>
@@ -153,11 +153,11 @@ export function ConnectorTab({ user, onOpenAuth, notify }) {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4 text-xs font-mono">
               <div>
-                <label className="block text-slate-400 mb-1">Terminal Platform</label>
+                <label className="block text-slate-500 mb-1">Terminal Platform</label>
                 <select
                   value={platform}
                   onChange={(e) => setPlatform(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-[#05070D] px-3.5 py-2.5 text-white cursor-pointer"
+                  className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2.5 text-white cursor-pointer"
                 >
                   <option value="MT4">MetaTrader 4 (MT4 EA Bridge)</option>
                   <option value="MT5">MetaTrader 5 (MT5 EA Bridge)</option>
@@ -165,25 +165,25 @@ export function ConnectorTab({ user, onOpenAuth, notify }) {
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">Demo Account Number</label>
+                <label className="block text-slate-500 mb-1">Demo Account Number</label>
                 <input
                   type="text"
                   required
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-[#05070D] px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
                   placeholder="e.g. 50928192"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">Broker Demo Server</label>
+                <label className="block text-slate-500 mb-1">Broker Demo Server</label>
                 <input
                   type="text"
                   required
                   value={server}
                   onChange={(e) => setServer(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-[#05070D] px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
                   placeholder="e.g. ICMarkets-Demo01"
                 />
               </div>
@@ -213,10 +213,10 @@ export function ConnectorTab({ user, onOpenAuth, notify }) {
               </span>
             </div>
 
-            <div className="mt-4 rounded-xl bg-[#05070D] border border-border p-3.5 h-48 overflow-y-auto space-y-2 text-[11px] font-mono">
+            <div className="mt-4 rounded-xl bg-slate-50 border border-border p-3.5 h-48 overflow-y-auto space-y-2 text-[11px] font-mono">
               <div className="text-slate-500">--- Real-time IPC Packet Trace ---</div>
-              <div className="text-slate-400">[SYSTEM] Bridge daemon listening on 127.0.0.1:8095</div>
-              <div className="text-slate-400">[CLOCK] Precision hardware timestamping (TSC) sync</div>
+              <div className="text-slate-500">[SYSTEM] Bridge daemon listening on 127.0.0.1:8095</div>
+              <div className="text-slate-500">[CLOCK] Precision hardware timestamping (TSC) sync</div>
               
               {simulationLogs.map((log, idx) => (
                 <div key={idx} className="text-emerald-400 flex items-start gap-2 animate-fadeIn">
@@ -245,7 +245,7 @@ export function ConnectorTab({ user, onOpenAuth, notify }) {
             </button>
 
             <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-500">
-              <div>Protocol: <span className="text-slate-300">FIX 4.4 / WS</span></div>
+              <div>Protocol: <span className="text-slate-700">FIX 4.4 / WS</span></div>
               <div>Fill Slippage: <span className="text-emerald-400">0.0 pips</span></div>
             </div>
           </div>

@@ -52,7 +52,7 @@ export function ChartsTab() {
           </div>
           <div>
             <h2 className="text-base font-bold text-white font-sans">Institutional Multi-Asset Terminal</h2>
-            <div className="text-xs font-mono text-slate-400">TradingView Live Feeds · 60m Default Horizon</div>
+            <div className="text-xs font-mono text-slate-500">TradingView Live Feeds · 60m Default Horizon</div>
           </div>
         </div>
 
@@ -65,11 +65,11 @@ export function ChartsTab() {
               className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                 selectedSymbol === s.id
                   ? 'bg-blue-600/20 border-blue-500 text-blue-300 font-bold shadow-sm'
-                  : 'border-border/80 bg-card text-slate-400 hover:text-white hover:bg-slate-800/80'
+                  : 'border-border/80 bg-card text-slate-500 hover:text-white hover:bg-slate-800/80'
               }`}
             >
               <span>{s.label}</span>
-              <span className="text-[9px] px-1 py-0.2 rounded bg-slate-800 text-slate-400 font-normal">
+              <span className="text-[9px] px-1 py-0.2 rounded bg-slate-800 text-slate-500 font-normal">
                 {s.tag}
               </span>
             </button>

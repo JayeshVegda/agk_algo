@@ -227,8 +227,8 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 font-mono">
         <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between shadow-sm">
           <div>
-            <div className="text-[10px] text-slate-400 uppercase tracking-wider">Active Feeds</div>
-            <div className="text-xl font-bold text-white mt-0.5 tabular-nums flex items-center gap-1.5">
+            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Active Feeds</div>
+            <div className="text-xl font-bold text-slate-900 mt-0.5 tabular-nums flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
               {activeCount} Live
             </div>
@@ -238,7 +238,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
 
         <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between shadow-sm">
           <div>
-            <div className="text-[10px] text-slate-400 uppercase tracking-wider">Session Win Rate</div>
+            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Session Win Rate</div>
             <div className="text-xl font-bold text-emerald-400 mt-0.5 tabular-nums">
               87.4%
             </div>
@@ -248,8 +248,8 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
 
         <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between shadow-sm">
           <div>
-            <div className="text-[10px] text-slate-400 uppercase tracking-wider">Net 30D Growth</div>
-            <div className="text-xl font-bold text-white mt-0.5 tabular-nums flex items-center gap-1">
+            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Net 30D Growth</div>
+            <div className="text-xl font-bold text-slate-900 mt-0.5 tabular-nums flex items-center gap-1">
               <Flame className="h-4 w-4 text-amber-400" />
               +1,840 pips
             </div>
@@ -259,12 +259,12 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
 
         <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between shadow-sm">
           <div>
-            <div className="text-[10px] text-slate-400 uppercase tracking-wider">Risk : Reward</div>
-            <div className="text-xl font-bold text-slate-200 mt-0.5 tabular-nums">
+            <div className="text-[10px] text-slate-500 uppercase tracking-wider">Risk : Reward</div>
+            <div className="text-xl font-bold text-slate-800 mt-0.5 tabular-nums">
               1 : 2.8 RR
             </div>
           </div>
-          <Target className="h-5 w-5 text-slate-400/50" />
+          <Target className="h-5 w-5 text-slate-500/50" />
         </div>
       </div>
 
@@ -278,7 +278,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search symbol (e.g. XAUUSD, EURUSD)..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-[#05070D] text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none text-xs transition-colors"
+            className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-slate-50 text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none text-xs transition-colors"
           />
           {searchQuery && (
             <button 
@@ -293,7 +293,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
         {/* Filters and Actions */}
         <div className="flex items-center gap-2.5 flex-wrap">
           {/* Status filter */}
-          <div className="inline-flex rounded-xl border border-border bg-[#05070D] p-1 text-xs">
+          <div className="inline-flex rounded-xl border border-border bg-slate-50 p-1 text-xs">
             {[
               { id: 'active', label: `Active (${activeCount})` },
               { id: 'closed', label: `Closed (${closedCount})` },
@@ -305,7 +305,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                 className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
                   filter === tab.id
                     ? 'bg-blue-600 text-white font-bold shadow'
-                    : 'text-slate-400 hover:text-slate-200'
+                    : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
                 {tab.label}
@@ -314,15 +314,15 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
           </div>
 
           {/* Direction Filter */}
-          <div className="inline-flex rounded-xl border border-border bg-[#05070D] p-1 text-xs">
+          <div className="inline-flex rounded-xl border border-border bg-slate-50 p-1 text-xs">
             {['all', 'BUY', 'SELL'].map((dir) => (
               <button
                 key={dir}
                 onClick={() => setDirectionFilter(dir)}
                 className={`px-2.5 py-1.5 rounded-lg font-medium transition-all cursor-pointer uppercase ${
                   directionFilter === dir
-                    ? 'bg-slate-700 text-white font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-slate-700 text-slate-900 font-bold'
+                    : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
                 {dir}
@@ -331,11 +331,11 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
           </div>
 
           {/* View Mode Toggle */}
-          <div className="inline-flex rounded-xl border border-border bg-[#05070D] p-1 text-xs">
+          <div className="inline-flex rounded-xl border border-border bg-slate-50 p-1 text-xs">
             <button
               onClick={() => setViewMode('grid')}
               className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === 'grid' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'
+                viewMode === 'grid' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-800'
               }`}
               title="Cards Grid View"
             >
@@ -344,7 +344,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
             <button
               onClick={() => setViewMode('table')}
               className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === 'table' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'
+                viewMode === 'table' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-800'
               }`}
               title="Terminal Table View"
             >
@@ -395,7 +395,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
       {filtered.length === 0 ? (
         <div className="text-center py-16 rounded-2xl border border-border bg-card/60 p-8 font-mono">
           <Clock className="h-8 w-8 text-slate-500 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-300">No {filter} signals matching query</h3>
+          <h3 className="text-base font-bold text-slate-700">No {filter} signals matching query</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
             Execution parameters update continuously during active market volatility hours.
           </p>
@@ -410,18 +410,18 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
             return (
               <div
                 key={s.id}
-                className="rounded-2xl border border-border bg-card p-5 space-y-4 hover:border-slate-600 hover:bg-card-hover transition-all duration-200 shadow-lg group relative overflow-hidden flex flex-col justify-between"
+                className="rounded-2xl border border-border bg-card p-5 space-y-4 hover:border-slate-300 hover:bg-card-hover transition-all duration-200 shadow-lg group relative overflow-hidden flex flex-col justify-between"
               >
                 <div className="space-y-4">
                   {/* Card Top */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0B101C] to-[#04060A] border border-border font-mono font-bold text-sm text-white flex items-center justify-center shadow-inner">
+                      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0B101C] to-[#04060A] border border-border font-mono font-bold text-sm text-slate-900 flex items-center justify-center shadow-inner">
                         {s.symbol.slice(0, 3)}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-base font-bold text-white tracking-wide">{s.symbol}</span>
+                          <span className="font-mono text-base font-bold text-slate-900 tracking-wide">{s.symbol}</span>
                           <span
                             className={`rounded-full px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 ${
                               isBuy
@@ -433,8 +433,8 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                             {s.direction}
                           </span>
                         </div>
-                        <div className="text-[11px] font-mono text-slate-400 flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300">
+                        <div className="text-[11px] font-mono text-slate-500 flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-700">
                             {s.plan_tier === 'PERFECT_SIGNAL_BOX' ? '⚡ Perfect Signal' : 'SR Box'}
                           </span>
                           <span>· 60m Scan</span>
@@ -446,7 +446,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                       className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider ${
                         s.status === 'active'
                           ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          : 'bg-slate-800 text-slate-400 border border-slate-700'
+                          : 'bg-slate-800 text-slate-500 border border-slate-700'
                       }`}
                     >
                       {s.status === 'active' && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />}
@@ -456,12 +456,12 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
 
                   {/* Visual Dynamic Risk:Reward Scale */}
                   <div className="py-1">
-                    <div className="flex justify-between text-[10px] font-mono text-slate-400 pb-1">
+                    <div className="flex justify-between text-[10px] font-mono text-slate-500 pb-1">
                       <span className="text-rose-400 font-semibold">Risk (1.0)</span>
-                      <span className="text-slate-400 font-bold">{rrData.ratio}</span>
+                      <span className="text-slate-500 font-bold">{rrData.ratio}</span>
                       <span className="text-emerald-400 font-semibold">Reward Target</span>
                     </div>
-                    <div className="h-2 w-full bg-[#05070D] rounded-full overflow-hidden flex border border-border">
+                    <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden flex border border-border">
                       <div 
                         style={{ width: `${rrData.riskPct}%` }} 
                         className="bg-rose-500/70 h-full border-r border-[#05070D]" 
@@ -475,9 +475,9 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
 
                   {/* Numeric Parameters Grid */}
                   <div className="grid grid-cols-2 gap-2 text-xs font-mono relative">
-                    <div className="p-3 rounded-xl bg-[#070B14] border border-border">
-                      <div className="text-[10px] uppercase text-slate-400 tracking-wider">Entry Zone</div>
-                      <div className={`text-sm font-bold text-white tabular-nums mt-0.5 ${!signalUnlocked ? 'blur-sm select-none' : ''}`}>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-border">
+                      <div className="text-[10px] uppercase text-slate-500 tracking-wider">Entry Zone</div>
+                      <div className={`text-sm font-bold text-slate-900 tabular-nums mt-0.5 ${!signalUnlocked ? 'blur-sm select-none' : ''}`}>
                         {signalUnlocked ? s.entry : '••••••'}
                       </div>
                     </div>
@@ -518,7 +518,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
 
                   {/* Analysis Drawer */}
                   {s.notes && (
-                    <div className="rounded-xl border border-border bg-[#070B14] p-3 text-[11px] text-slate-300 leading-relaxed font-mono">
+                    <div className="rounded-xl border border-border bg-slate-50 p-3 text-[11px] text-slate-700 leading-relaxed font-mono">
                       <div className="flex items-center justify-between text-amber-400 font-bold mb-1">
                         <span>Desk Analysis Rationale:</span>
                       </div>
@@ -533,7 +533,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                     <div className="flex items-center justify-between text-xs font-mono">
                       <button
                         onClick={() => handleCopyParams(s)}
-                        className="text-slate-400 hover:text-white flex items-center gap-1.5 text-[11px] cursor-pointer py-1.5 px-3 rounded-lg hover:bg-slate-800 transition-colors border border-border/50"
+                        className="text-slate-500 hover:text-white flex items-center gap-1.5 text-[11px] cursor-pointer py-1.5 px-3 rounded-lg hover:bg-slate-100 transition-colors border border-border/50"
                       >
                         {copiedId === s.id ? (
                           <>
@@ -542,7 +542,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                           </>
                         ) : (
                           <>
-                            <Copy className="h-3.5 w-3.5 text-slate-400" />
+                            <Copy className="h-3.5 w-3.5 text-slate-500" />
                             <span>Copy for MetaTrader</span>
                           </>
                         )}
@@ -568,7 +568,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                         )}
                         <button
                           onClick={() => openEditModal(s)}
-                          className="p-1 text-slate-400 hover:text-blue-400 rounded cursor-pointer"
+                          className="p-1 text-slate-500 hover:text-blue-400 rounded cursor-pointer"
                           title="Edit Signal"
                         >
                           <Edit3 className="h-3.5 w-3.5" />
@@ -594,7 +594,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
         <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-lg font-mono text-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-[#05070D] text-slate-400 border-b border-border">
+              <thead className="bg-slate-50 text-slate-500 border-b border-border">
                 <tr>
                   <th className="p-3.5">Symbol</th>
                   <th className="p-3.5">Direction</th>
@@ -615,7 +615,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
 
                   return (
                     <tr key={s.id} className="hover:bg-card-hover transition-colors">
-                      <td className="p-3.5 font-bold text-white">{s.symbol}</td>
+                      <td className="p-3.5 font-bold text-slate-900">{s.symbol}</td>
                       <td className="p-3.5">
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -625,7 +625,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                           {s.direction}
                         </span>
                       </td>
-                      <td className="p-3.5 tabular-nums text-slate-200">
+                      <td className="p-3.5 tabular-nums text-slate-800">
                         {signalUnlocked ? s.entry : '••••••'}
                       </td>
                       <td className="p-3.5 tabular-nums text-rose-400">
@@ -637,7 +637,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                       <td className="p-3.5 tabular-nums text-emerald-400">
                         {signalUnlocked ? (s.take_profit_2 || '-') : '••••••'}
                       </td>
-                      <td className="p-3.5 tabular-nums text-slate-300 font-bold">
+                      <td className="p-3.5 tabular-nums text-slate-700 font-bold">
                         {rrData.ratio}
                       </td>
                       <td className="p-3.5">
@@ -645,7 +645,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                           className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                             s.status === 'active'
                               ? 'bg-emerald-500/10 text-emerald-400'
-                              : 'bg-slate-800 text-slate-400'
+                              : 'bg-slate-800 text-slate-500'
                           }`}
                         >
                           {s.status} {s.pnl ? `(${s.pnl})` : ''}
@@ -655,7 +655,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                         {signalUnlocked ? (
                           <button
                             onClick={() => handleCopyParams(s)}
-                            className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-white bg-[#05070D] px-2.5 py-1 rounded-lg border border-border cursor-pointer"
+                            className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-white bg-slate-50 px-2.5 py-1 rounded-lg border border-border cursor-pointer"
                           >
                             {copiedId === s.id ? (
                               <Check className="h-3 w-3 text-emerald-400" />
@@ -687,13 +687,13 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-3xl border border-border bg-card p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2 font-sans">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2 font-sans">
                 <Zap className="h-5 w-5 text-emerald-400" />
                 {editingSignal ? 'Edit Signal Parameters' : 'Publish New Algorithmic Signal'}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="text-slate-500 hover:text-white p-1 rounded-lg"
               >
                 ✕
               </button>
@@ -702,22 +702,22 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
             <form onSubmit={handleCreateOrUpdateSignal} className="space-y-4 font-mono text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">Symbol</label>
+                  <label className="block text-slate-500 mb-1">Symbol</label>
                   <input
                     type="text"
                     required
                     value={form.symbol}
                     onChange={(e) => setForm({ ...form, symbol: e.target.value.toUpperCase() })}
                     placeholder="e.g. XAUUSD"
-                    className="w-full rounded-xl border border-border bg-[#05070D] px-3.5 py-2 text-white"
+                    className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2 text-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 mb-1">Direction</label>
+                  <label className="block text-slate-500 mb-1">Direction</label>
                   <select
                     value={form.direction}
                     onChange={(e) => setForm({ ...form, direction: e.target.value })}
-                    className="w-full rounded-xl border border-border bg-[#05070D] px-3.5 py-2 text-white cursor-pointer"
+                    className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2 text-white cursor-pointer"
                   >
                     <option value="BUY">BUY (Long)</option>
                     <option value="SELL">SELL (Short)</option>
@@ -727,71 +727,71 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">Entry Price</label>
+                  <label className="block text-slate-500 mb-1">Entry Price</label>
                   <input
                     type="text"
                     required
                     value={form.entry}
                     onChange={(e) => setForm({ ...form, entry: e.target.value })}
                     placeholder="e.g. 2,748.50"
-                    className="w-full rounded-xl border border-border bg-[#05070D] px-3.5 py-2 text-white"
+                    className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2 text-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 mb-1">Stop Loss (SL)</label>
+                  <label className="block text-slate-500 mb-1">Stop Loss (SL)</label>
                   <input
                     type="text"
                     required
                     value={form.stop_loss}
                     onChange={(e) => setForm({ ...form, stop_loss: e.target.value })}
                     placeholder="e.g. 2,735.00"
-                    className="w-full rounded-xl border border-border bg-[#05070D] px-3.5 py-2 text-rose-400"
+                    className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2 text-rose-400"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">Take Profit 1 (TP1)</label>
+                  <label className="block text-slate-500 mb-1">Take Profit 1 (TP1)</label>
                   <input
                     type="text"
                     required
                     value={form.take_profit_1}
                     onChange={(e) => setForm({ ...form, take_profit_1: e.target.value })}
                     placeholder="e.g. 2,765.00"
-                    className="w-full rounded-xl border border-border bg-[#05070D] px-3.5 py-2 text-emerald-400"
+                    className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2 text-emerald-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 mb-1">Take Profit 2 (Optional)</label>
+                  <label className="block text-slate-500 mb-1">Take Profit 2 (Optional)</label>
                   <input
                     type="text"
                     value={form.take_profit_2}
                     onChange={(e) => setForm({ ...form, take_profit_2: e.target.value })}
                     placeholder="e.g. 2,780.00"
-                    className="w-full rounded-xl border border-border bg-[#05070D] px-3.5 py-2 text-emerald-400"
+                    className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2 text-emerald-400"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">Plan Tier</label>
+                  <label className="block text-slate-500 mb-1">Plan Tier</label>
                   <select
                     value={form.plan_tier}
                     onChange={(e) => setForm({ ...form, plan_tier: e.target.value })}
-                    className="w-full rounded-xl border border-border bg-[#05070D] px-3.5 py-2 text-white cursor-pointer"
+                    className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2 text-white cursor-pointer"
                   >
                     <option value="PERFECT_SIGNAL_BOX">Perfect Signal Box ($20)</option>
                     <option value="SR_SIGNAL_BOX">SR Signal Box ($10)</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-400 mb-1">Status</label>
+                  <label className="block text-slate-500 mb-1">Status</label>
                   <select
                     value={form.status}
                     onChange={(e) => setForm({ ...form, status: e.target.value })}
-                    className="w-full rounded-xl border border-border bg-[#05070D] px-3.5 py-2 text-white cursor-pointer"
+                    className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2 text-white cursor-pointer"
                   >
                     <option value="active">Active</option>
                     <option value="closed">Closed</option>
@@ -800,13 +800,13 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">Analysis Rationale & Notes</label>
+                <label className="block text-slate-500 mb-1">Analysis Rationale & Notes</label>
                 <textarea
                   rows="3"
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   placeholder="e.g. London liquidity sweep confirmed on M15. Institutional order block retest."
-                  className="w-full rounded-xl border border-border bg-[#05070D] px-3.5 py-2 text-white"
+                  className="w-full rounded-xl border border-border bg-slate-50 px-3.5 py-2 text-white"
                 />
               </div>
 
@@ -814,7 +814,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl border border-border bg-slate-800 text-slate-300 hover:bg-slate-700 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-border bg-slate-800 text-slate-700 hover:bg-slate-700 cursor-pointer"
                 >
                   Cancel
                 </button>

@@ -73,7 +73,7 @@ export function BroadcastsTab({ user, notify }) {
             <h1 className="text-2xl font-bold tracking-tight text-white font-sans">
               Live Announcements & Directives
             </h1>
-            <p className="text-xs text-slate-400 font-mono mt-1">
+            <p className="text-xs text-slate-500 font-mono mt-1">
               Real-time directives issued directly by algorithmic engineers and chief market analysts.
             </p>
           </div>
@@ -84,7 +84,7 @@ export function BroadcastsTab({ user, notify }) {
               className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
                 filter === 'all'
                   ? 'bg-blue-600/20 border-blue-500/40 text-blue-300 font-bold'
-                  : 'border-border bg-[#05070D] text-slate-400'
+                  : 'border-border bg-slate-50 text-slate-500'
               }`}
             >
               All ({broadcasts.length})
@@ -94,7 +94,7 @@ export function BroadcastsTab({ user, notify }) {
               className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1 ${
                 filter === 'pinned'
                   ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 font-bold'
-                  : 'border-border bg-[#05070D] text-slate-400'
+                  : 'border-border bg-slate-50 text-slate-500'
               }`}
             >
               <Pin className="h-3 w-3" />
@@ -142,13 +142,13 @@ export function BroadcastsTab({ user, notify }) {
               </div>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed pt-3 font-mono whitespace-pre-line">
+            <p className="text-xs text-slate-700 leading-relaxed pt-3 font-mono whitespace-pre-line">
               {b.body}
             </p>
 
             <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-[10px] text-slate-500">
               <span>
-                Desk Lead: <span className="text-slate-300 font-semibold">{b.author || 'Chief Quantitative Strategist'}</span>
+                Desk Lead: <span className="text-slate-700 font-semibold">{b.author || 'Chief Quantitative Strategist'}</span>
               </span>
               <span className="flex items-center gap-1 text-emerald-400">
                 <CheckCircle className="h-3 w-3" />

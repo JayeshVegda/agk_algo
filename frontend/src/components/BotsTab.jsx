@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { pb } from '../lib/pocketbase';
 import { 
-  Cpu, Download, CheckCircle2, ShieldCheck, DollarSign, 
-  Activity, Zap, ExternalLink, KeyRound, Copy, Check, Info, Sliders
+  Cpu, Download, CheckCircle2, ShieldCheck, 
+  KeyRound, Copy, Check, Info, ArrowRight, X
 } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
 
 export function BotsTab({ user, onOpenPricing, notify }) {
   const [bots, setBots] = useState([]);
@@ -22,7 +25,6 @@ export function BotsTab({ user, onOpenPricing, notify }) {
     e.preventDefault();
     if (!accountNumber.trim()) return;
 
-    // Deterministic pseudo-license generation for demo/testing
     const cleanAcc = accountNumber.trim().replace(/\D/g, '') || '884920';
     const hash = Math.abs(
       cleanAcc.split('').reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0)
@@ -55,173 +57,174 @@ export function BotsTab({ user, onOpenPricing, notify }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 font-sans text-slate-800">
       {/* Header */}
-      <div className="p-6 rounded-2xl border border-border bg-surface shadow-sm">
-        <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-mono font-semibold mb-2">
-          <Cpu className="h-3.5 w-3.5" />
-          VERIFIED EXPERT ADVISORS (EA)
+      <div className="p-6 rounded-xl border border-slate-200 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <Badge variant="default" className="mb-2">
+            Verified Expert Advisors
+          </Badge>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Automated Algorithmic Execution Systems
+          </h1>
+          <p className="text-xs text-slate-600 max-w-2xl mt-1 leading-relaxed">
+            Rule-based MT4 & MT5 algorithms with hard stop-loss risk parameters, automated spread protection, and zero martingale exposure.
+          </p>
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-white font-sans">
-          Automated Algorithmic Execution Systems
-        </h1>
-        <p className="text-xs text-slate-400 font-mono max-w-2xl mt-1 leading-relaxed">
-          Production-tested MT4 & MT5 algorithms engineered with hardcoded equity protection, automated volatility filters, and zero martingale exposure.
-        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onOpenPricing}
+          className="shrink-0"
+        >
+          View Signal Plans
+        </Button>
       </div>
 
       {/* Bots Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {bots.map((bot) => (
-          <div
+          <Card
             key={bot.id}
-            className="rounded-2xl border border-border bg-card p-6 flex flex-col justify-between hover:border-slate-600 hover:bg-card-hover transition-all duration-200 shadow-lg group"
+            className="flex flex-col justify-between hover:border-emerald-300 transition-all"
           >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center justify-center font-bold">
-                  <Cpu className="h-5 w-5" />
+            <div>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="h-9 w-9 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center font-bold">
+                    <Cpu className="h-5 w-5" />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="secondary">
+                      {bot.platform}
+                    </Badge>
+                    <Badge variant="default">
+                      Verified
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="px-2.5 py-1 rounded-md bg-[#05070D] text-[11px] font-mono font-bold text-slate-300 border border-border">
-                    {bot.platform}
-                  </span>
-                  <span className="px-2 py-1 rounded-md bg-emerald-500/10 text-[10px] font-mono font-bold text-emerald-400 border border-emerald-500/20">
-                    VERIFIED
-                  </span>
-                </div>
-              </div>
 
-              <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2 font-sans">
-                  {bot.name}
-                  <span className="text-xs font-mono text-emerald-400 font-normal">({bot.version || 'v2.4'})</span>
-                </h3>
-                <p className="text-xs text-slate-400 leading-relaxed mt-2 font-mono">
+                <CardTitle className="mt-3 text-lg flex items-center justify-between">
+                  <span>{bot.name}</span>
+                  <span className="text-xs text-slate-500 font-normal">({bot.version || 'v2.4'})</span>
+                </CardTitle>
+
+                <CardDescription className="mt-1">
                   {bot.description || 'High-probability momentum breakout algorithm engineered for London and New York overlaps.'}
-                </p>
-              </div>
+                </CardDescription>
+              </CardHeader>
 
-              {/* Verified Metrics Matrix */}
-              <div className="grid grid-cols-2 gap-2 pt-2 text-xs font-mono">
-                <div className="p-2.5 rounded-xl bg-[#070B14] border border-border">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider">Min Capital</div>
-                  <div className="font-bold text-slate-200 mt-0.5 tabular-nums">{bot.recommended_deposit || '$500+'}</div>
+              <CardContent className="space-y-3 pt-2">
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                    <div className="text-[10px] text-slate-500 uppercase tracking-wider">Min Capital</div>
+                    <div className="font-bold text-slate-900 mt-0.5 tabular-nums">{bot.recommended_deposit || '$500+'}</div>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
+                    <div className="text-[10px] text-emerald-700 uppercase tracking-wider font-semibold">Risk Policy</div>
+                    <div className="font-bold text-emerald-700 mt-0.5">Fixed Stop-Loss</div>
+                  </div>
                 </div>
-                <div className="p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-                  <div className="text-[10px] text-emerald-400 uppercase tracking-wider">Win Rate</div>
-                  <div className="font-bold text-emerald-400 mt-0.5 tabular-nums">{bot.win_rate || '84.6%'}</div>
-                </div>
-                <div className="p-2.5 rounded-xl bg-[#070B14] border border-border">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider">Profit Factor</div>
-                  <div className="font-bold text-blue-400 mt-0.5 tabular-nums">{bot.profit_factor || '2.35'}</div>
-                </div>
-                <div className="p-2.5 rounded-xl bg-[#070B14] border border-border">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-wider">Max Drawdown</div>
-                  <div className="font-bold text-rose-400 mt-0.5 tabular-nums">{bot.max_drawdown || '< 5.2%'}</div>
-                </div>
-              </div>
+              </CardContent>
             </div>
 
-            {/* Bottom Actions */}
-            <div className="pt-5 mt-5 border-t border-border/60 flex items-center justify-between font-mono">
+            <CardFooter className="flex items-center justify-between pt-4 border-t border-slate-100 mt-4">
               <div>
                 <div className="text-[10px] text-slate-500 uppercase tracking-wider">Perpetual License</div>
-                <div className="text-xl font-bold text-white tabular-nums">
-                  ${bot.price} <span className="text-xs font-normal text-slate-400">USDT</span>
+                <div className="text-xl font-bold text-slate-900 tabular-nums">
+                  ${bot.price} <span className="text-xs font-normal text-slate-500">USDT</span>
                 </div>
               </div>
 
-              <button
+              <Button
+                size="sm"
                 onClick={() => {
                   setLicenseModalBot(bot);
                   setGeneratedKey(null);
                   setAccountNumber('');
                 }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md shadow-blue-600/30 transition-all cursor-pointer"
+                className="gap-1.5"
               >
                 <KeyRound className="h-3.5 w-3.5" />
-                License & EA
-              </button>
-            </div>
-          </div>
+                <span>Get License</span>
+              </Button>
+            </CardFooter>
+          </Card>
         ))}
       </div>
 
       {/* License Key Generator / Download Modal */}
       {licenseModalBot && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="w-full max-w-lg rounded-3xl border border-border bg-card p-6 sm:p-7 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2 font-sans">
-                <ShieldCheck className="h-5 w-5 text-emerald-400" />
-                {licenseModalBot.name} License Desk
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <Card className="w-full max-w-lg shadow-xl space-y-4">
+            <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-emerald-600" />
+                  {licenseModalBot.name} License Desk
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Bind this EA binary to your live or demo MetaTrader account.
+                </CardDescription>
+              </div>
               <button
                 onClick={() => setLicenseModalBot(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg cursor-pointer"
               >
-                ✕
+                <X className="h-5 w-5" />
               </button>
-            </div>
+            </CardHeader>
 
-            <p className="text-xs text-slate-400 font-mono leading-relaxed">
-              Every EA binary is compiled with hardware & broker account hash binding to prevent unauthorized de-compilation or copy distribution.
-            </p>
-
-            <form onSubmit={handleGenerateKey} className="space-y-4 font-mono text-xs">
-              <div>
-                <label className="block text-slate-300 mb-1">
-                  Target {licenseModalBot.platform} Account ID
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    required
-                    value={accountNumber}
-                    onChange={(e) => setAccountNumber(e.target.value)}
-                    placeholder="e.g. 50928192"
-                    className="flex-1 rounded-xl border border-border bg-[#05070D] px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
-                  />
-                  <button
-                    type="submit"
-                    className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold cursor-pointer shrink-0"
-                  >
-                    Generate Key
-                  </button>
+            <CardContent className="space-y-4">
+              <form onSubmit={handleGenerateKey} className="space-y-3 text-xs">
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">
+                    Target {licenseModalBot.platform} Account ID
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      required
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      placeholder="e.g. 50928192"
+                      className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none"
+                    />
+                    <Button type="submit">
+                      Generate Key
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </form>
+              </form>
 
-            {generatedKey && (
-              <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 font-mono space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Cryptographic Key Active
-                  </span>
-                  <button
-                    onClick={handleCopyKey}
-                    className="inline-flex items-center gap-1 text-[11px] text-slate-300 hover:text-white bg-slate-800/80 px-2.5 py-1 rounded-lg border border-border cursor-pointer"
-                  >
-                    {copiedKey ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
-                    {copiedKey ? 'Copied' : 'Copy Key'}
-                  </button>
-                </div>
+              {generatedKey && (
+                <div className="p-4 rounded-xl border border-emerald-300 bg-emerald-50/60 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      Cryptographic Key Generated
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyKey}
+                      className="h-7 text-xs bg-white"
+                    >
+                      {copiedKey ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                      <span>{copiedKey ? 'Copied' : 'Copy Key'}</span>
+                    </Button>
+                  </div>
 
-                <div className="p-3 rounded-xl bg-[#05070D] border border-border text-xs font-mono font-bold text-white tracking-widest break-all select-all">
-                  {generatedKey}
-                </div>
+                  <div className="p-2.5 rounded-lg bg-white border border-emerald-200 text-xs font-mono font-bold text-slate-900 tracking-wider break-all select-all">
+                    {generatedKey}
+                  </div>
 
-                <div className="text-[10px] text-slate-400 leading-relaxed">
-                  Paste this key into EA Input parameter <code className="text-slate-200">License_Key</code> upon attaching to {licenseModalBot.platform} chart.
-                </div>
+                  <div className="text-[11px] text-slate-600 leading-relaxed">
+                    Paste this key into EA parameter <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-800">License_Key</code> upon attaching to your {licenseModalBot.platform} chart.
+                  </div>
 
-                <div className="pt-2 flex gap-2">
-                  <a
-                    href="#download"
-                    onClick={(e) => {
-                      e.preventDefault();
+                  <Button
+                    onClick={() => {
                       if (notify) {
                         notify({
                           type: 'success',
@@ -230,39 +233,40 @@ export function BotsTab({ user, onOpenPricing, notify }) {
                         });
                       }
                     }}
-                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-center text-xs flex items-center justify-center gap-2 cursor-pointer shadow-glow-emerald"
+                    className="w-full justify-center gap-2 mt-2"
                   >
-                    <Download className="h-3.5 w-3.5" />
-                    Download EA Package (.zip)
-                  </a>
+                    <Download className="h-4 w-4" />
+                    <span>Download EA Package (.zip)</span>
+                  </Button>
+                </div>
+              )}
+
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs space-y-1.5 text-slate-600">
+                <div className="flex justify-between">
+                  <span>Target Platform:</span>
+                  <span className="font-semibold text-slate-900">{licenseModalBot.platform}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>License Validity:</span>
+                  <span className="font-semibold text-emerald-700">Perpetual (No Expiration)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Package Files:</span>
+                  <span className="font-medium text-slate-800">Compiled Binary (.ex4/.ex5), Preset Files (.set)</span>
                 </div>
               </div>
-            )}
+            </CardContent>
 
-            <div className="rounded-xl border border-border/80 bg-[#070B14] p-4 font-mono text-xs space-y-2">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Target Terminal:</span>
-                <span className="text-white font-bold">{licenseModalBot.platform}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">License Type:</span>
-                <span className="text-emerald-400 font-bold">Perpetual (No Expiration)</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Package Includes:</span>
-                <span className="text-slate-200">Compiled Binary, .set Presets, PDF Guide</span>
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-end font-mono">
-              <button
+            <CardFooter className="border-t border-slate-100 pt-3 flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setLicenseModalBot(null)}
-                className="px-4 py-2.5 rounded-xl border border-border bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors cursor-pointer"
               >
-                Close Desk
-              </button>
-            </div>
-          </div>
+                Close
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
       )}
     </div>
