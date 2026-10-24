@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { pb } from '../lib/pocketbase';
 import { 
   Shield, Zap, User, LogOut, Terminal, Bell, Cpu, 
-  BarChart3, Network, CreditCard, ChevronRight, Sparkles 
+  BarChart3, Network, CreditCard, Compass, ExternalLink 
 } from 'lucide-react';
 
 export function Navbar({ activeTab, setActiveTab, user, onOpenAuth }) {
@@ -12,27 +12,29 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth }) {
   };
 
   const navItems = [
-    { id: 'signals', label: 'Signals Feed', icon: Zap, badge: 'LIVE', shortcut: '1' },
-    { id: 'bots', label: 'Trading Bots', icon: Cpu, shortcut: '2' },
-    { id: 'charts', label: 'Live Charts', icon: BarChart3, shortcut: '3' },
-    { id: 'connector', label: 'Connector Demo', icon: Network, shortcut: '4' },
-    { id: 'broadcasts', label: 'Announcements', icon: Bell, shortcut: '5' },
-    { id: 'pricing', label: 'Plans & Pricing', icon: CreditCard, shortcut: '6' },
-    ...(user?.role === 'admin' ? [{ id: 'admin', label: 'Admin Desk', icon: Shield, badge: 'CRUD', shortcut: '7' }] : []),
+    { id: 'home', label: 'Overview', icon: Compass, shortcut: '1' },
+    { id: 'signals', label: 'Signals Feed', icon: Zap, badge: 'LIVE', shortcut: '2' },
+    { id: 'bots', label: 'Trading Bots', icon: Cpu, shortcut: '3' },
+    { id: 'charts', label: 'Live Charts', icon: BarChart3, shortcut: '4' },
+    { id: 'connector', label: 'Connector Demo', icon: Network, shortcut: '5' },
+    { id: 'broadcasts', label: 'Directives', icon: Bell, shortcut: '6' },
+    { id: 'pricing', label: 'Plans & Pricing', icon: CreditCard, shortcut: '7' },
+    ...(user?.role === 'admin' ? [{ id: 'admin', label: 'Admin Desk', icon: Shield, badge: 'CRUD', shortcut: '8' }] : []),
   ];
 
-  // Optional keyboard navigation (1-7)
+  // Optional keyboard navigation (1-8)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       const keyMap = {
-        '1': 'signals',
-        '2': 'bots',
-        '3': 'charts',
-        '4': 'connector',
-        '5': 'broadcasts',
-        '6': 'pricing',
-        '7': user?.role === 'admin' ? 'admin' : null,
+        '1': 'home',
+        '2': 'signals',
+        '3': 'bots',
+        '4': 'charts',
+        '5': 'connector',
+        '6': 'broadcasts',
+        '7': 'pricing',
+        '8': user?.role === 'admin' ? 'admin' : null,
       };
       if (keyMap[e.key]) {
         setActiveTab(keyMap[e.key]);
@@ -43,12 +45,12 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth }) {
   }, [user, setActiveTab]);
 
   return (
-    <header className="border-b border-border bg-[#070B14]/90 backdrop-blur-md sticky top-0 z-40">
+    <header className="border-b border-border bg-[#05070D]/95 backdrop-blur-md sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         {/* Brand Logo */}
         <div 
-          onClick={() => setActiveTab('signals')}
-          className="flex items-center gap-3 cursor-pointer group select-none"
+          onClick={() => setActiveTab('home')}
+          className="flex items-center gap-3 cursor-pointer group select-none shrink-0"
         >
           <div className="relative">
             <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600/20 to-cyan-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:border-blue-400 transition-all shadow-glow-blue">
@@ -56,7 +58,7 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth }) {
             </div>
             <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border border-[#070B14]"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border border-[#05070D]"></span>
             </span>
           </div>
 
@@ -74,7 +76,7 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth }) {
         </div>
 
         {/* Desktop Tabs */}
-        <nav className="hidden lg:flex items-center gap-1 font-mono text-xs">
+        <nav className="hidden xl:flex items-center gap-1 font-mono text-xs">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -82,7 +84,7 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth }) {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer relative ${
+                className={`px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer relative ${
                   isActive
                     ? 'bg-blue-600/15 text-blue-300 border border-blue-500/30 font-bold shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
@@ -132,7 +134,7 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth }) {
                   className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-all cursor-pointer shadow-glow-amber"
                 >
                   <Shield className="h-3.5 w-3.5" />
-                  Admin Desk
+                  Admin
                 </button>
               )}
 
@@ -157,7 +159,7 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth }) {
       </div>
 
       {/* Mobile & Tablet Nav Strip */}
-      <div className="lg:hidden flex items-center gap-1 px-3 py-2 overflow-x-auto border-t border-border text-xs font-mono bg-[#05070D]">
+      <div className="xl:hidden flex items-center gap-1 px-3 py-2 overflow-x-auto border-t border-border text-xs font-mono bg-[#05070D]">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
