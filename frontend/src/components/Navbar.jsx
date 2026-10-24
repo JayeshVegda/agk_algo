@@ -4,7 +4,7 @@ import {
   Zap, Cpu, Network, BarChart3, Bell, 
   CreditCard, ChevronDown, User, LogOut, Shield, 
   Compass, Search, Menu, ArrowRight, CheckCircle2, 
-  Sparkles, Layers
+  Sparkles, Layers, Download, Link2
 } from 'lucide-react';
 import { 
   NavigationMenu, 
@@ -85,6 +85,14 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAd
       badge: 'ALERTS',
       badgeClass: 'bg-[#00D878]/15 text-[#00D878] border border-[#00D878]/30',
     },
+    {
+      id: 'resources',
+      title: 'Downloads & Useful Links',
+      description: 'Official MT4/MT5 EAs, broker connectivity guides, and trading community feeds.',
+      icon: Download,
+      badge: 'KIT',
+      badgeClass: 'bg-[#F3C653]/15 text-[#F3C653] border border-[#F3C653]/30',
+    },
   ];
 
   const quickSearchItems = [
@@ -94,6 +102,7 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAd
     { label: 'Interactive Live Charts', tab: 'charts', icon: BarChart3 },
     { label: 'Connector Execution Demo', tab: 'connector', icon: Network },
     { label: 'Executive Directives Feed', tab: 'broadcasts', icon: Bell },
+    { label: 'Downloads & Resources Kit', tab: 'resources', icon: Download },
     { label: 'Subscription Plans & Pricing', tab: 'pricing', icon: CreditCard },
   ];
 
@@ -119,9 +128,9 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAd
             className="flex items-center cursor-pointer select-none shrink-0 group"
           >
             <img 
-              src="/assets/logos/akg-algo-symbol-transparent.png" 
+              src="/assets/logos/akg-algo-nav.svg" 
               alt="AKG ALGO — Trade Smarter" 
-              className="h-10 sm:h-11 w-auto hover:scale-105 transition-transform"
+              className="h-9 sm:h-10 w-auto hover:opacity-95 transition-opacity"
             />
           </div>
 

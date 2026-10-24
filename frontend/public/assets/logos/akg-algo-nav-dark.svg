@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="770" height="190" viewBox="0 0 770 190" role="img" aria-labelledby="title desc">
+<title id="title">AKG ALGO</title>
+<desc id="desc">AKG ALGO — Trade Smarter</desc>
+<defs>
+  <linearGradient id="nav-gold-dark" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#D97706"/>
+    <stop offset="0.5" stop-color="#B45309"/>
+    <stop offset="1" stop-color="#78350F"/>
+  </linearGradient>
+</defs>
+<g transform="translate(8, 0)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+ <path d="M10 164 L154 20" stroke="url(#nav-gold-dark)" stroke-width="15"/>
+ <path d="M116 20 H154 V58" stroke="url(#nav-gold-dark)" stroke-width="15"/>
+ <path d="M30 156 V108 M56 156 V80 M82 156 V50 M108 156 V20" stroke="#059669" stroke-width="4.5"/>
+ <rect x="21" y="122" width="18" height="34" rx="2" fill="#059669" stroke="none"/>
+ <rect x="47" y="98" width="18" height="58" rx="2" fill="#059669" stroke="none"/>
+ <rect x="73" y="70" width="18" height="86" rx="2" fill="#059669" stroke="none"/>
+ <rect x="99" y="40" width="18" height="116" rx="2" fill="#059669" stroke="none"/>
+</g>
+<g font-family="Montserrat, Inter, Arial, sans-serif" font-weight="800" font-size="82" letter-spacing="1">
+ <text x="195" y="96" fill="#0F172A">AK</text><text x="316" y="96" fill="url(#nav-gold-dark)">G</text>
+ <text x="404" y="96" fill="#0F172A">AL</text><text x="516" y="96" fill="url(#nav-gold-dark)">GO</text>
+</g>
+<path d="M195 120 H748" stroke="#D97706" stroke-width="2.5"/>
+<text x="197" y="162" font-family="Montserrat, Inter, Arial, sans-serif" font-size="22" letter-spacing="9" font-weight="700" fill="#334155">TRADE SMARTER</text>
+</svg>

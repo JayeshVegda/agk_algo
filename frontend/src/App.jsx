@@ -8,6 +8,7 @@ import { ChartsTab } from './components/ChartsTab';
 import { ConnectorTab } from './components/ConnectorTab';
 import { BroadcastsTab } from './components/BroadcastsTab';
 import { PricingTab } from './components/PricingTab';
+import { ResourcesTab } from './components/ResourcesTab';
 import { AdminPortal } from './components/admin/AdminPortal';
 import { AuthModal } from './components/AuthModal';
 import { ToastContainer } from './components/Toast';
@@ -149,6 +150,12 @@ export default function App() {
               notify={notify}
             />
           )}
+
+          {activeTab === 'resources' && (
+            <ResourcesTab 
+              notify={notify}
+            />
+          )}
         </main>
       </div>
 
@@ -191,6 +198,12 @@ export default function App() {
                 className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium"
               >
                 Plans & Pricing
+              </button>
+              <button 
+                onClick={() => { setActiveTab('resources'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                className="text-[#A6ADB9] hover:text-[#00D878] transition-colors cursor-pointer font-medium"
+              >
+                Downloads & Links
               </button>
               {user?.role === 'admin' && (
                 <button
