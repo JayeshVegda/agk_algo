@@ -1,0 +1,29 @@
+================================================================================
+AKG ALGO — EXPERT ADVISOR (EA) INSTALLATION & ACTIVATION GUIDE
+================================================================================
+
+1. PREREQUISITES
+   - MetaTrader 4 (MT4) or MetaTrader 5 (MT5) installed on Windows VPS or PC.
+   - Broker account connected (Demo or Live ECN recommended: IC Markets, Pepperstone, Tickmill).
+   - Valid AKG License Key obtained from your account dashboard.
+
+2. INSTALLATION STEPS
+   a. In MetaTrader, click: File -> Open Data Folder.
+   b. Open the folder: MQL4/Experts (for MT4) OR MQL5/Experts (for MT5).
+   c. Paste the downloaded binary (.ex4 or .ex5 file) into this Experts folder.
+   d. Return to MetaTrader, open the Navigator window (Ctrl+N), right-click 'Expert Advisors', and click 'Refresh'.
+   e. The EA will now appear in your Navigator list.
+
+3. ATTACHING TO CHART & SETTING LICENSE KEY
+   a. Drag the EA onto the recommended chart (e.g. XAUUSD M15 or EURUSD H1).
+   b. In the 'Common' tab, check: 'Allow Algorithmic Trading' and 'Allow DLL imports'.
+   c. In the 'Inputs' tab:
+      - LicenseKey: Paste your official hardware & account key (e.g. AKG-MT5-920-ABCD-1234).
+      - MaxSpreadPips: Default 1.8 (Recommended).
+      - RiskPercent: 1.0% - 2.0% per trade.
+   d. Click OK. Verify the smiley face or graduation cap in the top right corner is green.
+
+4. SUPPORT & DESK CONTACT
+   - Telegram Community: https://t.me/akg_algo_official
+   - Direct Verification Desk: support@akgalgo.local
+================================================================================

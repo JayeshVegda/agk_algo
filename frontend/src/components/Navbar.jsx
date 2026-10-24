@@ -34,7 +34,7 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { cn } from '../lib/utils';
 
-export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAdmin }) {
+export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAdmin, onOpenPurchases }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -355,6 +355,11 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAd
                   <span>Subscription & Billing</span>
                 </DropdownMenuItem>
 
+                <DropdownMenuItem onClick={onOpenPurchases}>
+                  <KeyRound className="h-3.5 w-3.5 text-[#00D878]" />
+                  <span>My Purchases & Licenses</span>
+                </DropdownMenuItem>
+
                 {user.role === 'admin' && (
                   <>
                     <DropdownMenuSeparator />
@@ -533,6 +538,21 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAd
                         </span>
                       </button>
                     </div>
+
+                    {user && (
+                      <div className="pt-2">
+                        <button
+                          onClick={() => { if (onOpenPurchases) onOpenPurchases(); setMobileOpen(false); }}
+                          className="w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-bold bg-[#00D878]/15 text-[#00D878] border border-[#00D878]/30 hover:bg-[#00D878]/25 transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2">
+                            <KeyRound className="h-4 w-4 text-[#00D878]" />
+                            <span>My Purchases & Licenses</span>
+                          </div>
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
 
                     {user?.role === 'admin' && (
                       <div className="pt-2 border-t border-white/10">

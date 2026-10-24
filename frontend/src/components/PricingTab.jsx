@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 
-export function PricingTab({ user, onOpenAuth, notify }) {
+export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [network, setNetwork] = useState('USDT-TRC20');
   const [txid, setTxid] = useState('');
@@ -38,6 +38,13 @@ export function PricingTab({ user, onOpenAuth, notify }) {
   const handleSubmitTxid = async (e) => {
     e.preventDefault();
     if (!user) {
+      if (notify) {
+        notify({
+          type: 'info',
+          title: 'Sign In Required',
+          message: 'Please sign in or create an account to start your subscription.'
+        });
+      }
       onOpenAuth();
       return;
     }
@@ -65,6 +72,65 @@ export function PricingTab({ user, onOpenAuth, notify }) {
           type: 'error',
           title: 'Submission Error',
           message: err.message || 'Check connection'
+        });
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleInstantSandboxVerify = async () => {
+    if (!user) {
+      if (notify) {
+        notify({
+          type: 'info',
+          title: 'Sign In Required',
+          message: 'Please sign in or create an account to activate instant test access.'
+        });
+      }
+      onOpenAuth();
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const demoTxid = `0x${Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('')}`;
+      await pb.collection('payments').create({
+        user_email: user.email,
+        plan: selectedPlan.id,
+        amount: selectedPlan.price,
+        network,
+        txid: demoTxid,
+        status: 'confirmed'
+      });
+
+      // Update user subscription plan and cycle expiration directly
+      const currentExpiry = user.cycle_expires_at ? new Date(user.cycle_expires_at) : new Date();
+      const baseDate = currentExpiry > new Date() ? currentExpiry : new Date();
+      baseDate.setDate(baseDate.getDate() + 30);
+
+      const updatedUser = await pb.collection('users').update(user.id, {
+        plan: selectedPlan.id,
+        cycle_expires_at: baseDate.toISOString()
+      });
+
+      // Immediately synchronize into pocketbase auth store for instant UI unlock
+      pb.authStore.save(pb.authStore.token, updatedUser);
+
+      setTxid(demoTxid);
+      setSubmitted(true);
+      if (notify) {
+        notify({
+          type: 'success',
+          title: 'Instant Sandbox Activation',
+          message: `Activated 30-day ${selectedPlan.name} access.`
+        });
+      }
+    } catch (err) {
+      if (notify) {
+        notify({
+          type: 'error',
+          title: 'Verification Error',
+          message: err.message || 'Error activating sandbox test'
         });
       }
     } finally {
@@ -242,15 +308,36 @@ export function PricingTab({ user, onOpenAuth, notify }) {
                   <div className="p-3 rounded-xl border border-white/10 bg-[#07090D] text-xs font-mono text-[#F3C653] break-all select-all">
                     TXID: {txid}
                   </div>
-                  <Button
-                    onClick={() => setSelectedPlan(null)}
-                    className="mt-2"
-                  >
-                    Return to Dashboard
-                  </Button>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-4">
+                    <Button
+                      onClick={() => setSelectedPlan(null)}
+                      variant="outline"
+                      className="w-full sm:w-auto text-xs"
+                    >
+                      Return to Dashboard
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setSelectedPlan(null);
+                        if (onNavigateSignals) onNavigateSignals();
+                      }}
+                      className="w-full sm:w-auto bg-[#00D878] text-[#07090D] hover:bg-[#00F09A] font-bold text-xs"
+                    >
+                      Open Signals Terminal →
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4 text-xs">
+                  {!user && (
+                    <div className="p-3 rounded-xl border border-[#F3C653]/30 bg-[#F3C653]/10 flex items-center justify-between text-xs">
+                      <span className="text-[#E7E9EF]">Sign in to bind this subscription to your email</span>
+                      <Button size="sm" onClick={onOpenAuth} className="font-bold text-xs h-7">
+                        Sign In / Register
+                      </Button>
+                    </div>
+                  )}
+
                   {/* Network Picker */}
                   <div>
                     <label className="block text-[#E7E9EF] font-semibold mb-1.5">Select Settlement Network</label>
@@ -317,14 +404,31 @@ export function PricingTab({ user, onOpenAuth, notify }) {
                       />
                     </div>
 
-                    <Button
-                      type="submit"
-                      disabled={submitting}
-                      className="w-full justify-center gap-2 font-bold"
-                    >
-                      <span>{submitting ? 'Confirming...' : 'Submit Payment for Verification'}</span>
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
+                    <div className="space-y-2 pt-2">
+                      <Button
+                        type="submit"
+                        disabled={submitting}
+                        className="w-full justify-center gap-2 font-bold"
+                      >
+                        <span>{submitting ? 'Confirming...' : 'Submit Payment for Desk Verification'}</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+
+                      <div className="relative my-2">
+                        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
+                        <div className="relative flex justify-center text-[10px] uppercase font-semibold"><span className="bg-[#10141B] px-2 text-[#A6ADB9]">Developer Sandbox</span></div>
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={submitting}
+                        onClick={handleInstantSandboxVerify}
+                        className="w-full py-2.5 px-3 rounded-xl bg-[#00D878]/15 border border-[#00D878]/30 hover:bg-[#00D878]/25 text-[#00D878] font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        <Zap className="h-4 w-4" />
+                        <span>⚡ Instant Sandbox Activation (Demo Mode)</span>
+                      </button>
+                    </div>
                   </form>
                 </div>
               )}

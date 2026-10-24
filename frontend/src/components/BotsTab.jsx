@@ -4,61 +4,196 @@ import {
   Cpu, Download, CheckCircle2, ShieldCheck, 
   KeyRound, Copy, Check, Info, ArrowRight, X,
   Layers, ExternalLink, Image as ImageIcon, BarChart3,
-  TrendingUp, Shield, Sparkles, HardDrive
+  TrendingUp, Shield, Sparkles, HardDrive, CreditCard,
+  Zap, AlertCircle
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 
-export function BotsTab({ user, onOpenPricing, notify }) {
+export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
   const [bots, setBots] = useState([]);
   const [platformFilter, setPlatformFilter] = useState('all');
   const [selectedBotDetail, setSelectedBotDetail] = useState(null);
-  const [licenseModalBot, setLicenseModalBot] = useState(null);
-  const [accountNumber, setAccountNumber] = useState('');
-  const [generatedKey, setGeneratedKey] = useState(null);
+  const [checkoutBot, setCheckoutBot] = useState(null);
+  
+  // Checkout state
+  const [checkoutAccount, setCheckoutAccount] = useState('');
+  const [checkoutNetwork, setCheckoutNetwork] = useState('USDT-TRC20');
+  const [checkoutTxid, setCheckoutTxid] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [purchaseResult, setPurchaseResult] = useState(null);
   const [copiedKey, setCopiedKey] = useState(false);
-  const [activeGalleryIndex, setActiveGalleryIndex] = useState(0);
+  const [copiedAddress, setCopiedAddress] = useState(false);
+  
+  // User confirmed purchases
+  const [myPurchases, setMyPurchases] = useState([]);
 
-  useEffect(() => {
-    pb.collection('bots').getFullList({ sort: '-created' })
-      .then(setBots)
-      .catch((err) => console.error('Failed to load bots:', err));
-  }, []);
+  const WALLETS = {
+    'USDT-TRC20': 'TLa2g9Y8kP2qXvL1b8Jp9wZmN4qK7dEf9A',
+    'USDT-BEP20': '0x71C2B81F1A9D4E72b83A072fCc8295b7A19D38Ef',
+    'USDT-ERC20': '0x71C2B81F1A9D4E72b83A072fCc8295b7A19D38Ef',
+  };
 
-  const handleGenerateKey = (e) => {
-    e.preventDefault();
-    if (!accountNumber.trim()) return;
-
-    const cleanAcc = accountNumber.trim().replace(/\D/g, '') || '884920';
-    const hash = Math.abs(
-      cleanAcc.split('').reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0)
-    ).toString(16).toUpperCase().padStart(8, '0');
-
-    const key = `AKG-${licenseModalBot.platform || 'MT'}-${cleanAcc.slice(-3)}-${hash.slice(0, 4)}-${hash.slice(4, 8)}`;
-    setGeneratedKey(key);
-
-    if (notify) {
-      notify({
-        type: 'success',
-        title: 'License Key Bound',
-        message: `Bound to ${licenseModalBot.platform} Account #${cleanAcc}`
-      });
+  const loadBots = async () => {
+    try {
+      const records = await pb.collection('bots').getFullList({ sort: '-created' });
+      setBots(records);
+    } catch (err) {
+      console.error('Failed to load bots:', err);
     }
   };
 
-  const handleCopyKey = () => {
-    if (!generatedKey) return;
-    navigator.clipboard.writeText(generatedKey);
-    setCopiedKey(true);
+  const loadUserPurchases = async () => {
+    if (!user?.email) return;
+    try {
+      const records = await pb.collection('payments').getFullList({
+        filter: `user_email = "${user.email}"`,
+        sort: '-created'
+      });
+      setMyPurchases(records);
+    } catch (err) {
+      console.error('Failed to load user bot purchases:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadBots();
+  }, []);
+
+  useEffect(() => {
+    if (user?.email) {
+      loadUserPurchases();
+      const unsub = pb.collection('payments').subscribe('*', () => loadUserPurchases()).catch(() => {});
+      return () => { unsub?.then?.((u) => u && u()); };
+    }
+  }, [user?.email]);
+
+  const generateLicenseKey = (platform, accNumber) => {
+    const cleanAcc = (accNumber || '').trim().replace(/\D/g, '') || '884920';
+    const hash = Math.abs(
+      cleanAcc.split('').reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0)
+    ).toString(16).toUpperCase().padStart(8, '0');
+    return `AKG-${platform || 'MT5'}-${cleanAcc.slice(-3)}-${hash.slice(0, 4)}-${hash.slice(4, 8)}`;
+  };
+
+  const handleCopy = (text, type = 'key') => {
+    navigator.clipboard.writeText(text);
+    if (type === 'key') setCopiedKey(true);
+    if (type === 'address') setCopiedAddress(true);
+
     if (notify) {
       notify({
         type: 'copy',
-        title: 'Copied License Key',
-        message: generatedKey
+        title: 'Copied to Clipboard',
+        message: text
       });
     }
-    setTimeout(() => setCopiedKey(false), 2000);
+    setTimeout(() => {
+      setCopiedKey(false);
+      setCopiedAddress(false);
+    }, 2000);
+  };
+
+  const openCheckout = (bot) => {
+    if (!user) {
+      if (notify) {
+        notify({
+          type: 'info',
+          title: 'Sign In Required',
+          message: 'Please sign in or register to purchase and bind trading bots.'
+        });
+      }
+      if (onOpenAuth) onOpenAuth();
+      return;
+    }
+
+    // Check if user already owns this bot
+    const existing = getOwnedPurchase(bot.name);
+    if (existing) {
+      const match = existing.plan.match(/BOT:\s*([^(]+)\s*\(([^#]+)#([^)]+)\)/i);
+      const acc = match ? match[3].trim() : '884920';
+      const cleanAcc = acc.replace(/\D/g, '') || '884920';
+      const generatedKey = generateLicenseKey(bot.platform, cleanAcc);
+      setCheckoutBot(bot);
+      setPurchaseResult({
+        isSandbox: false,
+        status: 'confirmed',
+        bot,
+        account: cleanAcc,
+        key: generatedKey,
+        txid: existing.txid,
+        isExisting: true
+      });
+      return;
+    }
+
+    setCheckoutBot(bot);
+    setCheckoutAccount('');
+    setCheckoutTxid('');
+    setPurchaseResult(null);
+  };
+
+  // Submit purchase: either real TXID verification or instant sandbox demo test
+  const handlePurchase = async (isSandbox = false) => {
+    if (!user) {
+      if (onOpenAuth) onOpenAuth();
+      return;
+    }
+
+    if (!checkoutAccount.trim()) {
+      if (notify) notify({ type: 'error', title: 'Account Number Missing', message: 'Please enter your MetaTrader account number to bind this license.' });
+      return;
+    }
+
+    if (!isSandbox && !checkoutTxid.trim()) {
+      if (notify) notify({ type: 'error', title: 'TXID Missing', message: 'Please enter your USDT transfer hash or use Instant Sandbox Test.' });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const cleanAcc = checkoutAccount.trim().replace(/\D/g, '') || '884920';
+      const generatedKey = generateLicenseKey(checkoutBot.platform, cleanAcc);
+      const planString = `BOT: ${checkoutBot.name} (${checkoutBot.platform} #${cleanAcc})`;
+      const txHash = isSandbox 
+        ? `0x${Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('')}`
+        : checkoutTxid.trim();
+
+      await pb.collection('payments').create({
+        user_email: user.email,
+        plan: planString,
+        amount: checkoutBot.price,
+        network: checkoutNetwork,
+        txid: txHash,
+        status: isSandbox ? 'confirmed' : 'pending'
+      });
+
+      setPurchaseResult({
+        isSandbox,
+        status: isSandbox ? 'confirmed' : 'pending',
+        bot: checkoutBot,
+        account: cleanAcc,
+        key: generatedKey,
+        txid: txHash
+      });
+
+      await loadUserPurchases();
+
+      if (notify) {
+        notify({
+          type: 'success',
+          title: isSandbox ? 'Bot License Activated' : 'Payment Logged for Verification',
+          message: isSandbox
+            ? `Perpetual license for ${checkoutBot.name} bound to MT#${cleanAcc}`
+            : `TXID submitted. Desk will verify blockchain transfer of $${checkoutBot.price} USDT.`
+        });
+      }
+    } catch (err) {
+      if (notify) notify({ type: 'error', title: 'Checkout Error', message: err.message });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const filteredBots = bots.filter((b) => {
@@ -66,8 +201,16 @@ export function BotsTab({ user, onOpenPricing, notify }) {
     return b.platform?.toUpperCase().includes(platformFilter.toUpperCase());
   });
 
+  const isBotOwned = (botName) => {
+    return myPurchases.some(p => p.status === 'confirmed' && p.plan?.includes(botName));
+  };
+
+  const getOwnedPurchase = (botName) => {
+    return myPurchases.find(p => p.status === 'confirmed' && p.plan?.includes(botName));
+  };
+
   return (
-    <div className="space-y-8 font-sans text-[#E7E9EF]">
+    <div className="space-y-8 font-sans text-[#E7E9EF] w-full">
       {/* Header */}
       <div className="p-6 md:p-8 rounded-2xl border border-white/10 bg-[#10141B] flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl">
         <div className="space-y-2">
@@ -102,127 +245,151 @@ export function BotsTab({ user, onOpenPricing, notify }) {
       </div>
 
       {/* Bots Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredBots.map((bot) => (
-          <Card
-            key={bot.id}
-            className="flex flex-col justify-between hover:border-[#F3C653]/40 transition-all bg-[#10141B] border-white/10 overflow-hidden shadow-lg group"
-          >
-            <div>
-              {/* Optional Bot Image Banner */}
-              {bot.image_url ? (
-                <div 
-                  className="h-44 w-full relative overflow-hidden bg-[#07090D] cursor-pointer"
-                  onClick={() => setSelectedBotDetail(bot)}
-                >
-                  <img 
-                    src={bot.image_url} 
-                    alt={bot.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#10141B] via-transparent to-black/30" />
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                    <Badge variant="secondary" className="backdrop-blur-md bg-black/60 border-white/10 text-white font-mono text-[10px]">
-                      {bot.platform}
-                    </Badge>
-                    <Badge variant="positive" className="backdrop-blur-md bg-[#00D878]/20 text-[#00D878] border-[#00D878]/30 text-[10px]">
-                      Verified
-                    </Badge>
-                  </div>
-                </div>
-              ) : (
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="h-9 w-9 rounded-xl bg-[#F3C653]/15 border border-[#F3C653]/30 text-[#F3C653] flex items-center justify-center font-bold">
-                      <Cpu className="h-5 w-5" />
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Badge variant="secondary">{bot.platform}</Badge>
-                      <Badge variant="positive">Verified</Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-              )}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {filteredBots.map((bot) => {
+          const owned = isBotOwned(bot.name);
+          const ownedRecord = owned ? getOwnedPurchase(bot.name) : null;
 
-              <div className="p-5 pt-3 space-y-3">
-                <div 
-                  className="cursor-pointer"
-                  onClick={() => setSelectedBotDetail(bot)}
-                >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-white group-hover:text-[#F3C653] transition-colors">
-                      {bot.name}
-                    </h3>
-                    <span className="text-xs text-[#A6ADB9] font-mono">{bot.version || 'v2.4'}</span>
-                  </div>
-
-                  <p className="mt-1 text-xs text-[#A6ADB9] line-clamp-2 leading-relaxed">
-                    {bot.description || 'Institutional momentum breakout algorithm engineered for London and New York overlaps.'}
-                  </p>
-                </div>
-
-                {/* Metrics */}
-                <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                  <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                    <div className="text-[10px] text-[#A6ADB9] uppercase">Max Drawdown</div>
-                    <div className="font-bold text-[#00D878] mt-0.5">{bot.drawdown || '4.5% Max DD'}</div>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                    <div className="text-[10px] text-[#A6ADB9] uppercase">Profit Factor</div>
-                    <div className="font-bold text-[#F3C653] mt-0.5">{bot.profit_factor || '2.65 PF'}</div>
-                  </div>
-                </div>
-
-                {bot.pairs && (
-                  <div className="text-[11px] text-[#A6ADB9] font-mono flex items-center gap-1.5 overflow-hidden">
-                    <span className="text-white/60">Traded:</span>
-                    <span className="text-white truncate font-semibold">{bot.pairs}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <CardFooter className="flex items-center justify-between p-5 pt-3 border-t border-white/10 bg-white/[0.02]">
+          return (
+            <Card
+              key={bot.id}
+              className={`flex flex-col justify-between transition-all bg-[#10141B] border overflow-hidden shadow-lg group ${
+                owned ? 'border-[#00D878]/40 ring-1 ring-[#00D878]/20' : 'border-white/10 hover:border-[#F3C653]/40'
+              }`}
+            >
               <div>
-                <div className="text-[10px] text-[#A6ADB9] uppercase tracking-wider font-mono">Perpetual License</div>
-                <div className="text-xl font-black text-white tabular-nums">
-                  ${bot.price} <span className="text-xs font-normal text-[#F3C653]">USDT</span>
+                {/* Bot Image Banner */}
+                {bot.image_url ? (
+                  <div 
+                    className="h-44 w-full relative overflow-hidden bg-[#07090D] cursor-pointer"
+                    onClick={() => setSelectedBotDetail(bot)}
+                  >
+                    <img 
+                      src={bot.image_url} 
+                      alt={bot.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#10141B] via-transparent to-black/30" />
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                      <Badge variant="secondary" className="backdrop-blur-md bg-black/60 border-white/10 text-white font-mono text-[10px]">
+                        {bot.platform}
+                      </Badge>
+                      {owned ? (
+                        <Badge variant="positive" className="backdrop-blur-md bg-[#00D878] text-[#07090D] font-bold text-[10px]">
+                          LICENSED
+                        </Badge>
+                      ) : (
+                        <Badge variant="positive" className="backdrop-blur-md bg-[#00D878]/20 text-[#00D878] border-[#00D878]/30 text-[10px]">
+                          Verified
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="h-9 w-9 rounded-xl bg-[#F3C653]/15 border border-[#F3C653]/30 text-[#F3C653] flex items-center justify-center font-bold">
+                        <Cpu className="h-5 w-5" />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="secondary">{bot.platform}</Badge>
+                        {owned ? (
+                          <Badge variant="positive" className="bg-[#00D878] text-[#07090D] font-bold">LICENSED</Badge>
+                        ) : (
+                          <Badge variant="positive">Verified</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                )}
+
+                <div className="p-4 sm:p-5 pt-3 space-y-3">
+                  <div 
+                    className="cursor-pointer"
+                    onClick={() => setSelectedBotDetail(bot)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#F3C653] transition-colors truncate">
+                        {bot.name}
+                      </h3>
+                      <span className="text-xs text-[#A6ADB9] font-mono shrink-0 ml-2">{bot.version || 'v2.4'}</span>
+                    </div>
+
+                    <p className="mt-1 text-xs text-[#A6ADB9] line-clamp-2 leading-relaxed">
+                      {bot.description || 'Institutional momentum breakout algorithm engineered for London and New York overlaps.'}
+                    </p>
+                  </div>
+
+                  {/* Metrics */}
+                  <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                    <div className="p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/10">
+                      <div className="text-[10px] text-[#A6ADB9] uppercase">Max Drawdown</div>
+                      <div className="font-bold text-[#00D878] mt-0.5">{bot.drawdown || '4.5% Max DD'}</div>
+                    </div>
+                    <div className="p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/10">
+                      <div className="text-[10px] text-[#A6ADB9] uppercase">Profit Factor</div>
+                      <div className="font-bold text-[#F3C653] mt-0.5">{bot.profit_factor || '2.65 PF'}</div>
+                    </div>
+                  </div>
+
+                  {bot.pairs && (
+                    <div className="text-[11px] text-[#A6ADB9] font-mono flex items-center gap-1.5 overflow-hidden">
+                      <span className="text-white/60">Traded:</span>
+                      <span className="text-white truncate font-semibold">{bot.pairs}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setSelectedBotDetail(bot)}
-                  className="h-8 text-xs font-semibold border-white/20 text-[#E7E9EF] hover:bg-white/10"
-                >
-                  View Details
-                </Button>
-                <Button
-                  size="sm"
-                  variant="default"
-                  onClick={() => {
-                    setLicenseModalBot(bot);
-                    setGeneratedKey(null);
-                    setAccountNumber('');
-                  }}
-                  className="h-8 gap-1.5 font-bold text-xs"
-                >
-                  <KeyRound className="h-3 w-3" />
-                  <span>License</span>
-                </Button>
-              </div>
-            </CardFooter>
-          </Card>
-        ))}
+              <CardFooter className="flex items-center justify-between p-4 sm:p-5 pt-3 border-t border-white/10 bg-white/[0.02]">
+                <div>
+                  <div className="text-[10px] text-[#A6ADB9] uppercase tracking-wider font-mono">Perpetual Binary</div>
+                  <div className="text-xl font-black text-white tabular-nums">
+                    ${bot.price} <span className="text-xs font-normal text-[#F3C653]">USDT</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedBotDetail(bot)}
+                    className="h-8 text-xs font-semibold border-white/20 text-[#E7E9EF] hover:bg-white/10"
+                  >
+                    Specs
+                  </Button>
+                  
+                  {owned ? (
+                    <Button
+                      size="sm"
+                      onClick={() => openCheckout(bot)}
+                      className="h-8 gap-1.5 font-bold text-xs bg-[#00D878] text-[#07090D] hover:bg-[#00F09A]"
+                    >
+                      <Download className="h-3 w-3" />
+                      <span>Download</span>
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => openCheckout(bot)}
+                      className="h-8 gap-1.5 font-bold text-xs"
+                    >
+                      <KeyRound className="h-3 w-3" />
+                      <span>Purchase</span>
+                    </Button>
+                  )}
+                </div>
+              </CardFooter>
+            </Card>
+          );
+        })}
       </div>
 
       {/* DEDICATED BOT DETAIL MODAL */}
       {selectedBotDetail && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
           <Card className="w-full max-w-2xl bg-[#10141B] border border-white/10 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col my-auto">
-            {/* Scrollable Modal Content */}
             <div className="flex-1 overflow-y-auto">
               {/* Modal Hero Image */}
               {selectedBotDetail.image_url && (
@@ -268,78 +435,70 @@ export function BotsTab({ user, onOpenPricing, notify }) {
               </CardHeader>
 
               <CardContent className="p-4 sm:p-6 pt-0 space-y-5 text-xs font-mono">
-              {/* Key Metrics Matrix */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
-                  <div className="text-[10px] text-[#A6ADB9]">Max Drawdown</div>
-                  <div className="text-sm font-bold text-[#00D878] mt-1">{selectedBotDetail.drawdown || '4.2% Max DD'}</div>
+                {/* Key Metrics Matrix */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
+                    <div className="text-[10px] text-[#A6ADB9]">Max Drawdown</div>
+                    <div className="text-sm font-bold text-[#00D878] mt-1">{selectedBotDetail.drawdown || '4.2% Max DD'}</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
+                    <div className="text-[10px] text-[#A6ADB9]">Profit Factor</div>
+                    <div className="text-sm font-bold text-[#F3C653] mt-1">{selectedBotDetail.profit_factor || '2.65 PF'}</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
+                    <div className="text-[10px] text-[#A6ADB9]">Win Rate</div>
+                    <div className="text-sm font-bold text-white mt-1">{selectedBotDetail.win_rate || '84.2%'}</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
+                    <div className="text-[10px] text-[#A6ADB9]">Min Capital</div>
+                    <div className="text-sm font-bold text-white mt-1">{selectedBotDetail.recommended_deposit || '$500+'}</div>
+                  </div>
                 </div>
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
-                  <div className="text-[10px] text-[#A6ADB9]">Profit Factor</div>
-                  <div className="text-sm font-bold text-[#F3C653] mt-1">{selectedBotDetail.profit_factor || '2.65 PF'}</div>
-                </div>
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
-                  <div className="text-[10px] text-[#A6ADB9]">Win Rate</div>
-                  <div className="text-sm font-bold text-white mt-1">{selectedBotDetail.win_rate || '80%'}</div>
-                </div>
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
-                  <div className="text-[10px] text-[#A6ADB9]">Min Capital</div>
-                  <div className="text-sm font-bold text-white mt-1">{selectedBotDetail.recommended_deposit || '$500+'}</div>
-                </div>
-              </div>
 
-              {/* Strategy Details */}
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
-                <div className="text-[11px] text-[#F3C653] font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span>Execution Architecture & Strategy</span>
+                {/* Strategy Technical Specifications */}
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2.5">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-[#F3C653]">
+                    Algorithm Mechanics & Guardrails
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2 text-[#E7E9EF]">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-[#00D878] shrink-0" />
+                      <span>Hard Invalidation Stop Loss</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-[#00D878] shrink-0" />
+                      <span>Dynamic Volatility Lot Sizing</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-[#00D878] shrink-0" />
+                      <span>Zero Martingale / Grid Risk</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-[#00D878] shrink-0" />
+                      <span>Spread & Slippage Filters</span>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-white text-xs leading-relaxed font-sans">
-                  {selectedBotDetail.strategy_type || 'Liquidity Sweeps, Asian Range Breakouts, and London/New York session overlap momentum.'}
-                </p>
-                {selectedBotDetail.pairs && (
-                  <div className="pt-2 text-[11px] flex items-center gap-2">
-                    <span className="text-[#A6ADB9]">Validated Asset Pairs:</span>
-                    <span className="text-[#00D878] font-bold">{selectedBotDetail.pairs}</span>
+
+                {/* Google Drive Link */}
+                {selectedBotDetail.download_url && (
+                  <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+                    <div className="flex items-center gap-2.5 text-blue-400 font-bold">
+                      <HardDrive className="h-4 w-4 shrink-0" />
+                      <span>Official Google Drive Package</span>
+                    </div>
+                    <a
+                      href={selectedBotDetail.download_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-500 transition-colors w-fit"
+                    >
+                      <span>Open Drive</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
                   </div>
                 )}
-              </div>
-
-              {/* Features List */}
-              {selectedBotDetail.features && (
-                <div className="space-y-2">
-                  <div className="text-[11px] text-[#A6ADB9] uppercase font-bold tracking-wider">
-                    Risk Guards & Algorithmic Features
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-2 text-[11px] font-sans">
-                    {selectedBotDetail.features.split('\n').filter(Boolean).map((feat, idx) => (
-                      <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.03] border border-white/5 text-[#E7E9EF]">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-[#00D878] shrink-0" />
-                        <span>{feat}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {/* Google Drive Direct Download Link */}
-              {selectedBotDetail.download_url && (
-                <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
-                  <div className="flex items-center gap-2.5 text-blue-400 font-bold">
-                    <HardDrive className="h-4 w-4 shrink-0" />
-                    <span>Google Drive Expert Advisor Package</span>
-                  </div>
-                  <a
-                    href={selectedBotDetail.download_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-500 transition-colors w-fit"
-                  >
-                    <span>Open in Drive</span>
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
-              )}
-            </CardContent>
+              </CardContent>
             </div>
 
             <CardFooter className="p-4 sm:p-6 border-t border-white/10 shrink-0 flex items-center justify-between bg-black/40">
@@ -363,14 +522,12 @@ export function BotsTab({ user, onOpenPricing, notify }) {
                   onClick={() => {
                     const b = selectedBotDetail;
                     setSelectedBotDetail(null);
-                    setLicenseModalBot(b);
-                    setGeneratedKey(null);
-                    setAccountNumber('');
+                    openCheckout(b);
                   }}
                   className="gap-2 font-bold text-xs"
                 >
                   <KeyRound className="h-3.5 w-3.5" />
-                  <span>Bind License Key</span>
+                  <span>{isBotOwned(selectedBotDetail.name) ? 'View License Key' : 'Purchase License'}</span>
                 </Button>
               </div>
             </CardFooter>
@@ -378,127 +535,244 @@ export function BotsTab({ user, onOpenPricing, notify }) {
         </div>
       )}
 
-      {/* License Key Generator / Download Modal */}
-      {licenseModalBot && (
+      {/* =========================================================================
+          BOT CHECKOUT & LICENSE DESK MODAL
+      ========================================================================= */}
+      {checkoutBot && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
           <Card className="w-full max-w-lg shadow-2xl bg-[#10141B] border border-white/10 max-h-[92vh] flex flex-col overflow-hidden my-auto">
-            <CardHeader className="p-4 sm:p-6 pb-3 border-b border-white/10 shrink-0 flex flex-row items-center justify-between">
+            <CardHeader className="p-4 sm:p-5 pb-3 border-b border-white/10 shrink-0 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-lg flex items-center gap-2 text-white">
-                  <ShieldCheck className="h-5 w-5 text-[#00D878]" />
-                  {licenseModalBot.name} License Desk
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2 text-white">
+                  <CreditCard className="h-5 w-5 text-[#F3C653]" />
+                  <span>{checkoutBot.name} · Checkout</span>
                 </CardTitle>
-                <CardDescription className="mt-1 text-[#A6ADB9]">
-                  Bind this EA binary to your live or demo MetaTrader account.
+                <CardDescription className="text-xs text-[#A6ADB9] mt-0.5">
+                  Perpetual binary EA license for {checkoutBot.platform}.
                 </CardDescription>
               </div>
               <button
-                onClick={() => setLicenseModalBot(null)}
+                onClick={() => setCheckoutBot(null)}
                 className="text-[#A6ADB9] hover:text-white p-1 rounded-lg cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
             </CardHeader>
 
-            <CardContent className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-4">
-              <form onSubmit={handleGenerateKey} className="space-y-3 text-xs">
-                <div>
-                  <label className="block text-[#A6ADB9] font-mono mb-1">
-                    MetaTrader {licenseModalBot.platform} Account Number
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. 50928192"
-                    value={accountNumber}
-                    onChange={(e) => setAccountNumber(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-white font-mono placeholder:text-white/20 focus:border-[#F3C653] focus:outline-none"
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full justify-center gap-2 font-bold"
-                >
-                  <KeyRound className="h-4 w-4" />
-                  <span>Generate Hardware & Account Key</span>
-                </Button>
-              </form>
-
-              {generatedKey && (
-                <div className="p-4 rounded-xl border border-[#00D878]/30 bg-[#00D878]/10 space-y-3 animate-fade-in font-mono text-xs">
-                  <div className="flex items-center justify-between text-[#00D878] font-bold">
-                    <span>Cryptographic License Generated</span>
-                    <Badge variant="positive">Verified</Badge>
+            <CardContent className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-4 text-xs font-sans">
+              
+              {/* SUCCESS / PURCHASE RESULT VIEW */}
+              {purchaseResult ? (
+                <div className="space-y-4 py-2">
+                  <div className="text-center space-y-2">
+                    <div className="h-12 w-12 rounded-full bg-[#00D878]/15 text-[#00D878] flex items-center justify-center mx-auto border border-[#00D878]/30">
+                      <CheckCircle2 className="h-7 w-7" />
+                    </div>
+                    <h3 className="text-lg font-bold text-white">
+                      {purchaseResult.status === 'confirmed' ? 'License Key Active & Bound' : 'Payment Submitted for Desk Verification'}
+                    </h3>
+                    <p className="text-xs text-[#A6ADB9] max-w-sm mx-auto leading-relaxed">
+                      {purchaseResult.status === 'confirmed'
+                        ? `Bound to MetaTrader ${purchaseResult.bot.platform} Account #${purchaseResult.account}.`
+                        : `Your TXID has been logged. Desk will review your on-chain settlement.`}
+                    </p>
                   </div>
 
-                  <div className="p-3 rounded-lg bg-black/40 border border-white/10 flex items-center justify-between gap-2">
-                    <span className="text-white select-all font-mono font-bold">{generatedKey}</span>
-                    <button
-                      onClick={handleCopyKey}
-                      className="p-1.5 text-[#A6ADB9] hover:text-white rounded cursor-pointer"
-                      title="Copy Key"
+                  {/* License Key Box */}
+                  <div className="p-4 rounded-xl border border-[#00D878]/30 bg-[#00D878]/10 space-y-2 font-mono">
+                    <div className="flex items-center justify-between text-[#00D878] text-[11px] font-bold">
+                      <span className="flex items-center gap-1.5">
+                        <KeyRound className="h-3.5 w-3.5" />
+                        <span>Hardware & Account License Key:</span>
+                      </span>
+                      <button
+                        onClick={() => handleCopy(purchaseResult.key, 'key')}
+                        className="hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        {copiedKey ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                        <span>{copiedKey ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-black/60 border border-white/10 text-white font-bold text-xs break-all select-all">
+                      {purchaseResult.key}
+                    </div>
+                    <div className="text-[10px] text-slate-400">
+                      Paste this into your MetaTrader {purchaseResult.bot.platform} EA inputs dialog.
+                    </div>
+                  </div>
+
+                  {/* Download Options */}
+                  <div className="grid grid-cols-2 gap-2 pt-2">
+                    {(() => {
+                      const ext = purchaseResult.bot.platform.toLowerCase().includes('4') ? 'ex4' : 'ex5';
+                      const fileSlug = purchaseResult.bot.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+                      const dlPath = `/downloads/${fileSlug}_${purchaseResult.bot.platform.toLowerCase().replace(/[^a-z0-9]/g, '')}.${ext}`;
+
+                      return (
+                        <a
+                          href={dlPath}
+                          download
+                          className="inline-flex items-center justify-center gap-2 p-2.5 rounded-xl bg-[#00D878] text-[#07090D] font-bold hover:bg-[#00F09A] transition-all text-xs text-center cursor-pointer shadow-xs"
+                        >
+                          <Download className="h-4 w-4" />
+                          <span>Download .{ext.toUpperCase()}</span>
+                        </a>
+                      );
+                    })()}
+
+                    {purchaseResult.bot.download_url ? (
+                      <a
+                        href={purchaseResult.bot.download_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 p-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 transition-all text-xs text-center"
+                      >
+                        <HardDrive className="h-4 w-4" />
+                        <span>Google Drive Pack</span>
+                      </a>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        onClick={() => setCheckoutBot(null)}
+                        className="text-xs"
+                      >
+                        Done
+                      </Button>
+                    )}
+                  </div>
+
+                  {purchaseResult.isExisting && (
+                    <div className="pt-2 flex items-center justify-between border-t border-white/10 text-xs">
+                      <span className="text-[#A6ADB9]">Need to bind another account?</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPurchaseResult(null);
+                          setCheckoutAccount('');
+                          setCheckoutTxid('');
+                        }}
+                        className="text-[#F3C653] hover:underline font-bold cursor-pointer"
+                      >
+                        + Purchase License for New Account #
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* CHECKOUT FORM */
+                <div className="space-y-4">
+                  {/* Price Banner */}
+                  <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+                    <div>
+                      <div className="text-[10px] text-[#A6ADB9] uppercase tracking-wider font-mono">One-Time Perpetual Price</div>
+                      <div className="text-2xl font-black text-white font-mono mt-0.5">
+                        ${checkoutBot.price}.00 <span className="text-xs text-[#F3C653]">USDT</span>
+                      </div>
+                    </div>
+                    <Badge variant="positive">Perpetual Binary</Badge>
+                  </div>
+
+                  {/* Required Account Number */}
+                  <div>
+                    <label className="block text-[#E7E9EF] font-semibold mb-1">
+                      MetaTrader {checkoutBot.platform} Account Number <span className="text-rose-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 884920 or demo account number"
+                      value={checkoutAccount}
+                      onChange={(e) => setCheckoutAccount(e.target.value)}
+                      className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-white font-mono placeholder:text-white/20 focus:border-[#F3C653] focus:outline-none text-xs"
+                    />
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                      The generated binary license will be bound to this account number.
+                    </span>
+                  </div>
+
+                  {/* Network Picker */}
+                  <div>
+                    <label className="block text-[#E7E9EF] font-semibold mb-1">Select Settlement Network</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {['USDT-TRC20', 'USDT-BEP20', 'USDT-ERC20'].map((net) => (
+                        <button
+                          key={net}
+                          type="button"
+                          onClick={() => setCheckoutNetwork(net)}
+                          className={`py-2 px-2.5 rounded-xl border text-center transition-all cursor-pointer font-bold text-xs ${
+                            checkoutNetwork === net
+                              ? 'border-[#F3C653] bg-[#F3C653]/15 text-[#F3C653]'
+                              : 'border-white/10 bg-white/5 text-[#A6ADB9] hover:bg-white/10'
+                          }`}
+                        >
+                          {net.replace('USDT-', '')}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Deposit Address Box */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#E7E9EF] font-semibold">Deposit Wallet Address ({checkoutNetwork})</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(WALLETS[checkoutNetwork], 'address')}
+                        className="text-[#F3C653] hover:underline flex items-center gap-1 cursor-pointer font-semibold"
+                      >
+                        {copiedAddress ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                        <span>{copiedAddress ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
+                    <div className="p-2.5 rounded-xl border border-white/10 bg-[#07090D] text-[#F3C653] break-all select-all font-mono text-xs">
+                      {WALLETS[checkoutNetwork]}
+                    </div>
+                  </div>
+
+                  {/* TXID Input */}
+                  <div>
+                    <label className="block text-[#E7E9EF] font-semibold mb-1">
+                      Transaction Hash / TXID
+                    </label>
+                    <input
+                      type="text"
+                      value={checkoutTxid}
+                      onChange={(e) => setCheckoutTxid(e.target.value)}
+                      placeholder="Paste your blockchain transaction hash here..."
+                      className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-white placeholder:text-white/20 focus:border-[#F3C653] focus:outline-none text-xs font-mono"
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-2 pt-2">
+                    <Button
+                      type="button"
+                      disabled={submitting}
+                      onClick={() => handlePurchase(false)}
+                      className="w-full justify-center gap-2 font-bold"
                     >
-                      {copiedKey ? <Check className="h-4 w-4 text-[#00D878]" /> : <Copy className="h-4 w-4" />}
+                      <span>{submitting ? 'Processing...' : 'Submit Payment for Desk Verification'}</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+
+                    <div className="relative my-2">
+                      <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
+                      <div className="relative flex justify-center text-[10px] uppercase font-semibold"><span className="bg-[#10141B] px-2 text-[#A6ADB9]">Instant Evaluation</span></div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={submitting}
+                      onClick={() => handlePurchase(true)}
+                      className="w-full py-2.5 px-3 rounded-xl bg-[#00D878]/15 border border-[#00D878]/30 hover:bg-[#00D878]/25 text-[#00D878] font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <Zap className="h-4 w-4" />
+                      <span>⚡ Instant Sandbox Purchase & Verify (Demo Mode)</span>
                     </button>
                   </div>
-
-                  <div className="text-[11px] text-[#A6ADB9] flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[#00D878]" />
-                    <span>Paste this license key into EA inputs in MetaTrader.</span>
-                  </div>
-                </div>
-              )}
-              {/* Google Drive Direct Download Link */}
-              {selectedBotDetail.download_url && (
-                <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
-                  <div className="flex items-center gap-2.5 text-blue-400 font-bold">
-                    <HardDrive className="h-4 w-4 shrink-0" />
-                    <span>Google Drive Expert Advisor Package</span>
-                  </div>
-                  <a
-                    href={selectedBotDetail.download_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-500 transition-colors w-fit"
-                  >
-                    <span>Open in Drive</span>
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
                 </div>
               )}
             </CardContent>
-
-            <CardFooter className="flex justify-between border-t border-white/10 pt-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setLicenseModalBot(null)}
-              >
-                Close Desk
-              </Button>
-
-              {licenseModalBot.download_url ? (
-                <a
-                  href={licenseModalBot.download_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#00D878] text-[#07090D] text-xs font-bold hover:bg-[#00F09A] transition-all"
-                >
-                  <HardDrive className="h-3.5 w-3.5" />
-                  <span>Download from Google Drive</span>
-                </a>
-              ) : (
-                <a
-                  href={`/downloads/${licenseModalBot.name.toLowerCase().replace(/\s+/g, '_')}_${licenseModalBot.platform.toLowerCase()}.ex5`}
-                  download
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00D878] text-[#07090D] text-xs font-bold hover:bg-[#00F09A] transition-all"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>Download EA Binary</span>
-                </a>
-              )}
-            </CardFooter>
           </Card>
         </div>
       )}

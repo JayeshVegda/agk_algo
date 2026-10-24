@@ -203,20 +203,28 @@ export function AdminPortal({ onNavigatePublic, notify }) {
     try {
       await pb.collection('payments').update(p.id, { status: 'confirmed' });
 
-      const userList = await pb.collection('users').getList(1, 1, {
-        filter: `email = "${p.user_email}"`
-      });
-
-      if (userList.items.length > 0) {
-        const targetUser = userList.items[0];
-        const expiryDate = new Date();
-        expiryDate.setDate(expiryDate.getDate() + 30);
-
-        await pb.collection('users').update(targetUser.id, {
-          plan: p.plan,
-          cycle_expires_at: expiryDate.toISOString()
+      // If this is a Signal Box subscription, extend cycle and set plan
+      if (p.plan === 'PERFECT_SIGNAL_BOX' || p.plan === 'SR_SIGNAL_BOX') {
+        const userList = await pb.collection('users').getList(1, 1, {
+          filter: `email = "${p.user_email}"`
         });
-        toast('Payment Approved', `Granted 30-day ${p.plan} access to ${p.user_email}`);
+
+        if (userList.items.length > 0) {
+          const targetUser = userList.items[0];
+          const currentExpiry = targetUser.cycle_expires_at ? new Date(targetUser.cycle_expires_at) : new Date();
+          const baseDate = currentExpiry > new Date() ? currentExpiry : new Date();
+          baseDate.setDate(baseDate.getDate() + 30);
+
+          await pb.collection('users').update(targetUser.id, {
+            plan: p.plan,
+            cycle_expires_at: baseDate.toISOString()
+          });
+          toast('Payment Approved', `Granted 30-day ${p.plan} access to ${p.user_email}`);
+        } else {
+          toast('Payment Approved', `Confirmed payment for ${p.user_email}`);
+        }
+      } else if (p.plan?.startsWith('BOT:')) {
+        toast('Bot License Approved', `Confirmed perpetual EA license for ${p.user_email}`);
       } else {
         toast('Payment Approved', `Confirmed payment for ${p.user_email}`);
       }

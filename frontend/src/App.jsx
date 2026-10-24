@@ -11,7 +11,9 @@ import { PricingTab } from './components/PricingTab';
 import { ResourcesTab } from './components/ResourcesTab';
 import { AdminPortal } from './components/admin/AdminPortal';
 import { AuthModal } from './components/AuthModal';
+import { UserPurchasesModal } from './components/UserPurchasesModal';
 import { ToastContainer } from './components/Toast';
+import { Compass, Zap, Cpu, Network, User } from 'lucide-react';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(
@@ -20,6 +22,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [user, setUser] = useState(pb.authStore.record);
   const [authOpen, setAuthOpen] = useState(false);
+  const [purchasesOpen, setPurchasesOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
 
   // Toast notification dispatcher
@@ -117,9 +120,10 @@ export default function App() {
           user={user}
           onOpenAuth={() => setAuthOpen(true)}
           onNavigateAdmin={() => navigateTo('/admin')}
+          onOpenPurchases={() => setPurchasesOpen(true)}
         />
 
-        <main className="w-[94%] max-w-[1750px] mx-auto px-2 sm:px-4 lg:px-6 py-6">
+        <main className="w-[94%] max-w-[1750px] mx-auto px-2 sm:px-4 lg:px-6 py-6 pb-24 md:pb-6">
           {activeTab === 'home' && (
             <LandingPage
               onNavigate={(tab) => {
@@ -144,6 +148,7 @@ export default function App() {
             <BotsTab 
               user={user} 
               onOpenPricing={() => setActiveTab('pricing')}
+              onOpenAuth={() => setAuthOpen(true)}
               notify={notify}
             />
           )}
@@ -169,6 +174,7 @@ export default function App() {
             <PricingTab 
               user={user} 
               onOpenAuth={() => setAuthOpen(true)}
+              onNavigateSignals={() => setActiveTab('signals')}
               notify={notify}
             />
           )}
@@ -266,6 +272,82 @@ export default function App() {
           });
         }}
       />
+
+      {/* User Purchases & Active Licenses Modal */}
+      <UserPurchasesModal
+        isOpen={purchasesOpen}
+        onClose={() => setPurchasesOpen(false)}
+        user={user}
+        onOpenPricing={() => setActiveTab('pricing')}
+        notify={notify}
+      />
+
+      {/* Mobile Bottom Navigation Dock for Android & Mobile Web */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#07090D]/95 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-pb">
+        <button
+          onClick={() => { setActiveTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all ${
+            activeTab === 'home' ? 'text-[#F3C653]' : 'text-[#A6ADB9] hover:text-white'
+          }`}
+        >
+          <Compass className="h-5 w-5" />
+          <span className="text-[10px] font-bold">Overview</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('signals'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all relative ${
+            activeTab === 'signals' ? 'text-[#00D878]' : 'text-[#A6ADB9] hover:text-white'
+          }`}
+        >
+          <div className="relative">
+            <Zap className="h-5 w-5" />
+            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#00D878] animate-pulse" />
+          </div>
+          <span className="text-[10px] font-bold">Signals</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('bots'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all ${
+            activeTab === 'bots' ? 'text-[#F3C653]' : 'text-[#A6ADB9] hover:text-white'
+          }`}
+        >
+          <Cpu className="h-5 w-5" />
+          <span className="text-[10px] font-bold">Bots</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('connector'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all ${
+            activeTab === 'connector' ? 'text-purple-400' : 'text-[#A6ADB9] hover:text-white'
+          }`}
+        >
+          <Network className="h-5 w-5" />
+          <span className="text-[10px] font-bold">Bridge</span>
+        </button>
+
+        <button
+          onClick={() => {
+            if (user) {
+              setPurchasesOpen(true);
+            } else {
+              setAuthOpen(true);
+            }
+          }}
+          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer text-[#A6ADB9] hover:text-white transition-all relative"
+        >
+          <div className="relative">
+            <User className="h-5 w-5" />
+            {user && (
+              <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#00D878]" />
+            )}
+          </div>
+          <span className="text-[10px] font-bold truncate max-w-[55px]">
+            {user ? 'Account' : 'Sign In'}
+          </span>
+        </button>
+      </nav>
 
       {/* Global Toast Container */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
