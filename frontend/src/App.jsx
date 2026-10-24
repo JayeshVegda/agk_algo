@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { pb } from './lib/pocketbase';
-import { TickerBar } from './components/TickerBar';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
 import { SignalsTab } from './components/SignalsTab';
@@ -89,7 +88,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-white text-slate-800 flex flex-col justify-between selection:bg-emerald-100 selection:text-emerald-900 font-sans">
       <div>
-        <TickerBar />
         <Navbar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
