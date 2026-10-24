@@ -15,6 +15,20 @@
       "when": 1792821276685,
       "tag": "0001_shallow_johnny_blaze",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792821470751,
+      "tag": "0002_kind_captain_stacy",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792821646062,
+      "tag": "0003_fearless_silver_samurai",
+      "breakpoints": true
     }
   ]
 }
