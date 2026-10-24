@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { pb } from '../lib/pocketbase';
 import { 
   Zap, TrendingUp, TrendingDown, Clock, Plus, X, Radio, 
-  Lock, ArrowRight, Edit3, Trash2, CheckCircle2 
+  Lock, ArrowRight, Edit3, Trash2, CheckCircle2, Copy, Check, BarChart2
 } from 'lucide-react';
 
 export function SignalsTab({ user, onOpenPricing, onOpenAuth }) {
@@ -11,6 +11,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth }) {
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingSignal, setEditingSignal] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   // New Signal Form State
   const [form, setForm] = useState({
@@ -54,6 +55,13 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth }) {
       unsubPromise.then((unsub) => unsub());
     };
   }, []);
+
+  const handleCopyParams = (s) => {
+    const text = `${s.symbol} ${s.direction}\nEntry: ${s.entry}\nSL: ${s.stop_loss}\nTP1: ${s.take_profit_1}${s.take_profit_2 ? `\nTP2: ${s.take_profit_2}` : ''}`;
+    navigator.clipboard.writeText(text);
+    setCopiedId(s.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   const handleCreateOrUpdateSignal = async (e) => {
     e.preventDefault();
@@ -129,33 +137,40 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth }) {
     return s.status === filter;
   });
 
+  const activeCount = signals.filter(s => s.status === 'active').length;
+  const closedCount = signals.filter(s => s.status === 'closed').length;
+
   return (
     <div className="space-y-6">
       {/* Header bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-border/80 bg-card/80 backdrop-blur shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-border bg-surface shadow-sm">
         <div>
           <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-mono font-semibold mb-1">
             <Radio className="h-3 w-3 animate-pulse" />
-            REALTIME SSE CONNECTED · {signals.length} TOTAL SIGNALS
+            LIVE SSE EXECUTION FEED
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Algorithmic Execution Feeds</h1>
-          <p className="text-xs text-slate-400">Institutional entry zones, stop losses, and multi-tier take-profit levels</p>
+          <h1 className="text-2xl font-bold tracking-tight text-white font-sans">Institutional Signal Stream</h1>
+          <p className="text-xs text-slate-400 font-mono mt-0.5">High-probability algorithmic setups with strict risk-to-reward parameters</p>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Status filter */}
-          <div className="inline-flex rounded-lg border border-border bg-slate-900/80 p-1 text-xs font-mono">
-            {['active', 'closed', 'all'].map((f) => (
+          <div className="inline-flex rounded-xl border border-border bg-[#05080e] p-1 text-xs font-mono">
+            {[
+              { id: 'active', label: `Active (${activeCount})` },
+              { id: 'closed', label: `Closed (${closedCount})` },
+              { id: 'all', label: `All (${signals.length})` },
+            ].map((tab) => (
               <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3 py-1 rounded-md capitalize font-medium transition-all cursor-pointer ${
-                  filter === f
-                    ? 'bg-blue-600 text-white shadow'
+                key={tab.id}
+                onClick={() => setFilter(tab.id)}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+                  filter === tab.id
+                    ? 'bg-blue-600 text-white font-bold shadow'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                {f}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -167,7 +182,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth }) {
                 setEditingSignal(null);
                 setShowModal(true);
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow transition-all cursor-pointer font-mono"
             >
               <Plus className="h-4 w-4" />
               Post Signal
@@ -183,8 +198,8 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth }) {
             <Lock className="h-4 w-4 text-blue-400 shrink-0" />
             <span>
               {user 
-                ? 'Preview Mode Active · Subscribe to a 30-day cycle to unlock institutional entry, stop loss, and TP values.'
-                : 'Preview Mode Active · Sign in or enroll to unlock live algorithmic execution parameters.'}
+                ? 'Trader Preview Mode · Subscribe to a 30-day cycle to unlock institutional entry, stop loss, and TP values.'
+                : 'Guest Preview Mode · Sign in or enroll to unlock live algorithmic execution parameters.'}
             </span>
           </div>
           <button
@@ -199,7 +214,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth }) {
 
       {/* Signals Grid */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 rounded-2xl border border-border/60 bg-card/40 p-8">
+        <div className="text-center py-16 rounded-2xl border border-border/60 bg-card/40 p-8 font-mono">
           <Clock className="h-8 w-8 text-slate-500 mx-auto mb-3" />
           <h3 className="text-base font-bold text-slate-300">No {filter} signals right now</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
@@ -215,17 +230,17 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth }) {
             return (
               <div
                 key={s.id}
-                className="rounded-2xl border border-border/80 bg-card/90 backdrop-blur p-5 space-y-4 hover:border-blue-500/40 transition-all shadow-md group relative overflow-hidden"
+                className="rounded-2xl border border-border bg-card p-5 space-y-4 hover:border-slate-700 hover:bg-card-hover transition-all shadow-md group relative overflow-hidden"
               >
                 {/* Card Top */}
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-10 w-10 rounded-xl bg-slate-800 border border-border font-mono font-bold text-sm text-white flex items-center justify-center">
+                  <div className="flex items-center gap-3">
+                    <div className="h-11 w-11 rounded-xl bg-[#090e18] border border-border font-mono font-bold text-sm text-white flex items-center justify-center">
                       {s.symbol.slice(0, 3)}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-base font-bold text-white">{s.symbol}</span>
+                        <span className="font-mono text-base font-bold text-white tracking-wide">{s.symbol}</span>
                         <span
                           className={`rounded px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 ${
                             isBuy
@@ -237,7 +252,9 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth }) {
                           {s.direction}
                         </span>
                       </div>
-                      <div className="text-[11px] font-mono text-slate-400">{s.plan_tier || 'SR Signal Box'}</div>
+                      <div className="text-[11px] font-mono text-slate-400 flex items-center gap-1 mt-0.5">
+                        <span>{s.plan_tier === 'PERFECT_SIGNAL_BOX' ? '⚡ Perfect Signal Box' : 'SR Signal Box'}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -255,40 +272,40 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth }) {
 
                 {/* Metrics Grid */}
                 <div className="grid grid-cols-2 gap-2 text-xs font-mono relative">
-                  <div className="p-2.5 rounded-xl bg-background/60 border border-border/60">
-                    <div className="text-[10px] uppercase text-slate-400">Entry Price</div>
+                  <div className="p-3 rounded-xl bg-[#090e18] border border-border/80">
+                    <div className="text-[10px] uppercase text-slate-400 tracking-wider">Entry Zone</div>
                     <div className={`text-sm font-bold text-slate-100 tabular-nums mt-0.5 ${!signalUnlocked ? 'blur-sm select-none' : ''}`}>
                       {signalUnlocked ? s.entry : '••••••'}
                     </div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/20">
-                    <div className="text-[10px] uppercase text-rose-400 font-medium">Stop Loss</div>
+                  <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/20">
+                    <div className="text-[10px] uppercase text-rose-400 font-semibold tracking-wider">Stop Loss</div>
                     <div className={`text-sm font-bold text-rose-400 tabular-nums mt-0.5 ${!signalUnlocked ? 'blur-sm select-none' : ''}`}>
                       {signalUnlocked ? s.stop_loss : '••••••'}
                     </div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-                    <div className="text-[10px] uppercase text-emerald-400 font-medium">Target 1</div>
+                  <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                    <div className="text-[10px] uppercase text-emerald-400 font-semibold tracking-wider">Target 1</div>
                     <div className={`text-sm font-bold text-emerald-400 tabular-nums mt-0.5 ${!signalUnlocked ? 'blur-sm select-none' : ''}`}>
                       {signalUnlocked ? s.take_profit_1 : '••••••'}
                     </div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-                    <div className="text-[10px] uppercase text-emerald-400 font-medium">Target 2</div>
+                  <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                    <div className="text-[10px] uppercase text-emerald-400 font-semibold tracking-wider">Target 2</div>
                     <div className={`text-sm font-bold text-emerald-400 tabular-nums mt-0.5 ${!signalUnlocked ? 'blur-sm select-none' : ''}`}>
-                      {signalUnlocked ? (s.take_profit_2 || 'Runner') : '••••••'}
+                      {signalUnlocked ? (s.take_profit_2 || 'Runner TP') : '••••••'}
                     </div>
                   </div>
 
                   {!signalUnlocked && (
                     <div 
                       onClick={user ? onOpenPricing : onOpenAuth}
-                      className="absolute inset-0 bg-background/60 backdrop-blur-[2px] flex items-center justify-center rounded-xl cursor-pointer hover:bg-background/40 transition-all border border-blue-500/20"
+                      className="absolute inset-0 bg-background/70 backdrop-blur-[2px] flex items-center justify-center rounded-xl cursor-pointer hover:bg-background/50 transition-all border border-blue-500/20"
                     >
-                      <span className="px-3 py-1 rounded-lg bg-blue-600/90 text-white font-bold text-[11px] shadow flex items-center gap-1.5">
+                      <span className="px-3.5 py-1.5 rounded-lg bg-blue-600 text-white font-bold text-[11px] shadow-lg flex items-center gap-1.5 font-mono">
                         <Lock className="h-3.5 w-3.5" />
                         Unlock Values
                       </span>
@@ -299,8 +316,31 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth }) {
                 {/* Analysis Notes */}
                 {s.notes && (
                   <div className="pt-2 border-t border-border/40 text-[11px] text-slate-400 leading-relaxed font-mono">
-                    <span className="text-slate-500">Analysis: </span>
-                    {signalUnlocked ? s.notes : 'Full technical commentary available to subscribed members.'}
+                    <span className="text-slate-500 font-bold">Desk Analysis: </span>
+                    {signalUnlocked ? s.notes : 'Full technical commentary available to active subscribers.'}
+                  </div>
+                )}
+
+                {/* Quick Copy Toolbar for Unlocked users */}
+                {signalUnlocked && (
+                  <div className="pt-2 flex items-center justify-between text-xs font-mono">
+                    <button
+                      onClick={() => handleCopyParams(s)}
+                      className="text-slate-400 hover:text-white flex items-center gap-1 text-[11px] cursor-pointer py-1 px-2 rounded hover:bg-slate-800 transition-colors"
+                    >
+                      {copiedId === s.id ? (
+                        <>
+                          <Check className="h-3.5 w-3.5 text-emerald-400" />
+                          <span className="text-emerald-400">Copied Parameters</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5 text-slate-400" />
+                          <span>Copy Parameters</span>
+                        </>
+                      )}
+                    </button>
+                    <span className="text-[10px] text-slate-600">Encrypted SSE</span>
                   </div>
                 )}
 
@@ -342,7 +382,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
             <div className="flex items-center justify-between pb-4 border-b border-border/80">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2 font-mono">
                 <Plus className="h-5 w-5 text-emerald-400" />
                 {editingSignal ? 'Edit Signal' : 'Post Live Signal'}
               </h3>
@@ -351,7 +391,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth }) {
                   setShowModal(false);
                   setEditingSignal(null);
                 }} 
-                className="text-slate-400 hover:text-white cursor-pointer"
+                className="text-slate-400 hover:text-white cursor-pointer p-1 rounded"
               >
                 <X className="h-5 w-5" />
               </button>
