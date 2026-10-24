@@ -77,8 +77,13 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           <X className="h-5 w-5" />
         </button>
 
-        <CardHeader className="space-y-1 pb-4">
-          <div className="flex">
+        <CardHeader className="space-y-2 pb-4 text-center items-center">
+          <img 
+            src="/assets/logos/akg-algo-symbol-transparent.png" 
+            alt="AKG ALGO" 
+            className="h-12 w-auto mx-auto object-contain mb-1"
+          />
+          <div className="flex justify-center">
             <Badge variant="gold" className="gap-1.5 py-0.5 px-2.5 text-[11px]">
               <Zap className="h-3 w-3" />
               <span>Terminal Authentication</span>

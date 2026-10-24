@@ -406,6 +406,12 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
         <div className="absolute top-0 right-1/4 w-48 h-48 bg-[#F3C653]/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-1/4 w-48 h-48 bg-[#00D878]/5 rounded-full blur-3xl pointer-events-none" />
 
+        <img 
+          src="/assets/logos/akg-algo-symbol-transparent.png" 
+          alt="AKG ALGO" 
+          className="h-14 w-auto mx-auto mb-2 object-contain relative z-10 opacity-95"
+        />
+
         <h2 className="text-2xl sm:text-3xl font-extrabold text-white relative z-10">
           Ready to automate your trading execution?
         </h2>

@@ -378,9 +378,11 @@ export function AdminPortal({ onNavigatePublic, notify }) {
       <div className="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4 font-sans text-slate-800">
         <div className="w-full max-w-md">
           <div className="text-center mb-6">
-            <div className="inline-flex h-12 w-12 rounded-xl bg-emerald-600 text-white items-center justify-center shadow-md mb-3">
-              <Shield className="h-6 w-6" />
-            </div>
+            <img 
+              src="/assets/logos/akg-algo-symbol-transparent.png" 
+              alt="AKG ALGO" 
+              className="h-14 w-auto mx-auto mb-3 object-contain"
+            />
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">AKG ALGO Admin Console</h1>
             <p className="text-xs text-slate-500 mt-1">Dedicated Administrative Portal & Operational Ledger</p>
           </div>
@@ -568,9 +570,11 @@ export function AdminPortal({ onNavigatePublic, notify }) {
         <div>
           <div className="h-16 px-4 border-b border-slate-100 flex items-center justify-between">
             <div className={`flex items-center gap-3 overflow-hidden select-none ${sidebarCollapsed ? 'justify-center w-full' : ''}`}>
-              <div className="h-9 w-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-sm shrink-0">
-                <Shield className="h-5 w-5" />
-              </div>
+              <img 
+                src="/assets/logos/akg-algo-symbol-transparent.png" 
+                alt="AKG ALGO" 
+                className={`${sidebarCollapsed ? 'h-7 w-auto' : 'h-8 w-auto'} object-contain shrink-0`}
+              />
               {!sidebarCollapsed && (
                 <div className="truncate">
                   <div className="font-black text-sm tracking-tight text-slate-900 flex items-center gap-1.5">

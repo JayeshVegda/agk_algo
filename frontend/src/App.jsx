@@ -158,9 +158,9 @@ export default function App() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-2">
               <img 
-                src="/assets/logos/akg-algo-header.svg" 
+                src="/assets/logos/akg-algo-symbol-transparent.png" 
                 alt="AKG ALGO — Trade Smarter" 
-                className="h-7 w-auto"
+                className="h-10 w-auto"
               />
               <p className="text-xs text-[#A6ADB9] max-w-lg leading-relaxed">
                 Automated MetaTrader Expert Advisors and institutional execution signals with strict stop-loss protection.

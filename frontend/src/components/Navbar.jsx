@@ -119,9 +119,9 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAd
             className="flex items-center cursor-pointer select-none shrink-0 group"
           >
             <img 
-              src="/assets/logos/akg-algo-header.svg" 
+              src="/assets/logos/akg-algo-symbol-transparent.png" 
               alt="AKG ALGO — Trade Smarter" 
-              className="h-8 sm:h-9 w-auto hover:opacity-90 transition-opacity"
+              className="h-10 sm:h-11 w-auto hover:scale-105 transition-transform"
             />
           </div>
 
@@ -409,9 +409,9 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAd
                 <div>
                   <SheetHeader className="p-4 border-b border-white/10">
                     <img 
-                      src="/assets/logos/akg-algo-header.svg" 
+                      src="/assets/logos/akg-algo-symbol-transparent.png" 
                       alt="AKG ALGO" 
-                      className="h-7 w-auto"
+                      className="h-8 w-auto"
                     />
                   </SheetHeader>
 
