@@ -9,11 +9,14 @@ import { ChartsTab } from './components/ChartsTab';
 import { ConnectorTab } from './components/ConnectorTab';
 import { BroadcastsTab } from './components/BroadcastsTab';
 import { PricingTab } from './components/PricingTab';
-import { AdminTab } from './components/AdminTab';
+import { AdminPortal } from './components/admin/AdminPortal';
 import { AuthModal } from './components/AuthModal';
 import { ToastContainer } from './components/Toast';
 
 export default function App() {
+  const [currentPath, setCurrentPath] = useState(
+    window.location.pathname.startsWith('/admin') ? '/admin' : window.location.pathname
+  );
   const [activeTab, setActiveTab] = useState('home');
   const [user, setUser] = useState(pb.authStore.record);
   const [authOpen, setAuthOpen] = useState(false);
@@ -33,8 +36,23 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  // Listen for browser back/forward buttons
   useEffect(() => {
-    // Listen for auth store changes
+    const onPopState = () => {
+      setCurrentPath(window.location.pathname.startsWith('/admin') ? '/admin' : window.location.pathname);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  // Client-side router navigation helper
+  const navigateTo = (path) => {
+    window.history.pushState({}, '', path);
+    setCurrentPath(path.startsWith('/admin') ? '/admin' : path);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
     const unsub = pb.authStore.onChange((token, model) => {
       setUser(model);
       if (model) {
@@ -48,6 +66,26 @@ export default function App() {
     return () => unsub();
   }, [notify]);
 
+  // =========================================================================
+  // DEDICATED STANDALONE ADMIN PORTAL (/admin)
+  // Completely separate page, template, and layout without public navigation
+  // =========================================================================
+  if (currentPath === '/admin') {
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
+        <AdminPortal
+          onNavigatePublic={() => navigateTo('/')}
+          notify={notify}
+        />
+        <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // PUBLIC WEBSITE (/)
+  // Full consumer experience with market ticker, public navbar, and catalog
+  // =========================================================================
   return (
     <div className="min-h-screen bg-white text-slate-800 flex flex-col justify-between selection:bg-emerald-100 selection:text-emerald-900 font-sans">
       <div>
@@ -57,6 +95,7 @@ export default function App() {
           setActiveTab={setActiveTab}
           user={user}
           onOpenAuth={() => setAuthOpen(true)}
+          onNavigateAdmin={() => navigateTo('/admin')}
         />
 
         <main className="max-w-7xl mx-auto px-4 py-8">
@@ -112,17 +151,10 @@ export default function App() {
               notify={notify}
             />
           )}
-
-          {activeTab === 'admin' && user?.role === 'admin' && (
-            <AdminTab 
-              user={user} 
-              notify={notify}
-            />
-          )}
         </main>
       </div>
 
-      {/* Global Clean White-Green Footer */}
+      {/* Global Clean White-Green Consumer Footer */}
       <footer className="border-t border-slate-200 bg-slate-50 py-10 text-xs text-slate-500 mt-20">
         <div className="max-w-7xl mx-auto px-4 space-y-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -162,6 +194,14 @@ export default function App() {
               >
                 Pricing Plans
               </button>
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => navigateTo('/admin')}
+                  className="text-emerald-700 font-bold hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  Admin Console →
+                </button>
+              )}
             </div>
           </div>
 

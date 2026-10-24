@@ -7,7 +7,7 @@ import {
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 
-export function Navbar({ activeTab, setActiveTab, user, onOpenAuth }) {
+export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAdmin }) {
   const handleLogout = () => {
     pb.authStore.clear();
     window.location.reload();
@@ -21,7 +21,6 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth }) {
     { id: 'connector', label: 'Connector Demo', icon: Network, shortcut: '5' },
     { id: 'broadcasts', label: 'Directives', icon: Bell, shortcut: '6' },
     { id: 'pricing', label: 'Plans & Pricing', icon: CreditCard, shortcut: '7' },
-    ...(user?.role === 'admin' ? [{ id: 'admin', label: 'Admin Desk', icon: Shield, badge: 'CRUD', shortcut: '8' }] : []),
   ];
 
   // Optional keyboard navigation (1-8)
@@ -127,13 +126,14 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth }) {
                 </div>
               </div>
 
-              {user.role === 'admin' && activeTab !== 'admin' && (
+              {user.role === 'admin' && (
                 <button
-                  onClick={() => setActiveTab('admin')}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold hover:bg-amber-100 transition-all cursor-pointer shadow-sm"
+                  onClick={onNavigateAdmin}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-semibold hover:bg-emerald-100 transition-all cursor-pointer shadow-sm"
+                  title="Open Dedicated Admin Console"
                 >
-                  <Shield className="h-3.5 w-3.5 text-amber-700" />
-                  Admin
+                  <Shield className="h-3.5 w-3.5 text-emerald-700" />
+                  <span>Admin Console →</span>
                 </button>
               )}
 
