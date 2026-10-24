@@ -4,7 +4,7 @@ import {
   Zap, TrendingUp, TrendingDown, Clock, Plus, X, Radio, 
   Lock, ArrowRight, Edit3, Trash2, CheckCircle2, Copy, Check, 
   Search, SlidersHorizontal, ShieldAlert, Award, Target, Flame,
-  LayoutGrid, Table as TableIcon, ChevronDown, ChevronUp
+  LayoutGrid, Table as TableIcon, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Activity, Filter
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
@@ -20,6 +20,9 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
   const [submitting, setSubmitting] = useState(false);
   const [editingSignal, setEditingSignal] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [assetFilter, setAssetFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
 
   const [form, setForm] = useState({
     symbol: 'XAUUSD',
@@ -194,6 +197,13 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
   const filtered = signals.filter((s) => {
     if (filter !== 'all' && s.status !== filter) return false;
     if (directionFilter !== 'all' && s.direction !== directionFilter) return false;
+    if (assetFilter !== 'all') {
+      const sym = (s.symbol || '').toUpperCase();
+      if (assetFilter === 'metals' && !sym.includes('XAU') && !sym.includes('GOLD') && !sym.includes('SILVER')) return false;
+      if (assetFilter === 'forex' && !['EUR', 'GBP', 'USD', 'JPY', 'AUD', 'NZD', 'CAD', 'CHF'].some(c => sym.includes(c))) return false;
+      if (assetFilter === 'indices' && !sym.includes('US30') && !sym.includes('NAS') && !sym.includes('GER') && !sym.includes('SPX')) return false;
+      if (assetFilter === 'crypto' && !sym.includes('BTC') && !sym.includes('ETH') && !sym.includes('SOL') && !sym.includes('CRYPTO')) return false;
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
@@ -203,6 +213,9 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
     }
     return true;
   });
+
+  const totalPages = Math.ceil(filtered.length / perPage) || 1;
+  const paginatedSignals = filtered.slice((page - 1) * perPage, page * perPage);
 
   const activeCount = signals.filter(s => s.status === 'active').length;
   const closedCount = signals.filter(s => s.status === 'closed').length;
@@ -270,41 +283,56 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
         </div>
       </div>
 
-      {/* 2. Control Bar: Search + Filters */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 rounded-2xl border border-white/10 bg-[#10141B] text-xs">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#A6ADB9]" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Filter by pair (e.g. XAUUSD, EURUSD)..."
-            className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-[#A6ADB9] focus:outline-none focus:border-[#F3C653] text-xs"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex rounded-xl border border-white/10 bg-white/5 p-0.5">
+      {/* 2. Scalable High-Capacity Query Strip (Multi-Filter & Pagination) */}
+      <div className="p-4 rounded-2xl border border-white/10 bg-[#10141B] space-y-3 shadow-xl text-xs">
+        {/* Row 1: Lifecycle Status & Asset Matrix */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+          {/* Status Tabs */}
+          <div className="flex items-center gap-1.5 flex-wrap">
             {[
               { id: 'active', label: `Active (${activeCount})` },
-              { id: 'closed', label: `Closed (${closedCount})` },
-              { id: 'all', label: `All (${signals.length})` },
+              { id: 'closed', label: `Settled (${closedCount})` },
+              { id: 'all', label: `All History (${signals.length})` },
             ].map((btn) => (
               <button
                 key={btn.id}
-                onClick={() => setFilter(btn.id)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
+                onClick={() => { setFilter(btn.id); setPage(1); }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   filter === btn.id
-                    ? 'bg-[#F3C653] text-[#07090D] font-bold'
-                    : 'text-[#A6ADB9] hover:text-white hover:bg-white/5'
+                    ? 'bg-[#F3C653] text-[#07090D] shadow-xs'
+                    : 'bg-white/5 text-[#A6ADB9] hover:text-white hover:bg-white/10'
                 }`}
               >
                 {btn.label}
               </button>
             ))}
+
+            <div className="h-4 w-px bg-white/10 mx-1 hidden sm:block" />
+
+            {/* Asset Class Filter Chips */}
+            {[
+              { id: 'all', label: 'All Markets' },
+              { id: 'metals', label: 'Gold (XAU)' },
+              { id: 'forex', label: 'FX Majors' },
+              { id: 'indices', label: 'Indices' },
+              { id: 'crypto', label: 'Crypto' },
+            ].map((af) => (
+              <button
+                key={af.id}
+                onClick={() => { setAssetFilter(af.id); setPage(1); }}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
+                  assetFilter === af.id
+                    ? 'bg-[#00D878]/20 text-[#00D878] border border-[#00D878]/40'
+                    : 'text-[#A6ADB9] hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {af.label}
+              </button>
+            ))}
           </div>
 
-          <div className="inline-flex rounded-xl border border-white/10 bg-white/5 p-0.5">
+          {/* Direction Filter */}
+          <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 shrink-0">
             {[
               { id: 'all', label: 'All Sides' },
               { id: 'BUY', label: 'BUY' },
@@ -312,45 +340,95 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
             ].map((d) => (
               <button
                 key={d.id}
-                onClick={() => setDirectionFilter(d.id)}
-                className={`px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
+                onClick={() => { setDirectionFilter(d.id); setPage(1); }}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition-all ${
                   directionFilter === d.id
-                    ? 'bg-white/20 text-white font-bold'
-                    : 'text-[#A6ADB9] hover:text-white hover:bg-white/5'
+                    ? 'bg-white/20 text-white shadow-xs'
+                    : 'text-[#A6ADB9] hover:text-white'
                 }`}
               >
                 {d.label}
               </button>
             ))}
           </div>
+        </div>
 
-          <div className="inline-flex rounded-xl border border-white/10 bg-white/5 p-0.5">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-lg cursor-pointer ${viewMode === 'grid' ? 'bg-white/20 text-white' : 'text-[#A6ADB9]'}`}
-              title="Grid View"
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg cursor-pointer ${viewMode === 'table' ? 'bg-white/20 text-white' : 'text-[#A6ADB9]'}`}
-              title="Table View"
-            >
-              <TableIcon className="h-3.5 w-3.5" />
-            </button>
+        {/* Row 2: Search, Pagination & View Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-white/5">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#A6ADB9]" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+              placeholder="Search ticker, setup notes..."
+              className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-[#A6ADB9] focus:outline-none focus:border-[#F3C653] text-xs font-mono"
+            />
           </div>
 
-          {isAdmin && (
-            <Button
-              size="sm"
-              onClick={() => { setEditingSignal(null); setShowModal(true); }}
-              className="gap-1.5 font-bold"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Post Signal</span>
-            </Button>
-          )}
+          <div className="flex items-center gap-3 justify-between sm:justify-end">
+            {/* Pagination Controls */}
+            <div className="flex items-center gap-2 text-xs font-mono text-[#A6ADB9]">
+              <span>Showing {Math.min((page - 1) * perPage + 1, filtered.length)}–{Math.min(page * perPage, filtered.length)} of {filtered.length}</span>
+              
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage(p => Math.max(p - 1, 1))}
+                  disabled={page <= 1}
+                  className="h-7 w-7 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-white disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed hover:bg-white/10"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+                <span className="px-1 text-white font-bold">{page}/{totalPages}</span>
+                <button
+                  onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+                  disabled={page >= totalPages}
+                  className="h-7 w-7 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-white disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed hover:bg-white/10"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <select
+                value={perPage}
+                onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1); }}
+                className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs font-semibold text-white focus:outline-none"
+              >
+                <option value={10} className="bg-[#10141B]">10/pg</option>
+                <option value={25} className="bg-[#10141B]">25/pg</option>
+                <option value={50} className="bg-[#10141B]">50/pg</option>
+              </select>
+            </div>
+
+            {/* View Switcher: Grid vs Table */}
+            <div className="flex items-center bg-white/5 p-1 rounded-xl border border-white/10 shrink-0">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-lg cursor-pointer transition-all ${viewMode === 'grid' ? 'bg-white/20 text-white' : 'text-[#A6ADB9]'}`}
+                title="Cards Grid"
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-1.5 rounded-lg cursor-pointer transition-all ${viewMode === 'table' ? 'bg-white/20 text-white' : 'text-[#A6ADB9]'}`}
+                title="Order Blotter Table"
+              >
+                <TableIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {isAdmin && (
+              <Button
+                size="sm"
+                onClick={() => { setEditingSignal(null); setShowModal(true); }}
+                className="gap-1.5 font-bold text-xs h-8"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Post Signal</span>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -387,7 +465,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((s) => {
+          {paginatedSignals.map((s) => {
             const isBuy = s.direction === 'BUY';
             const signalUnlocked = hasAccess;
             const rrData = calculateRR(s.entry, s.stop_loss, s.take_profit_1);
@@ -567,7 +645,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {filtered.map((s) => {
+                {paginatedSignals.map((s) => {
                   const isBuy = s.direction === 'BUY';
                   const signalUnlocked = hasAccess;
                   return (

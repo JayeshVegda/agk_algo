@@ -201,21 +201,33 @@ export function ConnectorTab({ user, onOpenAuth, notify }) {
               <Activity className="h-4 w-4 text-[#00D878]" />
               <span>Your Registered Bridge Terminals (Live Two-Way Sync)</span>
             </span>
-            <span className="text-[#A6ADB9] text-[11px]">{userRequests.length} Active Accounts</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[#A6ADB9] text-[11px]">{userRequests.length} Active Accounts</span>
+              <button
+                onClick={loadUserRequests}
+                disabled={loadingRequests}
+                title="Sync Live Status from Desk"
+                className="p-1 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-white cursor-pointer transition-colors"
+              >
+                <RefreshCw className={`h-3 w-3 ${loadingRequests ? 'animate-spin text-[#00D878]' : 'text-[#A6ADB9]'}`} />
+              </button>
+            </div>
           </div>
 
           <div className="grid gap-3">
             {userRequests.map((req) => {
               const statusInfo = getStatusBadge(req.status);
+              const isApproved = req.status === 'approved' || req.status === 'active';
+              const isLive = req.status === 'active';
 
               return (
                 <div 
                   key={req.id}
-                  className="p-5 rounded-2xl border border-white/10 bg-[#10141B] space-y-3 shadow-lg"
+                  className="p-5 rounded-2xl border border-white/10 bg-[#10141B] space-y-4 shadow-lg"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-bold text-xs text-white">
+                      <div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-xs text-white">
                         {req.platform}
                       </div>
                       <div>
@@ -236,14 +248,49 @@ export function ConnectorTab({ user, onOpenAuth, notify }) {
                     </div>
                   </div>
 
+                  {/* Operational Lifecycle Stepper */}
+                  <div className="grid grid-cols-3 gap-2 text-[10px] font-mono border-b border-white/5 pb-3">
+                    <div className="p-2 rounded-lg bg-white/5 border border-white/10 space-y-1">
+                      <div className="flex items-center gap-1.5 text-[#00D878] font-bold">
+                        <CheckCircle2 className="h-3 w-3" />
+                        <span>1. Logged</span>
+                      </div>
+                      <div className="text-[#A6ADB9]">Ticket recorded</div>
+                    </div>
+
+                    <div className={`p-2 rounded-lg border space-y-1 ${
+                      isApproved 
+                        ? 'bg-[#00D878]/10 border-[#00D878]/30 text-[#00D878]' 
+                        : 'bg-[#F3C653]/10 border-[#F3C653]/30 text-[#F3C653]'
+                    }`}>
+                      <div className="flex items-center gap-1.5 font-bold">
+                        {isApproved ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                        <span>2. Desk Review</span>
+                      </div>
+                      <div className="text-[#A6ADB9] truncate">{isApproved ? 'Approved by Admin' : 'In Compliance Review'}</div>
+                    </div>
+
+                    <div className={`p-2 rounded-lg border space-y-1 ${
+                      isLive 
+                        ? 'bg-[#00D878]/10 border-[#00D878]/30 text-[#00D878]' 
+                        : 'bg-white/5 border-white/10 text-[#A6ADB9]'
+                    }`}>
+                      <div className="flex items-center gap-1.5 font-bold">
+                        {isLive ? <Zap className="h-3 w-3 text-[#00D878]" /> : <Server className="h-3 w-3" />}
+                        <span>3. LD4 Bridge</span>
+                      </div>
+                      <div className="truncate">{isLive ? '0.8ms Socket Active' : 'Standby Router'}</div>
+                    </div>
+                  </div>
+
                   {/* Admin Live Notes Directive */}
                   {req.admin_notes && (
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs font-mono space-y-1">
-                      <div className="text-[10px] text-[#A6ADB9] uppercase font-bold tracking-wider flex items-center gap-1.5">
-                        <CheckCircle2 className="h-3 w-3 text-[#00D878]" />
-                        <span>Desk Administrator Operational Note</span>
+                    <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-mono space-y-1">
+                      <div className="text-[10px] text-[#00D878] uppercase font-bold tracking-wider flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-[#00D878]" />
+                        <span>Desk Administrator Operational Note & Direct Feedback</span>
                       </div>
-                      <p className="text-white text-xs leading-relaxed">
+                      <p className="text-white text-xs leading-relaxed font-sans">
                         "{req.admin_notes}"
                       </p>
                     </div>
