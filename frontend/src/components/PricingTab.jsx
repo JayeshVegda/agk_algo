@@ -79,65 +79,6 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
     }
   };
 
-  const handleInstantSandboxVerify = async () => {
-    if (!user) {
-      if (notify) {
-        notify({
-          type: 'info',
-          title: 'Sign In Required',
-          message: 'Please sign in or create an account to activate instant test access.'
-        });
-      }
-      onOpenAuth();
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const demoTxid = `0x${Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('')}`;
-      await pb.collection('payments').create({
-        user_email: user.email,
-        plan: selectedPlan.id,
-        amount: selectedPlan.price,
-        network,
-        txid: demoTxid,
-        status: 'confirmed'
-      });
-
-      // Update user subscription plan and cycle expiration directly
-      const currentExpiry = user.cycle_expires_at ? new Date(user.cycle_expires_at) : new Date();
-      const baseDate = currentExpiry > new Date() ? currentExpiry : new Date();
-      baseDate.setDate(baseDate.getDate() + 30);
-
-      const updatedUser = await pb.collection('users').update(user.id, {
-        plan: selectedPlan.id,
-        cycle_expires_at: baseDate.toISOString()
-      });
-
-      // Immediately synchronize into pocketbase auth store for instant UI unlock
-      pb.authStore.save(pb.authStore.token, updatedUser);
-
-      setTxid(demoTxid);
-      setSubmitted(true);
-      if (notify) {
-        notify({
-          type: 'success',
-          title: 'Instant Sandbox Activation',
-          message: `Activated 30-day ${selectedPlan.name} access.`
-        });
-      }
-    } catch (err) {
-      if (notify) {
-        notify({
-          type: 'error',
-          title: 'Verification Error',
-          message: err.message || 'Error activating sandbox test'
-        });
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const PLANS = [
     {
       id: 'SR_SIGNAL_BOX',
@@ -413,21 +354,6 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
                         <span>{submitting ? 'Confirming...' : 'Submit Payment for Desk Verification'}</span>
                         <ArrowRight className="h-4 w-4" />
                       </Button>
-
-                      <div className="relative my-2">
-                        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
-                        <div className="relative flex justify-center text-[10px] uppercase font-semibold"><span className="bg-[#10141B] px-2 text-[#A6ADB9]">Developer Sandbox</span></div>
-                      </div>
-
-                      <button
-                        type="button"
-                        disabled={submitting}
-                        onClick={handleInstantSandboxVerify}
-                        className="w-full py-2.5 px-3 rounded-xl bg-[#00D878]/15 border border-[#00D878]/30 hover:bg-[#00D878]/25 text-[#00D878] font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        <Zap className="h-4 w-4" />
-                        <span>⚡ Instant Sandbox Activation (Demo Mode)</span>
-                      </button>
                     </div>
                   </form>
                 </div>

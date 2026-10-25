@@ -36,9 +36,19 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
     notes: ''
   });
 
+  // Server-enforced access model:
+  // - admins & members with an active cycle read real `signals` (tier-filtered by API rules)
+  // - everyone else reads the public masked `signal_previews` view (no entry/SL/TP/notes)
+  const isAdmin = user?.role === 'admin';
+  const hasAccess =
+    isAdmin ||
+    (user?.plan && user.plan !== 'NONE' && user?.cycle_expires_at &&
+      new Date(user.cycle_expires_at) > new Date());
+  const signalsSource = hasAccess ? 'signals' : 'signal_previews';
+
   const loadSignals = async () => {
     try {
-      const records = await pb.collection('signals').getFullList({
+      const records = await pb.collection(signalsSource).getFullList({
         sort: '-created',
       });
       setSignals(records);
@@ -50,7 +60,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
   useEffect(() => {
     loadSignals();
 
-    const unsubPromise = pb.collection('signals').subscribe('*', (e) => {
+    const unsubPromise = pb.collection(signalsSource).subscribe('*', (e) => {
       if (e.action === 'create') {
         setSignals((prev) => [e.record, ...prev]);
         if (notify) {
@@ -70,7 +80,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
     return () => {
       unsubPromise.then((unsub) => unsub());
     };
-  }, [notify]);
+  }, [notify, signalsSource]);
 
   const handleCopyParams = (s) => {
     const text = `AKG ALGO SIGNAL\n${s.symbol} ${s.direction}\nEntry: ${s.entry}\nSL: ${s.stop_loss}\nTP1: ${s.take_profit_1}${s.take_profit_2 ? `\nTP2: ${s.take_profit_2}` : ''}`;
@@ -190,9 +200,6 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
     });
     setShowModal(true);
   };
-
-  const isAdmin = user?.role === 'admin';
-  const hasAccess = isAdmin || (user?.cycle_expires_at && new Date(user.cycle_expires_at) > new Date());
 
   const filtered = signals.filter((s) => {
     if (filter !== 'all' && s.status !== filter) return false;

@@ -154,20 +154,6 @@ export function AdminPortal({ onNavigatePublic, notify }) {
     }
   };
 
-  const handleQuickAdminLogin = async () => {
-    setLoginError(null);
-    setLoginLoading(true);
-    try {
-      const authData = await pb.collection('users').authWithPassword('jayeshvegda@gmail.com', 'root1234');
-      setCurrentUser(authData.record);
-      toast('Welcome Admin', 'Logged in with 1-Click Executive Admin');
-    } catch (err) {
-      setLoginError(err.message || '1-Click admin login failed');
-    } finally {
-      setLoginLoading(false);
-    }
-  };
-
   const handleLogout = () => {
     pb.authStore.clear();
     setCurrentUser(null);
@@ -199,32 +185,17 @@ export function AdminPortal({ onNavigatePublic, notify }) {
   };
 
   // --- PAYMENTS WORKFLOW ---
+  // Approving (pending -> confirmed) is handled server-side: the API hook grants
+  // the 30-day cycle for subscriptions and issues the license key for bot
+  // purchases in one transaction. The UI only flips the status.
   const handleApprovePayment = async (p) => {
     try {
       await pb.collection('payments').update(p.id, { status: 'confirmed' });
 
-      // If this is a Signal Box subscription, extend cycle and set plan
       if (p.plan === 'PERFECT_SIGNAL_BOX' || p.plan === 'SR_SIGNAL_BOX') {
-        const userList = await pb.collection('users').getList(1, 1, {
-          filter: `email = "${p.user_email}"`
-        });
-
-        if (userList.items.length > 0) {
-          const targetUser = userList.items[0];
-          const currentExpiry = targetUser.cycle_expires_at ? new Date(targetUser.cycle_expires_at) : new Date();
-          const baseDate = currentExpiry > new Date() ? currentExpiry : new Date();
-          baseDate.setDate(baseDate.getDate() + 30);
-
-          await pb.collection('users').update(targetUser.id, {
-            plan: p.plan,
-            cycle_expires_at: baseDate.toISOString()
-          });
-          toast('Payment Approved', `Granted 30-day ${p.plan} access to ${p.user_email}`);
-        } else {
-          toast('Payment Approved', `Confirmed payment for ${p.user_email}`);
-        }
+        toast('Payment Approved', `Granted 30-day ${p.plan} access to ${p.user_email}`);
       } else if (p.plan?.startsWith('BOT:')) {
-        toast('Bot License Approved', `Confirmed perpetual EA license for ${p.user_email}`);
+        toast('Bot License Approved', `Issued perpetual EA license for ${p.user_email}`);
       } else {
         toast('Payment Approved', `Confirmed payment for ${p.user_email}`);
       }
@@ -661,30 +632,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
               </div>
             )}
 
-            {/* 1-Click Admin Button */}
-            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
-                ⚡ Quick Executive Access
-              </div>
-              <Button
-                type="button"
-                onClick={handleQuickAdminLogin}
-                disabled={loginLoading}
-                className="w-full justify-between gap-2"
-              >
-                <span className="flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  <span>Log in as Jayesh Vegda</span>
-                </span>
-                <span className="text-[11px] bg-emerald-700 px-2 py-0.5 rounded">1-Click →</span>
-              </Button>
-            </div>
-
-            <div className="relative my-2">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
-              <div className="relative flex justify-center text-[10px] uppercase font-semibold"><span className="bg-white px-2 text-slate-400">Or Manual Admin Login</span></div>
-            </div>
-
+            {/* Manual Admin Login */}
             <form onSubmit={handleAdminLogin} className="space-y-3.5 text-xs">
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">Admin Email</label>
@@ -1119,7 +1067,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
           {/* ==================== TAB 0: EXECUTIVE OVERVIEW ==================== */}
           {activeTab === 'overview' && !selectedBotId && !selectedUserId && !selectedConnectorId && (
             <div className="space-y-6">
-              {/* Direct 1-Click Operational Command Shortcuts */}
+              {/* Direct Operational Command Shortcuts */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <button
                   onClick={() => setSignalModal({

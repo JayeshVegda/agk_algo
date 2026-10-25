@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build",
-    "serve": "./bin/pocketbase serve --dir=pb_data --publicDir=pb_public --http=0.0.0.0:8095",
-    "setup:db": "python3 scripts/setup_pb.py"
+    "serve": "./bin/pocketbase serve --dir=pb_data --publicDir=pb_public --hooksDir=pb_hooks --http=0.0.0.0:8095",
+    "setup:db": "python3 scripts/setup_pb.py",
+    "harden:db": "python3 scripts/apply_hardening.py"
   },
   "author": "AKG ALGO",
   "license": "PROPRIETARY"

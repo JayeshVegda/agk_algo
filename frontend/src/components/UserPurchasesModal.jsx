@@ -9,6 +9,7 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
+import { downloadLinksFor } from '../lib/utils';
 
 export function UserPurchasesModal({ isOpen, onClose, user, onOpenPricing, notify }) {
   const [payments, setPayments] = useState([]);
@@ -57,20 +58,6 @@ export function UserPurchasesModal({ isOpen, onClose, user, onOpenPricing, notif
   // Filter confirmed bot purchases
   const botPurchases = payments.filter((p) => p.plan?.startsWith('BOT:') && p.status === 'confirmed');
   const pendingPurchases = payments.filter((p) => p.status === 'pending');
-
-  const generateLicenseKey = (botPlanString) => {
-    // Expected format: BOT: Bot Name (Platform #AccountNumber)
-    const match = botPlanString.match(/BOT:\s*([^(]+)\s*\(([^#]+)#([^)]+)\)/i);
-    const platform = match ? match[2].trim() : 'MT5';
-    const acc = match ? match[3].trim() : '884920';
-
-    const cleanAcc = acc.replace(/\D/g, '') || '884920';
-    const hash = Math.abs(
-      cleanAcc.split('').reduce((accVal, char) => (accVal << 5) - accVal + char.charCodeAt(0), 0)
-    ).toString(16).toUpperCase().padStart(8, '0');
-
-    return `AKG-${platform}-${cleanAcc.slice(-3)}-${hash.slice(0, 4)}-${hash.slice(4, 8)}`;
-  };
 
   const handleCopy = (text, id) => {
     navigator.clipboard.writeText(text);
@@ -183,14 +170,16 @@ export function UserPurchasesModal({ isOpen, onClose, user, onOpenPricing, notif
             ) : (
               <div className="space-y-3">
                 {botPurchases.map((bp) => {
-                  const key = generateLicenseKey(bp.plan);
                   const isCopied = copiedKey === bp.id;
+                  const licenseKey = bp.license_key || '';
 
                   // Extract bot clean name and account
                   const match = bp.plan.match(/BOT:\s*([^(]+)\s*\(([^#]+)#([^)]+)\)/i);
                   const botName = match ? match[1].trim() : bp.plan.replace('BOT:', '').trim();
                   const platform = match ? match[2].trim() : 'MT5';
                   const acc = match ? match[3].trim() : '—';
+                  const matchedBot = botsList.find((b) => b.name.toLowerCase().trim() === botName.toLowerCase().trim());
+                  const driveUrl = matchedBot?.download_url || null;
 
                   return (
                     <div key={bp.id} className="p-4 rounded-xl border border-white/10 bg-[#07090D] space-y-3">
@@ -213,70 +202,69 @@ export function UserPurchasesModal({ isOpen, onClose, user, onOpenPricing, notif
                         </div>
                       </div>
 
-                      {/* License Key Box */}
+                      {/* License Key Box (server-issued on approval) */}
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[11px]">
                           <span className="text-slate-400 font-semibold flex items-center gap-1">
                             <KeyRound className="h-3 w-3 text-[#00D878]" />
                             Official Binary License Key:
                           </span>
-                          <button
-                            onClick={() => handleCopy(key, bp.id)}
-                            className="text-[#00D878] hover:underline flex items-center gap-1 cursor-pointer font-bold"
-                          >
-                            {isCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                            <span>{isCopied ? 'Copied' : 'Copy Key'}</span>
-                          </button>
+                          {licenseKey && (
+                            <button
+                              onClick={() => handleCopy(licenseKey, bp.id)}
+                              className="text-[#00D878] hover:underline flex items-center gap-1 cursor-pointer font-bold"
+                            >
+                              {isCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                              <span>{isCopied ? 'Copied' : 'Copy Key'}</span>
+                            </button>
+                          )}
                         </div>
-                        <div className="p-2.5 rounded-lg bg-black/60 border border-white/10 font-mono text-xs text-[#00D878] break-all select-all flex items-center justify-between">
-                          <span>{key}</span>
-                        </div>
+                        {licenseKey ? (
+                          <div className="p-2.5 rounded-lg bg-black/60 border border-white/10 font-mono text-xs text-[#00D878] break-all select-all flex items-center justify-between">
+                            <span>{licenseKey}</span>
+                          </div>
+                        ) : (
+                          <div className="p-2.5 rounded-lg bg-black/60 border border-white/10 font-mono text-xs text-slate-400">
+                            Pending desk verification — your key is issued when the desk approves the payment.
+                          </div>
+                        )}
                       </div>
 
                       {/* Download Buttons */}
                       <div className="flex flex-wrap items-center gap-2 pt-1">
-                        {(() => {
-                          const ext = platform.toLowerCase().includes('4') ? 'ex4' : 'ex5';
-                          const fileSlug = botName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-                          const downloadPath = `/downloads/${fileSlug}_${platform.toLowerCase().replace(/[^a-z0-9]/g, '')}.${ext}`;
-                          const matchedBot = botsList.find(b => b.name.toLowerCase().trim() === botName.toLowerCase().trim());
-                          const driveUrl = matchedBot?.download_url || "https://drive.google.com";
+                        {matchedBot && downloadLinksFor(matchedBot).map((l) => (
+                          <a
+                            key={l.path}
+                            href={l.path}
+                            download
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00D878] text-[#07090D] font-bold hover:bg-[#00F09A] transition-colors text-xs cursor-pointer shadow-xs"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            <span>Download .{l.ext} ({l.platform})</span>
+                          </a>
+                        ))}
 
-                          return (
-                            <>
-                              <a
-                                href={downloadPath}
-                                download
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#00D878] text-[#07090D] font-bold hover:bg-[#00F09A] transition-colors text-xs cursor-pointer shadow-xs"
-                              >
-                                <Download className="h-3.5 w-3.5" />
-                                <span>Download .{ext.toUpperCase()} Binary</span>
-                              </a>
+                        {driveUrl && (
+                          <a
+                            href={driveUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400 font-semibold hover:bg-blue-600/30 transition-colors text-xs"
+                          >
+                            <HardDrive className="h-3.5 w-3.5 text-blue-400" />
+                            <span>Google Drive Package</span>
+                            <ExternalLink className="h-3 w-3 text-blue-400" />
+                          </a>
+                        )}
 
-                              {driveUrl && (
-                                <a
-                                  href={driveUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400 font-semibold hover:bg-blue-600/30 transition-colors text-xs"
-                                >
-                                  <HardDrive className="h-3.5 w-3.5 text-blue-400" />
-                                  <span>Google Drive Package</span>
-                                  <ExternalLink className="h-3 w-3 text-blue-400" />
-                                </a>
-                              )}
-
-                              <a
-                                href="/downloads/AKG_ALGO_SETUP_GUIDE.txt"
-                                download
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white font-semibold hover:bg-white/10 transition-colors text-xs"
-                              >
-                                <FileText className="h-3.5 w-3.5 text-[#F3C653]" />
-                                <span>Setup Guide (.txt)</span>
-                              </a>
-                            </>
-                          );
-                        })()}
+                        <a
+                          href="/downloads/AKG_ALGO_SETUP_GUIDE.txt"
+                          download
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white font-semibold hover:bg-white/10 transition-colors text-xs"
+                        >
+                          <FileText className="h-3.5 w-3.5 text-[#F3C653]" />
+                          <span>Setup Guide (.txt)</span>
+                        </a>
                       </div>
                     </div>
                   );

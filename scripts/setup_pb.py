@@ -53,7 +53,7 @@ def main():
 
     for f in new_fields:
         if f.get("name") == "password":
-            f["min"] = 4
+            f["min"] = 8
 
     if "role" not in existing_field_names:
         new_fields.append({
@@ -191,7 +191,10 @@ def main():
                 {"name": "account_number", "type": "text", "required": True},
                 {"name": "server", "type": "text", "required": True},
                 {"name": "platform", "type": "select", "values": ["MT4", "MT5"], "maxSelect": 1, "required": True},
-                {"name": "status", "type": "select", "values": ["demo_active", "pending", "completed"], "maxSelect": 1, "required": True}
+                {"name": "status", "type": "select", "values": ["pending_review", "in_progress", "connected", "rejected", "demo_active"], "maxSelect": 1, "required": True},
+                {"name": "admin_notes", "type": "text", "required": False},
+                {"name": "risk_level", "type": "text", "required": False},
+                {"name": "leverage", "type": "text", "required": False}
             ]
         }, token)
         print("✓ 'connector_requests' created.")

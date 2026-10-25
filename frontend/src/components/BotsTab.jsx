@@ -5,11 +5,12 @@ import {
   KeyRound, Copy, Check, Info, ArrowRight, X,
   Layers, ExternalLink, Image as ImageIcon, BarChart3,
   TrendingUp, Shield, Sparkles, HardDrive, CreditCard,
-  Zap, AlertCircle
+  Clock, AlertCircle
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
+import { downloadLinksFor } from '../lib/utils';
 
 export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
   const [bots, setBots] = useState([]);
@@ -69,14 +70,6 @@ export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
     }
   }, [user?.email]);
 
-  const generateLicenseKey = (platform, accNumber) => {
-    const cleanAcc = (accNumber || '').trim().replace(/\D/g, '') || '884920';
-    const hash = Math.abs(
-      cleanAcc.split('').reduce((acc, char) => (acc << 5) - acc + char.charCodeAt(0), 0)
-    ).toString(16).toUpperCase().padStart(8, '0');
-    return `AKG-${platform || 'MT5'}-${cleanAcc.slice(-3)}-${hash.slice(0, 4)}-${hash.slice(4, 8)}`;
-  };
-
   const handleCopy = (text, type = 'key') => {
     navigator.clipboard.writeText(text);
     if (type === 'key') setCopiedKey(true);
@@ -112,16 +105,13 @@ export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
     const existing = getOwnedPurchase(bot.name);
     if (existing) {
       const match = existing.plan.match(/BOT:\s*([^(]+)\s*\(([^#]+)#([^)]+)\)/i);
-      const acc = match ? match[3].trim() : '884920';
-      const cleanAcc = acc.replace(/\D/g, '') || '884920';
-      const generatedKey = generateLicenseKey(bot.platform, cleanAcc);
+      const acc = match ? match[3].trim() : '—';
       setCheckoutBot(bot);
       setPurchaseResult({
-        isSandbox: false,
         status: 'confirmed',
         bot,
-        account: cleanAcc,
-        key: generatedKey,
+        account: acc,
+        key: existing.license_key || '',
         txid: existing.txid,
         isExisting: true
       });
@@ -134,8 +124,9 @@ export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
     setPurchaseResult(null);
   };
 
-  // Submit purchase: either real TXID verification or instant sandbox demo test
-  const handlePurchase = async (isSandbox = false) => {
+  // Submit purchase: logs the payment as pending; the license key is issued
+  // server-side once the desk approves the payment.
+  const handlePurchase = async () => {
     if (!user) {
       if (onOpenAuth) onOpenAuth();
       return;
@@ -146,36 +137,31 @@ export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
       return;
     }
 
-    if (!isSandbox && !checkoutTxid.trim()) {
-      if (notify) notify({ type: 'error', title: 'TXID Missing', message: 'Please enter your USDT transfer hash or use Instant Sandbox Test.' });
+    if (!checkoutTxid.trim()) {
+      if (notify) notify({ type: 'error', title: 'TXID Missing', message: 'Please enter your USDT transfer hash.' });
       return;
     }
 
     setSubmitting(true);
     try {
-      const cleanAcc = checkoutAccount.trim().replace(/\D/g, '') || '884920';
-      const generatedKey = generateLicenseKey(checkoutBot.platform, cleanAcc);
+      const cleanAcc = checkoutAccount.trim().replace(/\D/g, '');
       const planString = `BOT: ${checkoutBot.name} (${checkoutBot.platform} #${cleanAcc})`;
-      const txHash = isSandbox 
-        ? `0x${Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('')}`
-        : checkoutTxid.trim();
 
       await pb.collection('payments').create({
         user_email: user.email,
         plan: planString,
         amount: checkoutBot.price,
         network: checkoutNetwork,
-        txid: txHash,
-        status: isSandbox ? 'confirmed' : 'pending'
+        txid: checkoutTxid.trim(),
+        status: 'pending'
       });
 
       setPurchaseResult({
-        isSandbox,
-        status: isSandbox ? 'confirmed' : 'pending',
+        status: 'pending',
         bot: checkoutBot,
         account: cleanAcc,
-        key: generatedKey,
-        txid: txHash
+        key: '',
+        txid: checkoutTxid.trim()
       });
 
       await loadUserPurchases();
@@ -183,10 +169,8 @@ export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
       if (notify) {
         notify({
           type: 'success',
-          title: isSandbox ? 'Bot License Activated' : 'Payment Logged for Verification',
-          message: isSandbox
-            ? `Perpetual license for ${checkoutBot.name} bound to MT#${cleanAcc}`
-            : `TXID submitted. Desk will verify blockchain transfer of $${checkoutBot.price} USDT.`
+          title: 'Payment Logged for Verification',
+          message: `TXID submitted. Desk will verify the blockchain transfer of $${checkoutBot.price} USDT and issue your license key.`
         });
       }
     } catch (err) {
@@ -565,60 +549,63 @@ export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
               {purchaseResult ? (
                 <div className="space-y-4 py-2">
                   <div className="text-center space-y-2">
-                    <div className="h-12 w-12 rounded-full bg-[#00D878]/15 text-[#00D878] flex items-center justify-center mx-auto border border-[#00D878]/30">
-                      <CheckCircle2 className="h-7 w-7" />
+                    <div className={`h-12 w-12 rounded-full flex items-center justify-center mx-auto border ${
+                      purchaseResult.status === 'confirmed'
+                        ? 'bg-[#00D878]/15 text-[#00D878] border-[#00D878]/30'
+                        : 'bg-[#F3C653]/15 text-[#F3C653] border-[#F3C653]/30'
+                    }`}>
+                      {purchaseResult.status === 'confirmed' ? <CheckCircle2 className="h-7 w-7" /> : <Clock className="h-7 w-7" />}
                     </div>
                     <h3 className="text-lg font-bold text-white">
-                      {purchaseResult.status === 'confirmed' ? 'License Key Active & Bound' : 'Payment Submitted for Desk Verification'}
+                      {purchaseResult.status === 'confirmed' && purchaseResult.key
+                        ? 'License Key Active & Bound'
+                        : 'Payment Submitted for Desk Verification'}
                     </h3>
                     <p className="text-xs text-[#A6ADB9] max-w-sm mx-auto leading-relaxed">
-                      {purchaseResult.status === 'confirmed'
+                      {purchaseResult.status === 'confirmed' && purchaseResult.key
                         ? `Bound to MetaTrader ${purchaseResult.bot.platform} Account #${purchaseResult.account}.`
-                        : `Your TXID has been logged. Desk will review your on-chain settlement.`}
+                        : `Your TXID has been logged. Once the desk approves the payment, your license key is issued automatically and appears here and in My Purchases.`}
                     </p>
                   </div>
 
-                  {/* License Key Box */}
-                  <div className="p-4 rounded-xl border border-[#00D878]/30 bg-[#00D878]/10 space-y-2 font-mono">
-                    <div className="flex items-center justify-between text-[#00D878] text-[11px] font-bold">
-                      <span className="flex items-center gap-1.5">
-                        <KeyRound className="h-3.5 w-3.5" />
-                        <span>Hardware & Account License Key:</span>
-                      </span>
-                      <button
-                        onClick={() => handleCopy(purchaseResult.key, 'key')}
-                        className="hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        {copiedKey ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                        <span>{copiedKey ? 'Copied' : 'Copy'}</span>
-                      </button>
+                  {/* License Key Box (only after server-side issuance) */}
+                  {purchaseResult.status === 'confirmed' && purchaseResult.key && (
+                    <div className="p-4 rounded-xl border border-[#00D878]/30 bg-[#00D878]/10 space-y-2 font-mono">
+                      <div className="flex items-center justify-between text-[#00D878] text-[11px] font-bold">
+                        <span className="flex items-center gap-1.5">
+                          <KeyRound className="h-3.5 w-3.5" />
+                          <span>Hardware & Account License Key:</span>
+                        </span>
+                        <button
+                          onClick={() => handleCopy(purchaseResult.key, 'key')}
+                          className="hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          {copiedKey ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                          <span>{copiedKey ? 'Copied' : 'Copy'}</span>
+                        </button>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-black/60 border border-white/10 text-white font-bold text-xs break-all select-all">
+                        {purchaseResult.key}
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        Paste this into your MetaTrader {purchaseResult.bot.platform} EA inputs dialog.
+                      </div>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-black/60 border border-white/10 text-white font-bold text-xs break-all select-all">
-                      {purchaseResult.key}
-                    </div>
-                    <div className="text-[10px] text-slate-400">
-                      Paste this into your MetaTrader {purchaseResult.bot.platform} EA inputs dialog.
-                    </div>
-                  </div>
+                  )}
 
                   {/* Download Options */}
                   <div className="grid grid-cols-2 gap-2 pt-2">
-                    {(() => {
-                      const ext = purchaseResult.bot.platform.toLowerCase().includes('4') ? 'ex4' : 'ex5';
-                      const fileSlug = purchaseResult.bot.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-                      const dlPath = `/downloads/${fileSlug}_${purchaseResult.bot.platform.toLowerCase().replace(/[^a-z0-9]/g, '')}.${ext}`;
-
-                      return (
-                        <a
-                          href={dlPath}
-                          download
-                          className="inline-flex items-center justify-center gap-2 p-2.5 rounded-xl bg-[#00D878] text-[#07090D] font-bold hover:bg-[#00F09A] transition-all text-xs text-center cursor-pointer shadow-xs"
-                        >
-                          <Download className="h-4 w-4" />
-                          <span>Download .{ext.toUpperCase()}</span>
-                        </a>
-                      );
-                    })()}
+                    {downloadLinksFor(purchaseResult.bot).map((l) => (
+                      <a
+                        key={l.path}
+                        href={l.path}
+                        download
+                        className="inline-flex items-center justify-center gap-2 p-2.5 rounded-xl bg-[#00D878] text-[#07090D] font-bold hover:bg-[#00F09A] transition-all text-xs text-center cursor-pointer shadow-xs"
+                      >
+                        <Download className="h-4 w-4" />
+                        <span>Download .{l.ext} ({l.platform})</span>
+                      </a>
+                    ))}
 
                     {purchaseResult.bot.download_url ? (
                       <a
@@ -748,27 +735,12 @@ export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                     <Button
                       type="button"
                       disabled={submitting}
-                      onClick={() => handlePurchase(false)}
+                      onClick={() => handlePurchase()}
                       className="w-full justify-center gap-2 font-bold"
                     >
                       <span>{submitting ? 'Processing...' : 'Submit Payment for Desk Verification'}</span>
                       <ArrowRight className="h-4 w-4" />
                     </Button>
-
-                    <div className="relative my-2">
-                      <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
-                      <div className="relative flex justify-center text-[10px] uppercase font-semibold"><span className="bg-[#10141B] px-2 text-[#A6ADB9]">Instant Evaluation</span></div>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={submitting}
-                      onClick={() => handlePurchase(true)}
-                      className="w-full py-2.5 px-3 rounded-xl bg-[#00D878]/15 border border-[#00D878]/30 hover:bg-[#00D878]/25 text-[#00D878] font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
-                    >
-                      <Zap className="h-4 w-4" />
-                      <span>⚡ Instant Sandbox Purchase & Verify (Demo Mode)</span>
-                    </button>
                   </div>
                 </div>
               )}

@@ -43,12 +43,28 @@ The compiled files are automatically output to `pb_public/`.
 
 ### 2. Run PocketBase
 ```bash
-./bin/pocketbase serve --dir=pb_data --publicDir=pb_public --http=0.0.0.0:8095
+./bin/pocketbase serve --dir=pb_data --publicDir=pb_public --hooksDir=pb_hooks --http=0.0.0.0:8095
 ```
-Or start the background systemd service:
+Or `npm run serve` from the repo root. The server-side security hooks live in
+`pb_hooks/akg.pb.js` — they enforce registration defaults, payment validation,
+transactional approvals and license-key issuance. Never run without `--hooksDir=pb_hooks`.
+
+### 3. Fresh install: seed & harden
 ```bash
-sudo systemctl restart agk-algo
+python3 scripts/setup_pb.py       # create collections + demo content
+python3 scripts/apply_hardening.py  # lock API rules, masked preview view, data cleanup
 ```
+
+### Security model (do not bypass)
+- Signals entry/SL/TP are only readable by admins and members with an active 30-day
+  cycle; locked visitors get a server-side masked `signal_previews` feed.
+- Users cannot self-assign `role`, `plan` or `cycle_expires_at` (enforced in `pb_hooks`).
+- Payments are forced to `status=pending` with the authenticated email; plan and amount
+  are validated against server-side prices. Admin approval grants the cycle or issues a
+  license key in one transaction (`pb_hooks/akg.pb.js`).
+- Bot binaries live in `private_downloads/` (outside the web root) and are served via
+  `/api/akg/download/{name}` only to authenticated users with a confirmed `BOT:` payment.
+- The admin credentials below are demo defaults — rotate them before any deployment.
 
 ---
 
