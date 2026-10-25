@@ -11,7 +11,7 @@ import { PricingTab } from './components/PricingTab';
 import { ResourcesTab } from './components/ResourcesTab';
 import { AdminPortal } from './components/admin/AdminPortal';
 import { AuthModal } from './components/AuthModal';
-import { UserPurchasesModal } from './components/UserPurchasesModal';
+import { AccountTab } from './components/AccountTab';
 import { ToastContainer } from './components/Toast';
 import { Compass, Zap, Cpu, Network, User } from 'lucide-react';
 
@@ -22,7 +22,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [user, setUser] = useState(pb.authStore.record);
   const [authOpen, setAuthOpen] = useState(false);
-  const [purchasesOpen, setPurchasesOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
 
   // Toast notification dispatcher
@@ -118,9 +117,13 @@ export default function App() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           user={user}
+          notify={notify}
           onOpenAuth={() => setAuthOpen(true)}
           onNavigateAdmin={() => navigateTo('/admin')}
-          onOpenPurchases={() => setPurchasesOpen(true)}
+          onOpenAccount={() => {
+            setActiveTab('account');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
         />
 
         <main className="w-[94%] max-w-[1750px] mx-auto px-2 sm:px-4 lg:px-6 py-6 pb-24 md:pb-6">
@@ -180,8 +183,20 @@ export default function App() {
           )}
 
           {activeTab === 'resources' && (
-            <ResourcesTab 
+            <ResourcesTab
               notify={notify}
+            />
+          )}
+
+          {activeTab === 'account' && (
+            <AccountTab
+              user={user}
+              notify={notify}
+              onNavigate={(tab) => {
+                setActiveTab(tab);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onOpenAuth={() => setAuthOpen(true)}
             />
           )}
         </main>
@@ -273,15 +288,6 @@ export default function App() {
         }}
       />
 
-      {/* User Purchases & Active Licenses Modal */}
-      <UserPurchasesModal
-        isOpen={purchasesOpen}
-        onClose={() => setPurchasesOpen(false)}
-        user={user}
-        onOpenPricing={() => setActiveTab('pricing')}
-        notify={notify}
-      />
-
       {/* Mobile Bottom Navigation Dock for Android & Mobile Web */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#07090D]/95 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-pb">
         <button
@@ -330,12 +336,15 @@ export default function App() {
         <button
           onClick={() => {
             if (user) {
-              setPurchasesOpen(true);
+              setActiveTab('account');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
               setAuthOpen(true);
             }
           }}
-          className="flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer text-[#A6ADB9] hover:text-white transition-all relative"
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all relative ${
+            activeTab === 'account' && user ? 'text-[#00D878]' : 'text-[#A6ADB9] hover:text-white'
+          }`}
         >
           <div className="relative">
             <User className="h-5 w-5" />

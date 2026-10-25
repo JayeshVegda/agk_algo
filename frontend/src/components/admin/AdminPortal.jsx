@@ -14,6 +14,7 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
+import { NotificationBell } from '../NotificationBell';
 
 export function AdminPortal({ onNavigatePublic, notify }) {
   const [currentUser, setCurrentUser] = useState(pb.authStore.record);
@@ -205,14 +206,29 @@ export function AdminPortal({ onNavigatePublic, notify }) {
     }
   };
 
-  const handleRejectPayment = async (p) => {
-    if (!window.confirm(`Reject payment of $${p.amount} USDT from ${p.user_email}?`)) return;
+  // Reject flow: opens the reason modal; the reason is stored server-side and
+  // delivered to the member as a notification + shown in their payment history.
+  const [rejectModal, setRejectModal] = useState(null); // { payment, reason, submitting }
+
+  const handleRejectPayment = (p) => {
+    setRejectModal({ payment: p, reason: '', submitting: false });
+  };
+
+  const confirmRejectPayment = async () => {
+    const rm = rejectModal;
+    if (!rm) return;
+    setRejectModal({ ...rm, submitting: true });
     try {
-      await pb.collection('payments').update(p.id, { status: 'rejected' });
-      toast('Payment Rejected', `Marked payment from ${p.user_email} as rejected`, 'info');
+      await pb.collection('payments').update(rm.payment.id, {
+        status: 'rejected',
+        admin_notes: rm.reason.trim(),
+      });
+      toast('Payment Rejected', `${rm.payment.user_email} was notified` + (rm.reason.trim() ? ' with your reason' : ''), 'info');
+      setRejectModal(null);
       loadData();
     } catch (err) {
       toast('Reject Error', err.message, 'error');
+      setRejectModal({ ...rm, submitting: false });
     }
   };
 
@@ -995,6 +1011,9 @@ export function AdminPortal({ onNavigatePublic, notify }) {
 
           {/* Right: Operational Telemetry & Shortcuts */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Realtime admin notifications (payment submissions, etc.) */}
+            <NotificationBell user={currentUser} notify={notify} dark={false} />
+
             {/* System Status in Navbar (No repetition on page!) */}
             <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-mono">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -1032,37 +1051,8 @@ export function AdminPortal({ onNavigatePublic, notify }) {
           </div>
         </header>
 
-        {/* Mobile Fast Tab Switcher (One-touch momentum scrolling for phone screens) */}
-        <div className="lg:hidden flex items-center gap-1.5 overflow-x-auto no-scrollbar py-2 px-3 border-b border-slate-200 bg-white sticky top-16 z-20 shadow-xs">
-          {navigationGroups.flatMap(g => g.items).map(item => (
-            <button
-              key={item.id}
-              onClick={() => {
-                setActiveTab(item.id);
-                setSelectedBotId(null);
-                setSelectedUserId(null);
-                setSelectedConnectorId(null);
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 shrink-0 ${
-                activeTab === item.id
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <span>{item.label}</span>
-              {item.badge !== undefined && item.badge > 0 ? (
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                  activeTab === item.id ? 'bg-white text-emerald-800' : 'bg-amber-500 text-white'
-                }`}>
-                  {item.badge}
-                </span>
-              ) : null}
-            </button>
-          ))}
-        </div>
-
         {/* Content Workspace (Fluid 90-95% width, high information density, anti-slop) */}
-        <main className="flex-1 p-3 sm:p-5 lg:p-7 space-y-5 w-[96%] max-w-[1850px] mx-auto">
+        <main className="flex-1 p-3 sm:p-5 lg:p-7 space-y-5 w-[96%] max-w-[1850px] mx-auto pb-28 lg:pb-7">
           
           {/* ==================== TAB 0: EXECUTIVE OVERVIEW ==================== */}
           {activeTab === 'overview' && !selectedBotId && !selectedUserId && !selectedConnectorId && (
@@ -1412,7 +1402,64 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                 </Card>
               ) : (
                 <div className="space-y-3">
-                  <Card className="overflow-hidden shadow-sm bg-white">
+                  {/* Mobile: one-tap approval cards */}
+                  <div className="md:hidden space-y-2.5">
+                    {filteredPayments.map((p) => (
+                      <Card key={p.id} className={`p-3.5 bg-white space-y-2.5 ${p.status === 'pending' ? 'border-amber-300 ring-1 ring-amber-200' : ''}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-slate-900 truncate">{p.user_email}</span>
+                          <Badge variant={p.status === 'confirmed' ? 'default' : p.status === 'pending' ? 'secondary' : 'destructive'}>
+                            {p.status.toUpperCase()}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 text-[11px] font-mono text-slate-500">
+                          <span className="font-black text-slate-900 text-sm">${p.amount} USDT</span>
+                          <span>{p.network}</span>
+                        </div>
+                        <div className="text-[11px] font-semibold text-slate-700 truncate">{p.plan}</div>
+                        {p.txid && (
+                          <a
+                            href={getExplorerUrl(p.network, p.txid)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] font-mono text-emerald-700 flex items-center gap-1 break-all"
+                          >
+                            <span>{p.txid.slice(0, 14)}…{p.txid.slice(-8)}</span>
+                            <ExternalLink className="h-3 w-3 shrink-0" />
+                          </a>
+                        )}
+                        {p.status === 'pending' ? (
+                          <div className="flex gap-2 pt-1">
+                            <button
+                              onClick={() => handleApprovePayment(p)}
+                              className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold cursor-pointer active:bg-emerald-700 transition-colors"
+                            >
+                              ✓ Approve & Grant
+                            </button>
+                            <button
+                              onClick={() => handleRejectPayment(p)}
+                              className="flex-1 py-2.5 rounded-xl border border-rose-300 text-rose-600 text-xs font-bold cursor-pointer active:bg-rose-50 transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between pt-1">
+                            <span className="text-[10px] font-mono text-slate-400">{p.created?.slice(0, 16) || ''}</span>
+                            <button
+                              onClick={() => handleDeletePayment(p.id)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 rounded cursor-pointer"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Desktop table */}
+                  <Card className="hidden md:block overflow-hidden shadow-sm bg-white">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs min-w-[850px]">
                         <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-semibold">
@@ -3286,8 +3333,99 @@ export function AdminPortal({ onNavigatePublic, notify }) {
       </div>
 
       {/* =========================================================================
+          MOBILE BOTTOM TAB BAR (primary admin actions one thumb away)
+      ========================================================================= */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 flex items-stretch justify-around shadow-[0_-4px_16px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)]">
+        {[
+          { id: 'overview', label: 'Overview', icon: Layers },
+          { id: 'payments', label: 'Payments', icon: DollarSign, badge: pendingPayments.length },
+          { id: 'signals', label: 'Signals', icon: Zap },
+          { id: 'broadcasts', label: 'Directives', icon: Bell },
+        ].map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => {
+                setActiveTab(item.id);
+                setSelectedBotId(null);
+                setSelectedUserId(null);
+                setSelectedConnectorId(null);
+                setSearchQuery('');
+              }}
+              className={`relative flex-1 flex flex-col items-center gap-0.5 py-2.5 cursor-pointer transition-colors ${
+                isActive ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              <span className="text-[10px] font-bold">{item.label}</span>
+              {item.badge > 0 && (
+                <span className="absolute top-1.5 right-1/2 translate-x-4 min-w-[16px] h-4 px-0.5 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+        <button
+          onClick={() => setMobileDrawerOpen(true)}
+          className="flex-1 flex flex-col items-center gap-0.5 py-2.5 text-slate-400 hover:text-slate-600 cursor-pointer transition-colors"
+        >
+          <Menu className="h-5 w-5" />
+          <span className="text-[10px] font-bold">More</span>
+        </button>
+      </nav>
+
+      {/* =========================================================================
           MODALS
       ========================================================================= */}
+
+      {/* ===================== MODAL: REJECT PAYMENT WITH REASON ===================== */}
+      {rejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <Card className="w-full max-w-sm shadow-2xl bg-white">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <XCircle className="h-4 w-4 text-rose-600" />
+                Reject Payment
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500 mt-1">
+                ${rejectModal.payment.amount} USDT · {rejectModal.payment.user_email}
+                {rejectModal.payment.txid ? ` · TXID ${rejectModal.payment.txid.slice(0, 10)}…` : ''}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 pt-1 space-y-2">
+              <label className="block text-xs font-semibold text-slate-700">
+                Reason (sent to the trader as a notification)
+              </label>
+              <textarea
+                autoFocus
+                rows={3}
+                value={rejectModal.reason}
+                onChange={(e) => setRejectModal({ ...rejectModal, reason: e.target.value })}
+                placeholder="e.g. TXID not found on chain / amount mismatch"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-rose-500 resize-none"
+              />
+              <p className="text-[10px] text-slate-400">
+                The trader sees this reason in their payment history. You can leave it blank.
+              </p>
+            </CardContent>
+            <CardFooter className="p-4 pt-0 flex gap-2">
+              <Button variant="outline" className="flex-1 text-xs" onClick={() => setRejectModal(null)} disabled={rejectModal.submitting}>
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 text-xs bg-rose-600 hover:bg-rose-700"
+                onClick={confirmRejectPayment}
+                disabled={rejectModal.submitting}
+              >
+                {rejectModal.submitting ? 'Rejecting…' : 'Confirm Reject'}
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      )}
 
       {/* ===================== MODAL: DUAL-MODE SIGNAL PUBLISHER ===================== */}
       {signalModal && (

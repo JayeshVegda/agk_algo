@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { pb } from '../lib/pocketbase';
-import { 
-  Check, ShieldAlert, CreditCard, Copy, CheckCircle2, 
-  Lock, Zap, ArrowRight, ShieldCheck, X
+import {
+  Check, ShieldAlert, CreditCard, Copy, CheckCircle2,
+  Lock, Zap, ArrowRight, ShieldCheck, X, Timer, Clock
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
@@ -15,6 +15,29 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [myPayments, setMyPayments] = useState([]);
+
+  // The member's own ledger drives the state-aware CTAs (current plan badge,
+  // pending-verification state, renew vs subscribe).
+  const loadMyPayments = useCallback(async () => {
+    if (!user?.email) { setMyPayments([]); return; }
+    try {
+      const records = await pb.collection('payments').getFullList({
+        filter: `user_email = "${user.email}"`,
+        sort: '-created'
+      });
+      setMyPayments(records);
+    } catch {
+      setMyPayments([]);
+    }
+  }, [user?.email]);
+
+  useEffect(() => {
+    loadMyPayments();
+    if (!user?.email) return;
+    const unsub = pb.collection('payments').subscribe('*', () => loadMyPayments()).catch(() => {});
+    return () => { unsub?.then?.((u) => u && u()); };
+  }, [user?.email, loadMyPayments]);
 
   const WALLETS = {
     'USDT-TRC20': 'TLa2g9Y8kP2qXvL1b8Jp9wZmN4qK7dEf9A',
@@ -113,6 +136,30 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
     }
   ];
 
+  // ---- Membership state (drives state-aware CTAs) -------------------------
+  const now = Date.now();
+  const expiry = user?.cycle_expires_at ? new Date(String(user.cycle_expires_at).replace(' ', 'T')).getTime() : null;
+  const isActive = expiry && expiry > now;
+  const daysLeft = isActive ? Math.max(0, Math.ceil((expiry - now) / 86400000)) : 0;
+  const pendingPlans = new Set(
+    myPayments.filter((p) => p.status === 'pending' && !p.plan?.startsWith('BOT:')).map((p) => p.plan)
+  );
+
+  // Per-plan CTA: what the button should say and do for this member right now.
+  const planCta = (plan) => {
+    if (!user) return { label: `Select ${plan.name}`, icon: 'arrow', action: 'checkout' };
+    if (pendingPlans.has(plan.id)) {
+      return { label: 'Verification in Progress', icon: 'timer', action: 'none', disabled: true };
+    }
+    if (isActive && user.plan === plan.id) {
+      return { label: 'Buy Next Month (+30 Days)', icon: 'credit', action: 'checkout' };
+    }
+    if (isActive) {
+      return { label: `Switch to ${plan.name}`, icon: 'arrow', action: 'checkout' };
+    }
+    return { label: `Select ${plan.name}`, icon: 'arrow', action: 'checkout' };
+  };
+
   return (
     <div className="space-y-10 max-w-5xl mx-auto font-sans text-[#E7E9EF]">
       {/* Title */}
@@ -134,7 +181,9 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
       {/* Plan Cards */}
       <div className="grid md:grid-cols-2 gap-8">
         {PLANS.map((plan) => {
-          const isCurrentPlan = user?.plan === plan.id;
+          const isCurrentPlan = user?.plan === plan.id && isActive;
+          const cta = planCta(plan);
+          const hasPending = pendingPlans.has(plan.id);
 
           return (
             <Card
@@ -151,11 +200,15 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
                     <Badge variant={plan.popular ? 'gold' : 'secondary'}>
                       {plan.tag}
                     </Badge>
-                    {isCurrentPlan && (
-                      <span className="text-xs font-bold text-[#00D878] flex items-center gap-1">
-                        <Check className="h-3 w-3" /> Active Plan
+                    {isCurrentPlan ? (
+                      <span className="text-xs font-bold text-[#00D878] flex items-center gap-1 bg-[#00D878]/10 border border-[#00D878]/30 px-2 py-0.5 rounded-full">
+                        <Check className="h-3 w-3" /> Your Plan — {daysLeft}d left
                       </span>
-                    )}
+                    ) : hasPending && user ? (
+                      <span className="text-xs font-bold text-amber-300 flex items-center gap-1 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full">
+                        <Timer className="h-3 w-3" /> Pending Verification
+                      </span>
+                    ) : null}
                   </div>
 
                   <CardTitle className="mt-3 text-2xl font-bold text-white">
@@ -186,19 +239,30 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
                 </CardContent>
               </div>
 
-              <CardFooter className="pt-6 border-t border-white/10 mt-6">
+              <CardFooter className="pt-6 border-t border-white/10 mt-6 space-y-2">
+                {isCurrentPlan && (
+                  <div className="text-[10px] text-[#A6ADB9] leading-relaxed">
+                    Your cycle ends <b className="text-[#E7E9EF]">{new Date(expiry).toLocaleDateString()}</b>. Buying now stacks
+                    30 more days on top — no gap in access.
+                  </div>
+                )}
                 <Button
                   variant={plan.popular ? 'default' : 'outline'}
                   size="lg"
+                  disabled={cta.disabled}
                   onClick={() => {
+                    if (cta.action === 'none') return;
+                    if (!user) { onOpenAuth(); return; }
                     setSelectedPlan(plan);
                     setSubmitted(false);
                     setTxid('');
                   }}
                   className="w-full justify-center gap-2"
                 >
-                  <span>Select {plan.name}</span>
-                  <ArrowRight className="h-4 w-4" />
+                  {cta.icon === 'timer' && <Timer className="h-4 w-4" />}
+                  {cta.icon === 'credit' && <CreditCard className="h-4 w-4" />}
+                  {cta.icon === 'arrow' && <ArrowRight className="h-4 w-4" />}
+                  <span>{cta.label}</span>
                 </Button>
               </CardFooter>
             </Card>
@@ -225,7 +289,9 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
                   USDT Checkout · {selectedPlan.name}
                 </CardTitle>
                 <CardDescription className="mt-1 text-[#A6ADB9]">
-                  Transfer exact USDT amount to the official deposit address.
+                  {isActive && user?.plan === selectedPlan.id
+                    ? 'Renewal: 30 days will be added on top of your current cycle end date.'
+                    : 'Transfer exact USDT amount to the official deposit address.'}
                 </CardDescription>
               </div>
               <button 

@@ -101,10 +101,21 @@ export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
       return;
     }
 
+    // A payment for this bot is already awaiting desk verification.
+    if (isBotPending(bot.name)) {
+      if (notify) {
+        notify({
+          type: 'info',
+          title: 'Verification in Progress',
+          message: `Your payment for ${bot.name} is being verified. The license key is issued automatically once approved.`
+        });
+      }
+      return;
+    }
+
     // Check if user already owns this bot
     const existing = getOwnedPurchase(bot.name);
-    if (existing) {
-      const match = existing.plan.match(/BOT:\s*([^(]+)\s*\(([^#]+)#([^)]+)\)/i);
+    if (existing) {      const match = existing.plan.match(/BOT:\s*([^(]+)\s*\(([^#]+)#([^)]+)\)/i);
       const acc = match ? match[3].trim() : '—';
       setCheckoutBot(bot);
       setPurchaseResult({
@@ -189,6 +200,10 @@ export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
     return myPurchases.some(p => p.status === 'confirmed' && p.plan?.includes(botName));
   };
 
+  const isBotPending = (botName) => {
+    return myPurchases.some(p => p.status === 'pending' && p.plan?.includes(botName));
+  };
+
   const getOwnedPurchase = (botName) => {
     return myPurchases.find(p => p.status === 'confirmed' && p.plan?.includes(botName));
   };
@@ -232,6 +247,7 @@ export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {filteredBots.map((bot) => {
           const owned = isBotOwned(bot.name);
+          const pending = !owned && isBotPending(bot.name);
           const ownedRecord = owned ? getOwnedPurchase(bot.name) : null;
 
           return (
@@ -262,6 +278,10 @@ export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                         <Badge variant="positive" className="backdrop-blur-md bg-[#00D878] text-[#07090D] font-bold text-[10px]">
                           LICENSED
                         </Badge>
+                      ) : pending ? (
+                        <Badge variant="gold" className="backdrop-blur-md bg-[#F3C653] text-[#07090D] font-bold text-[10px]">
+                          PENDING
+                        </Badge>
                       ) : (
                         <Badge variant="positive" className="backdrop-blur-md bg-[#00D878]/20 text-[#00D878] border-[#00D878]/30 text-[10px]">
                           Verified
@@ -279,6 +299,8 @@ export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                         <Badge variant="secondary">{bot.platform}</Badge>
                         {owned ? (
                           <Badge variant="positive" className="bg-[#00D878] text-[#07090D] font-bold">LICENSED</Badge>
+                        ) : pending ? (
+                          <Badge variant="gold" className="bg-[#F3C653] text-[#07090D] font-bold">PENDING</Badge>
                         ) : (
                           <Badge variant="positive">Verified</Badge>
                         )}
@@ -351,6 +373,15 @@ export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                     >
                       <Download className="h-3 w-3" />
                       <span>Download</span>
+                    </Button>
+                  ) : pending ? (
+                    <Button
+                      size="sm"
+                      disabled
+                      className="h-8 gap-1.5 font-bold text-xs opacity-70 cursor-not-allowed"
+                    >
+                      <Clock className="h-3 w-3" />
+                      <span>Verifying…</span>
                     </Button>
                   ) : (
                     <Button
@@ -511,7 +542,7 @@ export function BotsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                   className="gap-2 font-bold text-xs"
                 >
                   <KeyRound className="h-3.5 w-3.5" />
-                  <span>{isBotOwned(selectedBotDetail.name) ? 'View License Key' : 'Purchase License'}</span>
+                  <span>{isBotOwned(selectedBotDetail.name) ? 'View License Key' : isBotPending(selectedBotDetail.name) ? 'Verification in Progress' : 'Purchase License'}</span>
                 </Button>
               </div>
             </CardFooter>

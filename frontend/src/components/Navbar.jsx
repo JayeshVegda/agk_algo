@@ -32,9 +32,10 @@ import {
 } from './ui/Sheet';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
+import { NotificationBell } from './NotificationBell';
 import { cn } from '../lib/utils';
 
-export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAdmin, onOpenPurchases }) {
+export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNavigateAdmin, onOpenAccount }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -295,9 +296,12 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAd
           </div>
         </div>
 
-        {/* Right: Search + Profile & Auth */}
+        {/* Right: Search + Notifications + Profile & Auth */}
         <div className="flex items-center gap-2 sm:gap-3">
-          
+
+          {/* Realtime Notifications */}
+          <NotificationBell user={user} notify={notify} dark />
+
           {/* Quick Search Trigger */}
           <button
             onClick={() => setSearchOpen(true)}
@@ -355,9 +359,9 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAd
                   <span>Subscription & Billing</span>
                 </DropdownMenuItem>
 
-                <DropdownMenuItem onClick={onOpenPurchases}>
+                <DropdownMenuItem onClick={onOpenAccount}>
                   <KeyRound className="h-3.5 w-3.5 text-[#00D878]" />
-                  <span>My Purchases & Licenses</span>
+                  <span>My Account & Licenses</span>
                 </DropdownMenuItem>
 
                 {user.role === 'admin' && (
@@ -542,12 +546,12 @@ export function Navbar({ activeTab, setActiveTab, user, onOpenAuth, onNavigateAd
                     {user && (
                       <div className="pt-2">
                         <button
-                          onClick={() => { if (onOpenPurchases) onOpenPurchases(); setMobileOpen(false); }}
+                          onClick={() => { if (onOpenAccount) onOpenAccount(); setMobileOpen(false); }}
                           className="w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-bold bg-[#00D878]/15 text-[#00D878] border border-[#00D878]/30 hover:bg-[#00D878]/25 transition-colors cursor-pointer"
                         >
                           <div className="flex items-center gap-2">
                             <KeyRound className="h-4 w-4 text-[#00D878]" />
-                            <span>My Purchases & Licenses</span>
+                            <span>My Account & Licenses</span>
                           </div>
                           <ArrowRight className="h-3.5 w-3.5" />
                         </button>

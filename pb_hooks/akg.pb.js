@@ -64,6 +64,23 @@ onRecordCreateRequest((e) => {
     // file a payment on behalf of a customer, so their provided email is kept.
     e.record.set("user_email", e.auth.get("email"));
     e.record.set("status", "pending");
+
+    // Alert every admin in real time: a member filed a payment for review.
+    try {
+      const col = $app.findCollectionByNameOrId("notifications");
+      const admins = $app.findRecordsByFilter("users", "role = 'admin'", "-created", 50, 0);
+      for (const admin of admins) {
+        const n = new Record(col);
+        n.set("user", admin.id);
+        n.set("title", "New Payment Submitted");
+        n.set("body", e.auth.get("email") + " filed " + e.record.get("plan") + " (" + e.record.get("amount") + " USDT). TXID: " + (e.record.get("txid") || "-"));
+        n.set("type", "payment_submitted");
+        n.set("read", false);
+        $app.save(n);
+      }
+    } catch (err) {
+      console.log("akg: admin payment alert failed:", err);
+    }
   }
 
   // Validate plan + amount against server-side prices (clients cannot pay $1 for a $299 bot).
@@ -146,6 +163,36 @@ onRecordUpdateRequest((e) => {
   const was = orig.get("status") || "";
   const now = e.record.get("status") || "";
 
+  const notifyUser = (email, title, body, type, dedupeKey) => {
+    try {
+      const u = $app.findFirstRecordByFilter("users", "email = {:email}", { email: email });
+      const col = $app.findCollectionByNameOrId("notifications");
+      const n = new Record(col);
+      n.set("user", u.id);
+      n.set("title", title);
+      n.set("body", body || "");
+      n.set("type", type);
+      n.set("read", false);
+      if (dedupeKey) n.set("dedupe_key", dedupeKey);
+      $app.save(n);
+    } catch (err) {
+      console.log("akg: user notification failed:", err);
+    }
+  };
+
+  // Rejection: tell the member what happened and why (admin_notes).
+  if (now === "rejected" && was !== "rejected") {
+    const reason = e.record.get("admin_notes") || "";
+    notifyUser(
+      e.record.get("user_email") || "",
+      "Payment Rejected",
+      "Your " + e.record.get("plan") + " payment was rejected by the desk." + (reason ? " Reason: " + reason : ""),
+      "payment_rejected"
+    );
+    e.next();
+    return;
+  }
+
   // Only act on a pending -> confirmed transition (idempotent approvals).
   if (was === "confirmed" || now !== "confirmed") {
     e.next();
@@ -189,6 +236,12 @@ onRecordUpdateRequest((e) => {
         "Cannot approve: no user account exists for " + email + ". Reject or delete this payment."
       );
     }
+    notifyUser(
+      email,
+      "Payment Approved — Signals Unlocked",
+      "Your " + plan + " membership is active for 30 days. Welcome to the desk.",
+      "payment_approved"
+    );
     e.next();
     return;
   }
@@ -204,6 +257,12 @@ onRecordUpdateRequest((e) => {
     const key = "AKG-" + platform + "-" + acc + "-" + rand.slice(0, 4) + "-" + rand.slice(4, 8);
 
     e.record.set("license_key", key);
+    notifyUser(
+      e.record.get("user_email") || "",
+      "License Issued — " + m[1].trim(),
+      "Your bot license is ready: " + key + ". Download it anytime from My Account.",
+      "license_issued"
+    );
     e.next();
     return;
   }
@@ -286,4 +345,105 @@ routerAdd("GET", "/api/akg/download/{name}", (e) => {
   }
 
   return e.fileFS($os.dirFS("./private_downloads"), name);
+});
+
+// ---------------------------------------------------------------------------
+// connector_requests status changes
+// ---------------------------------------------------------------------------
+
+onRecordUpdateRequest((e) => {
+  const orig = e.record.original();
+  const was = orig.get("status") || "";
+  const now = e.record.get("status") || "";
+  if (was === now) {
+    e.next();
+    return;
+  }
+
+  try {
+    const u = $app.findFirstRecordByFilter("users", "email = {:email}", { email: e.record.get("user_email") || "" });
+    const col = $app.findCollectionByNameOrId("notifications");
+    const n = new Record(col);
+    n.set("user", u.id);
+    n.set("title", "Connector Update");
+    n.set("body", "Your bridge request status changed: " + was + " → " + now + "." + (e.record.get("admin_notes") ? " Note: " + e.record.get("admin_notes") : ""));
+    n.set("type", "connector_update");
+    n.set("read", false);
+    $app.save(n);
+  } catch (err) {
+    console.log("akg: connector notification failed:", err);
+  }
+  e.next();
+}, "connector_requests");
+
+// ---------------------------------------------------------------------------
+// Membership expiry reminders (daily)
+// ---------------------------------------------------------------------------
+// Creates in-app reminders 7 / 3 / 1 / 0 days before the 30-day cycle ends,
+// plus one "expired today" notice. dedupe_key makes re-runs idempotent.
+
+cronAdd("akg_expiry_reminders", "17 3 * * *", () => {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  let members = [];
+  try {
+    members = $app.findRecordsByFilter(
+      "users",
+      "plan != '' && plan != 'NONE'",
+      "-created", 500, 0
+    );
+  } catch (err) {
+    console.log("akg: expiry scan failed:", err);
+    return;
+  }
+
+  const col = $app.findCollectionByNameOrId("notifications");
+  for (const u of members) {
+    const raw = u.get("cycle_expires_at");
+    const s = raw && typeof raw.string === "function" ? raw.string() : String(raw || "");
+    if (!s || s.indexOf("0001-01-01") === 0) continue;
+    const expiry = new Date(s.replace(" ", "T")).getTime();
+    if (isNaN(expiry)) continue;
+
+    const diffDays = Math.floor((expiry - now) / DAY_MS); // >=0 unexpired, -1 = expired today
+    let title = null;
+    let daysLabel = null;
+
+    if (diffDays === 7 || diffDays === 3 || diffDays === 1) {
+      daysLabel = String(diffDays);
+      title = "Membership Expiring in " + diffDays + " Day" + (diffDays === 1 ? "" : "s");
+    } else if (diffDays === 0) {
+      daysLabel = "0";
+      title = "Membership Expires Today";
+    } else if (diffDays === -1) {
+      daysLabel = "expired";
+      title = "Membership Expired";
+    }
+    if (!title) continue;
+
+    const expiryDay = s.split(" ")[0];
+    const dedupeKey = "expiry_" + u.id + "_" + expiryDay + "_" + daysLabel;
+    let existing = null;
+    try {
+      existing = $app.findFirstRecordByFilter("notifications", "dedupe_key = {:k}", { k: dedupeKey });
+    } catch {
+      existing = null;
+    }
+    if (existing) continue;
+
+    const n = new Record(col);
+    n.set("user", u.id);
+    n.set("title", title);
+    n.set("body", diffDays < 0
+      ? "Your " + u.get("plan") + " cycle has ended. Renew now to keep your signal access."
+      : "Your " + u.get("plan") + " cycle ends " + expiryDay + ". Buy next month from My Account to stay locked in.");
+    n.set("type", "plan_expiry");
+    n.set("read", false);
+    n.set("dedupe_key", dedupeKey);
+    try {
+      $app.save(n);
+    } catch (err) {
+      console.log("akg: expiry notification failed:", err);
+    }
+  }
 });
