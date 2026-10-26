@@ -129,10 +129,44 @@ def main():
                 {"name": "price", "type": "number", "required": True},
                 {"name": "version", "type": "text", "required": True},
                 {"name": "recommended_deposit", "type": "text", "required": False},
-                {"name": "win_rate", "type": "text", "required": False}
+                {"name": "win_rate", "type": "number", "required": False},
+                {"name": "drawdown", "type": "number", "required": False},
+                {"name": "profit_factor", "type": "number", "required": False},
+                {"name": "pairs", "type": "json", "required": False},
+                {"name": "features", "type": "json", "required": False},
+                {"name": "gallery", "type": "json", "required": False},
+                {"name": "strategy_type", "type": "text", "required": False},
+                {"name": "trading_style", "type": "text", "required": False},
+                {"name": "timeframes", "type": "select", "values": ["M1", "M5", "M15", "M30", "H1", "H4", "D1", "W1", "MN"], "maxSelect": 4, "required": False},
+                {"name": "min_lot", "type": "number", "required": False},
+                {"name": "leverage", "type": "text", "required": False},
+                {"name": "broker_note", "type": "text", "required": False},
+                {"name": "image_url", "type": "text", "required": False},
+                {"name": "download_url", "type": "text", "required": False}
             ]
         }, token)
         print("✓ 'bots' created.")
+
+    # --- BOT CHANGES (release notes per bot) ---
+    if "bot_changes" not in all_colls:
+        print("Creating 'bot_changes' collection...")
+        post("/api/collections", {
+            "name": "bot_changes",
+            "type": "base",
+            "listRule": "",
+            "viewRule": "",
+            "createRule": "@request.auth.id != '' && @request.auth.role = 'admin'",
+            "updateRule": "@request.auth.id != '' && @request.auth.role = 'admin'",
+            "deleteRule": "@request.auth.id != '' && @request.auth.role = 'admin'",
+            "fields": [
+                {"name": "bot", "type": "relation", "collectionId": "bots", "maxSelect": 1, "cascadeDelete": True, "required": True},
+                {"name": "version", "type": "text", "required": True},
+                {"name": "released", "type": "date", "required": False},
+                {"name": "summary", "type": "text", "required": True}
+            ],
+            "indexes": ["CREATE UNIQUE INDEX idx_bot_changes_bot_version ON bot_changes (bot, version)"]
+        }, token)
+        print("✓ 'bot_changes' created.")
 
     # --- BROADCASTS ---
     if "broadcasts" not in all_colls:
@@ -281,7 +315,6 @@ def main():
                 "price": 299,
                 "version": "v3.2",
                 "recommended_deposit": "$500+",
-                "win_rate": "84.2%"
             },
             {
                 "name": "AKG Momentum Hunter",
@@ -290,7 +323,6 @@ def main():
                 "price": 349,
                 "version": "v2.0",
                 "recommended_deposit": "$1,000+",
-                "win_rate": "78.5%"
             },
             {
                 "name": "AKG Scalper Pro",
@@ -299,7 +331,6 @@ def main():
                 "price": 399,
                 "version": "v4.1",
                 "recommended_deposit": "$300+",
-                "win_rate": "89.1%"
             }
         ]
         for b in sample_bots:

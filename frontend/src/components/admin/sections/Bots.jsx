@@ -28,10 +28,13 @@ export function downscaleImage(file, maxSide = 640) {
   });
 }
 
+const listText = (v) => (Array.isArray(v) ? v.join(', ') : String(v || ''));
+
 const EMPTY_BOT = {
   name: '', platform: 'MT5', price: '', version: '', recommended_deposit: '',
   win_rate: '', drawdown: '', profit_factor: '', pairs: '', strategy_type: '',
   features: '', description: '', image_url: '', download_url: '',
+  timeframes: '', trading_style: '', min_lot: '', leverage: '', broker_note: '',
 };
 
 export default function Bots() {
@@ -52,7 +55,7 @@ export default function Bots() {
     const q = search.trim().toLowerCase();
     return bots
       .filter((b) => (filter === 'all' ? true : (b.platform || '').includes(filter)))
-      .filter((b) => !q || (b.name || '').toLowerCase().includes(q) || (b.pairs || '').toLowerCase().includes(q));
+      .filter((b) => !q || (b.name || '').toLowerCase().includes(q) || listText(b.pairs).toLowerCase().includes(q));
   }, [bots, filter, search]);
 
   // Linked signals fetched on demand when the dossier opens (small query).
@@ -110,9 +113,9 @@ export default function Bots() {
               </div>
               <p className="mt-2 line-clamp-2 flex-1 text-[11px] leading-relaxed text-akg-muted">{b.description}</p>
               <div className="mt-2 flex gap-3 font-data text-[10px] text-akg-muted">
-                <span className="text-akg-green">{b.win_rate}</span>
-                <span>PF {b.profit_factor}</span>
-                <span>DD {b.drawdown}</span>
+                {b.win_rate != null && b.win_rate !== '' && <span className="text-akg-green">{b.win_rate}%</span>}
+                {b.profit_factor != null && b.profit_factor !== '' && <span>PF {b.profit_factor}</span>}
+                {b.drawdown != null && b.drawdown !== '' && <span>DD {b.drawdown}%</span>}
               </div>
               <div className="mt-3 flex items-center justify-between border-t border-white/[0.06] pt-3">
                 <button
@@ -141,16 +144,16 @@ export default function Bots() {
         onClose={() => setDossier(null)}
         size="lg"
         title={dossier?.name}
-        subtitle={dossier ? `${dossier.platform} · ${dossier.pairs}` : ''}
+        subtitle={dossier ? `${dossier.platform} · ${listText(dossier.pairs)}` : ''}
       >
         {dossier && (
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
                 ['Price', `$${dossier.price}`],
-                ['Win rate', dossier.win_rate],
+                ['Win rate', dossier.win_rate != null && dossier.win_rate !== '' ? `${dossier.win_rate}%` : ''],
                 ['Profit factor', dossier.profit_factor],
-                ['Max drawdown', dossier.drawdown],
+                ['Max drawdown', dossier.drawdown != null && dossier.drawdown !== '' ? `${dossier.drawdown}%` : ''],
               ].map(([k, v]) => (
                 <div key={k} className="rounded-xl border border-white/[0.07] bg-[#0A0D13] px-3 py-2.5">
                   <div className="text-[9px] uppercase tracking-wide text-akg-muted">{k}</div>
@@ -238,9 +241,21 @@ function BotEditor({ bot, onClose, onSave }) {
 
   React.useEffect(() => {
     if (bot) {
+      const joinList = (v) => (Array.isArray(v) ? v.join(', ') : v || '');
       setForm({
         ...EMPTY_BOT,
         ...Object.fromEntries(Object.entries(bot).map(([k, v]) => [k, v ?? ''])),
+        // json/number columns come back typed — surface them as editable strings
+        pairs: joinList(bot.pairs),
+        features: joinList(bot.features),
+        timeframes: joinList(bot.timeframes),
+        win_rate: bot.win_rate ?? '',
+        drawdown: bot.drawdown ?? '',
+        profit_factor: bot.profit_factor ?? '',
+        min_lot: bot.min_lot ?? '',
+        leverage: bot.leverage || '',
+        trading_style: bot.trading_style || '',
+        broker_note: bot.broker_note || '',
       });
     }
   }, [bot]);
@@ -261,10 +276,23 @@ function BotEditor({ bot, onClose, onSave }) {
         <button
           onClick={async () => {
             setBusy(true);
+            const numOrNull = (v) => {
+              const n = parseFloat(String(v).replace('%', ''));
+              return Number.isFinite(n) ? n : null;
+            };
+            const list = (v, upper = false) => String(v || '')
+              .split(/[\n,]/).map((t) => t.trim()).filter(Boolean)
+              .map((t) => (upper ? t.toUpperCase() : t));
             const payload = {
               ...form,
               price: Number(form.price),
-              features: form.features,
+              win_rate: numOrNull(form.win_rate),
+              drawdown: numOrNull(form.drawdown),
+              profit_factor: numOrNull(form.profit_factor),
+              min_lot: form.min_lot === '' ? null : Number(form.min_lot),
+              pairs: list(form.pairs, true),
+              features: list(form.features),
+              timeframes: list(form.timeframes),
             };
             delete payload.id;
             delete payload.created;
@@ -317,14 +345,36 @@ function BotEditor({ bot, onClose, onSave }) {
             <label className={labelCls}>Profit factor</label>
             <input value={form.profit_factor} onChange={set('profit_factor')} className={cn(inputCls, 'font-data')} placeholder="2.64" />
           </div>
-          <div>
-            <label className={labelCls}>Min capital</label>
-            <input value={form.recommended_deposit} onChange={set('recommended_deposit')} className={cn(inputCls, 'font-data')} placeholder="$1,000" />
-          </div>
           <div className="col-span-2">
             <label className={labelCls}>Strategy type</label>
             <input value={form.strategy_type} onChange={set('strategy_type')} className={inputCls} placeholder="Session Liquidity Sweep" />
           </div>
+          <div>
+            <label className={labelCls}>Trading style</label>
+            <input value={form.trading_style} onChange={set('trading_style')} className={inputCls} placeholder="Intraday swing" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div>
+            <label className={labelCls}>Timeframes</label>
+            <input value={form.timeframes} onChange={set('timeframes')} className={cn(inputCls, 'font-data')} placeholder="M15, H1" />
+          </div>
+          <div>
+            <label className={labelCls}>Min lot</label>
+            <input value={form.min_lot} onChange={set('min_lot')} type="number" step="0.01" className={cn(inputCls, 'font-data')} placeholder="0.01" />
+          </div>
+          <div>
+            <label className={labelCls}>Leverage guide</label>
+            <input value={form.leverage} onChange={set('leverage')} className={cn(inputCls, 'font-data')} placeholder="1:20+" />
+          </div>
+          <div>
+            <label className={labelCls}>Min capital</label>
+            <input value={form.recommended_deposit} onChange={set('recommended_deposit')} className={cn(inputCls, 'font-data')} placeholder="$1,000" />
+          </div>
+        </div>
+        <div>
+          <label className={labelCls}>Broker note</label>
+          <textarea value={form.broker_note} onChange={set('broker_note')} className={textareaCls} placeholder="Broker/feed guidance for this bot (no performance claims)." />
         </div>
         <div>
           <label className={labelCls}>Traded pairs</label>

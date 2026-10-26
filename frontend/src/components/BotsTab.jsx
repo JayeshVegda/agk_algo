@@ -12,6 +12,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { downloadLinksFor } from '../lib/utils';
+import { pairsOf, featuresOf, timeframesOf, pctStat, statNumOrNull } from '../lib/bots';
 import { useWallets } from '../lib/wallets';
 import EquityCurve from './EquityCurve';
 
@@ -35,10 +36,10 @@ function BotHeroMedia({ bot }) {
   const img = (bot.image_url || '').trim();
   const showImg = img && !imgFailed;
   const stats = [
-    { k: 'Win rate', v: bot.win_rate, c: 'text-white' },
-    { k: 'Profit factor', v: bot.profit_factor, c: 'text-akg-gold' },
-    { k: 'Max drawdown', v: bot.drawdown, c: 'text-rose-400' },
-  ].filter((s) => s.v);
+    { k: 'Win rate', v: bot.win_rate, c: 'text-white', fmt: pctStat },
+    { k: 'Profit factor', v: bot.profit_factor, c: 'text-akg-gold', fmt: null },
+    { k: 'Max drawdown', v: bot.drawdown, c: 'text-rose-400', fmt: pctStat },
+  ].filter((s) => statNumOrNull(s.v) !== null || (typeof s.v === 'string' && s.v));
 
   return (
     <div className="relative min-h-[280px] overflow-hidden rounded-3xl border border-white/10 bg-[#0A0D13] sm:min-h-[360px]">
@@ -80,7 +81,7 @@ function BotHeroMedia({ bot }) {
         <div className="absolute inset-x-4 bottom-4 flex flex-wrap gap-2">
           {stats.map((s) => (
             <div key={s.k} className="rounded-xl bg-black/55 px-3.5 py-2 backdrop-blur">
-              <div className={`font-data text-sm font-bold ${s.c}`}>{s.v}</div>
+              <div className={`font-data text-sm font-bold ${s.c}`}>{s.fmt ? s.fmt(s.v) : `${s.v}`}</div>
               <div className="mt-0.5 text-[9px] uppercase tracking-wide text-white/55">{s.k}</div>
             </div>
           ))}
@@ -109,6 +110,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
 
   // User confirmed purchases
   const [myPurchases, setMyPurchases] = useState([]);
+  const [allBotChanges, setAllBotChanges] = useState([]);
 
   // Live wallets from site_settings (rotatable without redeploy); see lib/wallets.
   const WALLETS = useWallets();
@@ -153,6 +155,16 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
   useEffect(() => {
     loadBots();
   }, []);
+
+  // Release notes feed the product page timeline (direct collection read,
+  // public list rule). Rewind on slug change so cross-navigation never shows stale notes.
+  useEffect(() => {
+    let stale = false;
+    pb.collection('bot_changes').getFullList({ sort: '-released' })
+      .then((items) => { if (!stale) setAllBotChanges(items); })
+      .catch(() => {});
+    return () => { stale = true; };
+  }, [botSlug]);
 
   // Escape closes the checkout modal.
   useEffect(() => {
@@ -321,11 +333,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
     return myPurchases.find(p => p.status === 'confirmed' && p.plan?.includes(botName));
   };
 
-  const botFeatures = (bot) =>
-    String(bot.features || '')
-      .split(',')
-      .map((f) => f.trim())
-      .filter(Boolean);
+  const botFeatures = (bot) => featuresOf(bot);
 
   const filteredBots = bots.filter((b) => {
     if (platformFilter === 'all') return true;
@@ -365,7 +373,8 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
     const owned = isBotOwned(bot.name);
     const pending = isBotPending(bot.name);
     const features = botFeatures(bot);
-    const pairs = String(bot.pairs || '').split(',').map((t) => t.trim()).filter(Boolean);
+    const pairs = pairsOf(bot);
+    const selectedChanges = allBotChanges.filter((ch) => ch.bot === bot.id);
 
     return (
       <div className="max-w-6xl mx-auto font-sans text-akg-silver w-full">
@@ -452,13 +461,13 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
             {/* stat overlay */}
             <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.04] sm:grid-cols-4">
               {[
-                { k: 'Win rate', v: bot.win_rate, tone: 'text-white' },
-                { k: 'Profit factor', v: bot.profit_factor, tone: 'text-akg-gold' },
-                { k: 'Max drawdown', v: bot.drawdown, tone: 'text-rose-400' },
-                { k: 'Min capital', v: bot.recommended_deposit, tone: 'text-white' },
-              ].filter((s) => s.v).map((s) => (
+                { k: 'Win rate', v: bot.win_rate, tone: 'text-white', fmt: pctStat },
+                { k: 'Profit factor', v: bot.profit_factor, tone: 'text-akg-gold', fmt: null },
+                { k: 'Max drawdown', v: bot.drawdown, tone: 'rose-400', fmt: pctStat },
+                { k: 'Min capital', v: bot.recommended_deposit, tone: 'text-white', fmt: null },
+              ].filter((s) => (typeof s.v === 'number' ? statNumOrNull(s.v) !== null : !!s.v)).map((s) => (
                 <div key={s.k} className="bg-akg-surface px-4 py-3">
-                  <div className={`font-data text-base font-semibold ${s.tone}`}>{s.v}</div>
+                  <div className={`font-data text-base font-semibold ${s.tone}`}>{s.fmt ? s.fmt(s.v) : `${s.v}`}</div>
                   <div className="mt-0.5 text-[10px] uppercase tracking-wide text-akg-muted">{s.k}</div>
                 </div>
               ))}
@@ -494,6 +503,35 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
             )}
 
             <section>
+              <h2 className="font-display text-lg font-bold text-white">Running requirements</h2>
+              <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
+                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+                  <div className="font-data text-[10px] uppercase tracking-wide text-akg-muted">Timeframe</div>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {(timeframesOf(bot).length ? timeframesOf(bot) : ['—']).map((tf) => (
+                      <span key={tf} className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 font-data text-[11px] text-akg-gold">{tf}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+                  <div className="font-data text-[10px] uppercase tracking-wide text-akg-muted">Min capital</div>
+                  <div className="mt-1 font-data text-[13px] text-akg-silver">{bot.recommended_deposit || '—'}</div>
+                </div>
+                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+                  <div className="font-data text-[10px] uppercase tracking-wide text-akg-muted">Min lot</div>
+                  <div className="mt-1 font-data text-[13px] text-akg-silver">{bot.min_lot != null ? bot.min_lot : '—'}</div>
+                </div>
+                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+                  <div className="font-data text-[10px] uppercase tracking-wide text-akg-muted">Leverage guide</div>
+                  <div className="mt-1 font-data text-[13px] text-akg-silver">{bot.leverage || '—'}</div>
+                </div>
+              </div>
+              {bot.broker_note && (
+                <p className="mt-3 text-xs leading-relaxed text-akg-muted">{bot.broker_note}</p>
+              )}
+            </section>
+
+            <section>
               <h2 className="font-display text-lg font-bold text-white">Before you go live</h2>
               <div className="mt-4 space-y-2.5">
                 {[
@@ -511,6 +549,28 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                 })}
               </div>
             </section>
+
+            {selectedChanges.length > 0 && (
+              <section>
+                <h2 className="font-display text-lg font-bold text-white">Release history</h2>
+                <ol className="mt-4 space-y-3 border-l border-white/10 pl-4">
+                  {selectedChanges.map((ch) => (
+                    <li key={ch.id} className="relative">
+                      <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-akg-gold" />
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-data text-xs font-bold text-akg-gold">{ch.version}</span>
+                        {ch.released && (
+                          <span className="font-data text-[10px] text-akg-muted">
+                            {new Date(ch.released).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xs leading-relaxed text-akg-muted">{ch.summary}</p>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
           </div>
 
           {/* Side rail */}
@@ -690,9 +750,9 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                 </p>
 
                 <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 font-data text-[11px]">
-                  <span className="text-akg-green">{bot.win_rate} win</span>
-                  <span className="text-akg-muted">PF {bot.profit_factor}</span>
-                  <span className="text-akg-muted">DD {bot.drawdown}</span>
+                  {statNumOrNull(bot.win_rate) !== null && <span className="text-akg-green">{pctStat(bot.win_rate)} win</span>}
+                  {statNumOrNull(bot.profit_factor) !== null && <span className="text-akg-muted">PF {bot.profit_factor}</span>}
+                  {statNumOrNull(bot.drawdown) !== null && <span className="text-akg-muted">DD {pctStat(bot.drawdown)}</span>}
                 </div>
 
                 <div className="mt-auto flex items-center justify-between pt-5">

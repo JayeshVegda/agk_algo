@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { pb } from '../lib/pocketbase';
+import { pairsOf, pctStat, statNumOrNull } from '../lib/bots';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import {
@@ -26,7 +27,7 @@ const hasStats = (bot) => Boolean(bot?.win_rate || bot?.profit_factor || bot?.dr
 
 /* Market category chip on bot cards, derived from pairs/strategy. */
 const botCategory = (bot) => {
-  const s = `${bot?.pairs || ''} ${bot?.strategy_type || ''}`.toLowerCase();
+  const s = `${pairsOf(bot).join(' ')} ${bot?.strategy_type || ''}`.toLowerCase();
   if (s.includes('gold') || s.includes('xau')) return { label: 'Gold', icon: Coins };
   if (s.includes('btc') || s.includes('crypto') || s.includes('eth') || s.includes('sol')) return { label: 'Crypto', icon: Bitcoin };
   if (/us30|nas100|us500|dax40|indices|x\.?1/.test(s)) return { label: 'Indices', icon: ArrowLeftRight };
@@ -517,7 +518,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                             <div className="flex h-44 flex-col items-center justify-center gap-1.5 text-center sm:h-48">
                               <LineChart className="h-5 w-5 text-akg-muted" />
                               <span className="px-6 font-data text-[10px] uppercase tracking-wide text-akg-muted">
-                                {bot.pairs} · {bot.platform}
+                                {pairsOf(bot).join(' · ') || bot.platform} · {bot.platform}
                               </span>
                             </div>
                           )}
@@ -548,15 +549,15 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                         {/* Body */}
                         <div className="flex flex-1 flex-col p-4">
                           <div className="flex items-center justify-between font-data text-[10px] uppercase tracking-wide text-akg-muted">
-                            <span>{bot.platform} · {bot.pairs}</span>
+                            <span>{bot.platform} · {pairsOf(bot).join(' · ')}</span>
                             <span className="text-akg-gold/80">{bot.version}</span>
                           </div>
 
                           <div className="mt-3 grid grid-cols-3 gap-2">
                             {[
                               { k: 'Strategy', v: bot.strategy_type },
-                              { k: 'Win rate', v: bot.win_rate },
-                              { k: 'Drawdown', v: bot.drawdown },
+                              { k: 'Win rate', v: pctStat(bot.win_rate) },
+                              { k: 'Drawdown', v: pctStat(bot.drawdown) },
                             ].map(({ k, v }) => (
                               <div key={k} className="flex flex-col justify-center rounded-lg bg-white/[0.05] px-2 py-2 text-center transition-colors group-hover:bg-white/[0.07]">
                                 <div
