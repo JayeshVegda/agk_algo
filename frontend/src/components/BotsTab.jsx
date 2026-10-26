@@ -5,7 +5,8 @@ import {
   KeyRound, Copy, Check, ArrowRight, X,
   ExternalLink, BarChart3,
   Shield, HardDrive, CreditCard,
-  Clock, AlertCircle, ChevronLeft, FlaskConical, Lock, Timer
+  Clock, AlertCircle, ChevronLeft, FlaskConical, Lock, Timer,
+  Coins, Bitcoin, ArrowLeftRight, LineChart
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
@@ -16,6 +17,78 @@ import EquityCurve from './EquityCurve';
 
 const slugify = (name) =>
   String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+const botCategory = (bot) => {
+  const s = `${bot?.pairs || ''} ${bot?.strategy_type || ''}`.toLowerCase();
+  if (s.includes('gold') || s.includes('xau')) return { label: 'Gold', icon: Coins };
+  if (s.includes('btc') || s.includes('crypto') || s.includes('eth') || s.includes('sol')) return { label: 'Crypto', icon: Bitcoin };
+  if (/us30|nas100|us500|dax40|indices|x\.?1/.test(s)) return { label: 'Indices', icon: ArrowLeftRight };
+  return { label: 'Forex', icon: LineChart };
+};
+
+/* Product-page hero media: the bot's image over the equity fallback,
+   with category chip and its own stat pills straight from the record. */
+function BotHeroMedia({ bot }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const cat = botCategory(bot);
+  const CatIcon = cat.icon;
+  const img = (bot.image_url || '').trim();
+  const showImg = img && !imgFailed;
+  const stats = [
+    { k: 'Win rate', v: bot.win_rate, c: 'text-white' },
+    { k: 'Profit factor', v: bot.profit_factor, c: 'text-akg-gold' },
+    { k: 'Max drawdown', v: bot.drawdown, c: 'text-rose-400' },
+  ].filter((s) => s.v);
+
+  return (
+    <div className="relative min-h-[280px] overflow-hidden rounded-3xl border border-white/10 bg-[#0A0D13] sm:min-h-[360px]">
+      {showImg ? (
+        <img
+          src={img}
+          alt={`${bot.name} showcase`}
+          onError={() => setImgFailed(true)}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : stats.length > 0 ? (
+        <div className="absolute inset-0 px-5 pt-6 pb-24">
+          <EquityCurve
+            seed={bot.name}
+            profitFactor={bot.profit_factor}
+            drawdown={bot.drawdown}
+            winRate={bot.win_rate}
+            points={110}
+            className="h-full w-full"
+          />
+        </div>
+      ) : (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-center">
+          <CatIcon className="h-6 w-6 text-akg-muted" />
+          <span className="px-6 font-data text-[10px] uppercase tracking-wide text-akg-muted">
+            {bot.pairs} · {bot.platform}
+          </span>
+        </div>
+      )}
+
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#07090D] via-black/10 to-black/30" />
+
+      <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 font-data text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur">
+        <CatIcon className="h-3 w-3" />
+        {cat.label}
+      </span>
+
+      {stats.length > 0 && (
+        <div className="absolute inset-x-4 bottom-4 flex flex-wrap gap-2">
+          {stats.map((s) => (
+            <div key={s.k} className="rounded-xl bg-black/55 px-3.5 py-2 backdrop-blur">
+              <div className={`font-data text-sm font-bold ${s.c}`}>{s.v}</div>
+              <div className="mt-0.5 text-[9px] uppercase tracking-wide text-white/55">{s.k}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, onOpenAuth, notify }) {
   const [bots, setBots] = useState([]);
@@ -292,6 +365,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
     const owned = isBotOwned(bot.name);
     const pending = isBotPending(bot.name);
     const features = botFeatures(bot);
+    const pairs = String(bot.pairs || '').split(',').map((t) => t.trim()).filter(Boolean);
 
     return (
       <div className="max-w-6xl mx-auto font-sans text-akg-silver w-full">
@@ -303,43 +377,53 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
           All Expert Advisors
         </button>
 
-        {/* Header */}
-        <div className="mt-5 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-          <div>
+        {/* Hero: facts left, provenance media right */}
+        <div className="mt-5 grid items-stretch gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="flex flex-col justify-center">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary" className="font-mono">{bot.platform}</Badge>
               <Badge variant="gold" className="font-mono">{bot.version || ''}</Badge>
               {owned && <Badge variant="positive">Licensed</Badge>}
               {pending && <Badge variant="gold">Verification in progress</Badge>}
             </div>
-            <h1 className="mt-3 font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            <h1 className="mt-3 font-display text-3xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-[2.75rem]">
               {bot.name}
             </h1>
-            <p className="mt-2 font-data text-xs text-akg-muted">
-              {bot.pairs} · {bot.strategy_type}
-            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {pairs.map((p) => (
+                <span key={p} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 font-data text-[10px] font-semibold uppercase tracking-[0.12em] text-akg-gold">
+                  {p}
+                </span>
+              ))}
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center gap-5">
+              <div>
+                <div className="font-display text-4xl font-extrabold text-white tabular-nums">
+                  ${bot.price}
+                  <span className="ml-1.5 text-sm font-bold text-akg-gold">USDT</span>
+                </div>
+                <div className="mt-0.5 text-[11px] text-akg-muted">One-time perpetual license</div>
+              </div>
+              <Button
+                size="lg"
+                variant={owned ? 'positive' : 'default'}
+                className="gap-2"
+                onClick={() => openCheckout(bot)}
+              >
+                {owned ? (
+                  <><KeyRound className="h-4 w-4" /><span>View License Key</span></>
+                ) : pending ? (
+                  <><Clock className="h-4 w-4" /><span>Verification in Progress</span></>
+                ) : (
+                  <><KeyRound className="h-4 w-4" /><span>Purchase License</span></>
+                )}
+              </Button>
+            </div>
           </div>
 
-          <div className="shrink-0 lg:text-right">
-            <div className="font-display text-3xl font-extrabold text-white tabular-nums">
-              ${bot.price}
-              <span className="ml-1.5 text-sm font-bold text-akg-gold">USDT</span>
-            </div>
-            <div className="text-[11px] text-akg-muted">One-time perpetual license</div>
-            <Button
-              variant={owned ? 'positive' : 'default'}
-              className="mt-3 gap-2"
-              onClick={() => openCheckout(bot)}
-            >
-              {owned ? (
-                <><KeyRound className="h-4 w-4" /><span>View License Key</span></>
-              ) : pending ? (
-                <><Clock className="h-4 w-4" /><span>Verification in Progress</span></>
-              ) : (
-                <><KeyRound className="h-4 w-4" /><span>Purchase License</span></>
-              )}
-            </Button>
-          </div>
+          <BotHeroMedia bot={bot} />
         </div>
 
         {/* Performance panel */}
@@ -491,14 +575,29 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
             )}
 
             <div className="rounded-2xl border border-white/10 bg-akg-surface p-5">
-              <div className="text-xs font-bold text-akg-silver">Pairs & platform</div>
-              <p className="mt-2 font-data text-[11px] text-akg-muted">{bot.pairs}</p>
-              <p className="mt-1 font-data text-[11px] text-akg-muted">MetaTrader {bot.platform}</p>
-              {bot.recommended_deposit && (
-                <p className="mt-3 text-[11px] text-akg-muted">
-                  Recommended capital: <span className="font-data text-akg-silver">{bot.recommended_deposit}</span>
-                </p>
-              )}
+              <div className="text-xs font-bold text-akg-silver">At a glance</div>
+              <dl className="mt-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-[11px] text-akg-muted">Platform</dt>
+                  <dd className="font-data text-[11px] text-akg-silver">MetaTrader {bot.platform}</dd>
+                </div>
+                {bot.version && (
+                  <div className="flex items-center justify-between gap-3">
+                    <dt className="text-[11px] text-akg-muted">Version</dt>
+                    <dd className="font-data text-[11px] text-akg-silver">{bot.version}</dd>
+                  </div>
+                )}
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-[11px] text-akg-muted">Pairs</dt>
+                  <dd className="text-right font-data text-[11px] text-akg-silver">{bot.pairs}</dd>
+                </div>
+                {bot.recommended_deposit && (
+                  <div className="flex items-center justify-between gap-3">
+                    <dt className="text-[11px] text-akg-muted">Min capital</dt>
+                    <dd className="font-data text-[11px] text-akg-silver">{bot.recommended_deposit}</dd>
+                  </div>
+                )}
+              </dl>
             </div>
           </div>
         </div>
