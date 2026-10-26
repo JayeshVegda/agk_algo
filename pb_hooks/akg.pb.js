@@ -661,10 +661,38 @@ onRecordUpdateRequest((e) => {
   }
   e.next();
 }, "notifications");
+
+// ---------------------------------------------------------------------------
+// Traders roster for the admin console. PocketBase hides user emails from
+// everyone except superusers (emailVisibility), which empties the console's
+// member dossier and payment lookups. This route returns the roster with
+// emails, only to console managers, so the client side stays otherwise plain.
+routerAdd("GET", "/api/akg/traders", (e) => {
+  const auth = e.auth;
+  const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
+  if (!isManager) {
+    e.json(403, { message: "Administrators only." });
+    return;
+  }
+  try {
+    const rows = $app.findRecordsByFilter("users", "", "-created", 5000, 0).map((u) => ({
+      id: u.id,
+      email: String(u.get("email") || ""),
+      name: String(u.get("name") || ""),
+      verified: !!u.get("verified"),
+      role: String(u.get("role") || ""),
+      plan: String(u.get("plan") || ""),
+      cycle_expires_at: String(u.get("cycle_expires_at") || ""),
+      created: String(u.get("created") || ""),
+    }));
+    e.json(200, rows);
+  } catch (err) {
+    e.json(500, { message: String(err) });
+  }
+});
 // ---------------------------------------------------------------------------
 // Admin console stats (aggregates computed server-side so the browser never
 // downloads full tables just to render KPIs)
-// ---------------------------------------------------------------------------
 routerAdd("GET", "/api/akg/stats", (e) => {
   const auth = e.auth;
   const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");

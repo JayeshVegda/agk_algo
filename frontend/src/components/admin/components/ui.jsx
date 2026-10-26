@@ -133,10 +133,12 @@ export function FilterChips({ options, value, onChange }) {
   );
 }
 
-export function SearchInput({ value, onChange, placeholder = 'Search...' }) {
+export function SearchInput({ value, onChange, placeholder = 'Search...', id = 'akg-admin-search' }) {
   return (
     <input
       type="text"
+      id={id}
+      name="search"
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
