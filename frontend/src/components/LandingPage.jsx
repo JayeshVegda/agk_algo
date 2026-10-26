@@ -167,10 +167,24 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
   useEffect(() => {
     if (!botsEmbla) return undefined;
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // embla play()/stop() can throw transiently while the engine is
+    // re-initializing or between mounts — never let that reach React.
+    const settle = (reduced) => {
+      try {
+        if (reduced) {
+          botsAutoplay.stop();
+        } else {
+          botsAutoplay.play();
+        }
+      } catch {
+        setTimeout(() => {
+          try { reduced ? botsAutoplay.stop() : botsAutoplay.play(); } catch { /* give up quietly */ }
+        }, 60);
+      }
+    };
     const apply = (reduced) => {
       reduceMotionRef.current = reduced;
-      if (reduced) botsAutoplay.stop();
-      else botsAutoplay.play();
+      settle(reduced);
     };
     const onMq = (e) => apply(e.matches);
     const onReInit = () => apply(mq.matches);
@@ -186,7 +200,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
     return () => {
       mq.removeEventListener('change', onMq);
       botsEmbla.off('reInit', onReInit);
-      botsAutoplay.stop();
+      settle(true);
     };
   }, [botsEmbla, botsAutoplay]);
 
@@ -456,11 +470,8 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
         <Reveal delay={0.08} y={36}>
           <div
             className="-mx-4 mt-9"
-            onMouseEnter={() => { setBotsHover(true); botsAutoplay.stop(); }}
-            onMouseLeave={() => {
-              setBotsHover(false);
-              if (!reduceMotionRef.current) botsAutoplay.play();
-            }}
+            onMouseEnter={() => setBotsHover(true)}
+            onMouseLeave={() => setBotsHover(false)}
           >
             <div className="overflow-hidden py-2" ref={botsEmblaRef}>
               <div className="flex">
