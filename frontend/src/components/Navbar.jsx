@@ -433,11 +433,11 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[350px] p-0 flex flex-col justify-between bg-[#07090D] border-l border-white/10">
                 <div>
-                  <SheetHeader className="p-4 border-b border-white/10">
+                  <SheetHeader className="p-4 pr-12 border-b border-white/10">
                     <img
                       src="/assets/logos/akg-algo-metallic-nav.png"
                       alt="AKG ALGO"
-                      className="h-8 w-auto"
+                      className="h-7 w-auto max-w-[70%] self-start object-contain"
                     />
                   </SheetHeader>
 

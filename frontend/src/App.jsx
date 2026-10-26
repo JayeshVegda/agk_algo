@@ -17,6 +17,7 @@ import { CheckoutPage } from './components/CheckoutPage';
 import { TrackRecordPage } from './components/TrackRecordPage';
 import { TermsPage, RefundPage, RiskPage, PrivacyPage } from './components/LegalPages';
 import { ToastContainer } from './components/Toast';
+import { Footer } from './components/Footer';
 import { Compass, Zap, Cpu, Network, User } from 'lucide-react';
 
 // Public tab routes: path -> tab id. Tabs are URL-addressable so any page
@@ -268,85 +269,11 @@ export default function App() {
         </main>
       </div>
 
-      {/* Global Brand Kit Consumer Footer */}
-      <footer className="border-t border-white/10 bg-[#07090D] py-12 text-xs text-[#A6ADB9] mt-20">
-        <div className="w-[94%] max-w-[1750px] mx-auto px-2 sm:px-4 space-y-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="space-y-2">
-              <img
-                src="/assets/logos/akg-algo-metallic-footer.webp"
-                alt="AKG ALGO — Trade Smarter"
-                className="h-11 w-auto"
-                loading="lazy"
-              />
-              <p className="text-xs text-[#A6ADB9] max-w-lg leading-relaxed">
-                Automated MetaTrader Expert Advisors and institutional execution signals with strict stop-loss protection.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-6 text-xs flex-wrap">
-              <button 
-                onClick={() => switchTab('signals')}
-                className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium"
-              >
-                Signals
-              </button>
-              <button 
-                onClick={() => switchTab('bots')}
-                className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium"
-              >
-                Trading Bots
-              </button>
-              <button 
-                onClick={() => switchTab('connector')}
-                className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium"
-              >
-                Connector Demo
-              </button>
-              <button 
-                onClick={() => switchTab('pricing')}
-                className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium"
-              >
-                Plans & Pricing
-              </button>
-              <button 
-                onClick={() => switchTab('resources')}
-                className="text-[#A6ADB9] hover:text-[#00D878] transition-colors cursor-pointer font-medium"
-              >
-                Traders Kit
-              </button>
-              <span className="text-white/20">|</span>
-              <button onClick={() => switchTab('track')} className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium">Track Record</button>
-              <span className="text-white/20">|</span>
-              <button onClick={() => switchTab('terms')} className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium">Terms</button>
-              <button onClick={() => switchTab('refund')} className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium">Refunds</button>
-              <button onClick={() => switchTab('risk')} className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium">Risk</button>
-              <button onClick={() => switchTab('privacy')} className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium">Privacy</button>
-              {user?.role === 'admin' && (
-                <button
-                  onClick={() => navigateTo('/admin')}
-                  className="text-[#F3C653] font-bold hover:underline cursor-pointer flex items-center gap-1"
-                >
-                  Admin Console →
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
-            <div className="flex items-center gap-4 text-[#A6ADB9]">
-              <span>Platform: <span className="text-[#00D878] font-semibold">MT4 & MT5</span></span>
-              <span>•</span>
-              <span>Settlement: <span className="text-[#F3C653] font-semibold">USDT Direct</span></span>
-              <span>•</span>
-              <span>Perpetual Licenses & 30D Cycles</span>
-            </div>
-            <div className="text-white/40">
-              © 2026 AKG ALGO. All rights reserved.
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer
+        onNavigate={switchTab}
+        user={user}
+        onNavigateAdmin={() => navigateTo('/admin')}
+      />
 
       {/* Auth Modal */}
       <AuthModal

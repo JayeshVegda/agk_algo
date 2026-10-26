@@ -187,53 +187,66 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       {/* ============================================================
           1. HERO — asymmetric split: copy left, real live feed right
       ============================================================ */}
-      <section className="relative flex min-h-[calc(100dvh-4rem)] items-center overflow-hidden">
-        {/* ambient brand glow */}
+      <section className="relative overflow-hidden lg:flex lg:min-h-[calc(100dvh-7rem)] lg:items-center">
+        {/* ambient brand glow + faint terminal dot-grid for depth */}
         <div className="pointer-events-none absolute -top-32 right-[10%] h-96 w-96 rounded-full bg-[#F3C653]/[0.05] blur-3xl" />
         <div className="pointer-events-none absolute bottom-0 left-[5%] h-72 w-72 rounded-full bg-[#00D878]/[0.04] blur-3xl" />
+        <div
+          className="pointer-events-none absolute inset-0 [background-image:radial-gradient(circle_at_1px,rgba(231,233,239,0.055)_1px,transparent_0)] [background-size:26px_26px] [mask-image:radial-gradient(ellipse_65%_70%_at_60%_40%,black,transparent)]"
+        />
 
-        <div className="grid w-full items-center gap-12 py-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+        <div className="grid w-full items-center gap-8 py-4 sm:gap-12 sm:py-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:py-14">
           {/* Copy column */}
           <div className="max-w-2xl">
             <Reveal>
               <span className="inline-flex items-center gap-2 font-data text-[11px] uppercase tracking-[0.18em] text-akg-gold">
                 <span className="live-dot" />
-                MT4 & MT5 Expert Advisors
+                MT4 &amp; MT5 Expert Advisors
               </span>
             </Reveal>
 
             <Reveal delay={0.08}>
-              <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl">
+              <h1 className="mt-4 font-display text-[2rem] font-extrabold leading-[1.08] tracking-tight text-white sm:mt-5 sm:text-5xl">
                 Trade <span className="text-metallic">smarter.</span>
-                <br />
+                <br className="hidden sm:block" />{' '}
                 Automate every entry.
               </h1>
             </Reveal>
 
             <Reveal delay={0.16}>
-              <p className="mt-5 max-w-[52ch] text-base leading-relaxed text-akg-muted sm:text-lg">
+              <p className="mt-4 max-w-[52ch] text-[15px] leading-relaxed text-akg-muted sm:mt-5 sm:text-lg">
                 Rule-based Expert Advisors and live signal desks with hard stop-loss on every trade. Settled in USDT, yours forever.
               </p>
             </Reveal>
 
             <Reveal delay={0.24}>
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Button size="lg" variant="default" onClick={() => onNavigate('pricing')} className="gap-2">
+              <div className="mt-6 flex flex-col gap-2.5 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+                <Button size="lg" variant="default" onClick={() => onNavigate('pricing')} className="w-full gap-2 sm:w-auto">
                   <Cpu className="h-4 w-4" />
                   <span>Get Access</span>
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => onNavigate('signals')} className="gap-2">
+                <Button size="lg" variant="outline" onClick={() => onNavigate('signals')} className="w-full gap-2 sm:w-auto">
                   <Terminal className="h-4 w-4 text-akg-green" />
                   <span>View Live Signals</span>
                 </Button>
               </div>
+            </Reveal>
+
+            <Reveal delay={0.28}>
+              <p className="mt-5 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-data text-[10px] uppercase tracking-[0.13em] text-akg-muted/80">
+                <span>Hard stop-loss on every trade</span>
+                <span className="text-akg-gold/40">/</span>
+                <span>USDT settled</span>
+                <span className="text-akg-gold/40">/</span>
+                <span>One-time licenses</span>
+              </p>
             </Reveal>
           </div>
 
           {/* Live feed column: a real component rendering the real masked feed */}
           <Reveal delay={0.2} className="w-full">
             <div className="surface-glass rounded-2xl">
-              <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-3.5">
+              <div className="flex items-center justify-between border-b border-white/[0.07] px-4 py-3 sm:px-5 sm:py-3.5">
                 <div className="flex items-center gap-2.5">
                   <span className="live-dot" />
                   <span className="font-data text-[11px] uppercase tracking-[0.16em] text-akg-silver">
@@ -249,10 +262,13 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                     Connecting to the signal desk...
                   </div>
                 )}
-                {previews.slice(0, 5).map((s) => {
+                {previews.slice(0, 5).map((s, i) => {
                   const down = String(s.pnl || '').trim().startsWith('-');
                   return (
-                    <div key={s.id} className="flex items-center justify-between gap-3 px-5 py-3">
+                    <div
+                      key={s.id}
+                      className={`${i === 4 ? 'hidden sm:flex' : 'flex'} items-center justify-between gap-3 px-4 py-3 sm:px-5`}
+                    >
                       <div className="flex items-center gap-3">
                         <span className="font-data text-sm font-semibold text-white">{s.symbol}</span>
                         <span
@@ -276,14 +292,14 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                 })}
               </div>
 
-              <div className="flex items-center justify-between border-t border-white/[0.07] px-5 py-3">
+              <div className="flex items-center justify-between gap-3 border-t border-white/[0.07] px-4 py-3 sm:px-5">
                 <span className="flex items-center gap-1.5 text-[11px] text-akg-muted">
-                  <Lock className="h-3 w-3" />
-                  Entry, SL & TP visible to members
+                  <Lock className="h-3 w-3 shrink-0" />
+                  Entry, SL &amp; TP visible to members
                 </span>
                 <button
                   onClick={() => onNavigate('signals')}
-                  className="group flex items-center gap-1 text-[11px] font-semibold text-akg-gold hover:text-akg-goldLight"
+                  className="group flex shrink-0 items-center gap-1 text-[11px] font-semibold text-akg-gold hover:text-akg-goldLight"
                 >
                   View Live Signals
                   <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
@@ -305,7 +321,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
           3. STATS BAND — real counts, hairline separated, no cards
       ============================================================ */}
       <section className="border-y border-white/[0.07]">
-        <RevealGroup className="mx-auto grid max-w-5xl grid-cols-2 gap-y-10 px-4 py-12 md:grid-cols-4">
+        <RevealGroup className="mx-auto grid max-w-5xl grid-cols-2 gap-y-6 px-4 py-8 md:grid-cols-4 md:py-10">
           {[
             { value: botCount, label: 'Expert Advisors', format: (v) => `${Math.round(v)}` },
             { value: 30, label: 'Day signal cycles', format: (v) => `${Math.round(v)}` },
@@ -330,12 +346,16 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       {/* ============================================================
           4. BOTS SHOWCASE — featured card + compact pair (asymmetric)
       ============================================================ */}
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:py-24">
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:py-20">
         <Reveal>
-          <h2 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-            Expert Advisors, perpetual licenses
+          <span className="font-data text-[10px] font-bold uppercase tracking-[0.22em] text-akg-gold/80">
+            01 · EA catalog
+          </span>
+          <h2 className="mt-2.5 font-display text-3xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-4xl">
+            Perpetual licenses,<br className="hidden sm:block" />{' '}
+            <span className="text-metallic">institutional edges.</span>
           </h2>
-          <p className="mt-2 max-w-[60ch] text-sm text-akg-muted">
+          <p className="mt-3 max-w-[60ch] text-sm text-akg-muted sm:text-[15px]">
             License keys bind cryptographically to your MetaTrader account. Pay once, run forever.
           </p>
         </Reveal>
@@ -346,11 +366,11 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
             <Reveal className="lg:row-span-2">
               <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#F3C653]/25 bg-akg-surface shadow-gold transition-transform duration-500 ease-akg hover:-translate-y-1">
                 <div className="relative border-b border-white/[0.06] bg-[#0A0D13]">
-                  <div className="flex items-center justify-between px-6 pt-5">
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 px-5 pt-5 sm:px-6">
                     <Badge variant="gold" className="gap-1 border border-[#F3C653]/40">
                       Most deployed
                     </Badge>
-                    <span className="font-data text-[10px] text-akg-muted">
+                    <span className="ml-auto whitespace-nowrap font-data text-[10px] text-akg-muted">
                       Illustrative equity profile
                     </span>
                   </div>
@@ -364,7 +384,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                   />
                 </div>
 
-                <div className="flex flex-1 flex-col p-6 sm:p-7">
+                <div className="flex flex-1 flex-col p-5 sm:p-7">
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-data text-[11px] uppercase tracking-[0.14em] text-akg-muted">
                       {featured.platform} · {featured.pairs}
@@ -391,7 +411,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                     ))}
                   </div>
 
-                  <div className="mt-auto flex items-end justify-between gap-4 pt-6">
+                  <div className="mt-auto flex flex-wrap items-end justify-between gap-4 pt-6">
                     <div>
                       <div className="font-display text-2xl font-extrabold text-white tabular-nums">
                         ${featured.price}
@@ -409,12 +429,12 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
             </Reveal>
           )}
 
-          {/* Compact bot cards */}
+          {/* Compact bot cards + what's inside a license */}
           <RevealGroup className="grid gap-5" stagger={0.1}>
             {rest.map((bot) => (
               <RevealItem key={bot.id}>
-                <article className="group flex flex-col gap-4 rounded-2xl border border-white/10 bg-akg-surface p-6 transition-colors hover:border-white/20 sm:flex-row sm:items-center">
-                  <div className="flex-1">
+                <article className="group flex flex-col gap-4 rounded-2xl border border-white/10 bg-akg-surface p-5 transition-all duration-300 hover:border-[#F3C653]/25 sm:flex-row sm:items-center sm:p-6">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2.5">
                       <h3 className="font-display text-base font-bold text-white">{bot.name}</h3>
                       <span className="font-data text-[10px] text-akg-muted">{bot.version}</span>
@@ -425,10 +445,10 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                     <p className="mt-2.5 line-clamp-2 text-xs leading-relaxed text-akg-muted">
                       {bot.description}
                     </p>
-                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-data text-[11px]">
-                      <span className="text-akg-green">{bot.win_rate} win</span>
-                      <span className="text-akg-muted">PF {bot.profit_factor}</span>
-                      <span className="text-akg-muted">DD {bot.drawdown}</span>
+                    <div className="mt-3 flex flex-wrap gap-1.5 font-data text-[11px]">
+                      <span className="rounded-md bg-akg-green/[0.08] px-2 py-0.5 text-akg-green">{bot.win_rate} win</span>
+                      <span className="rounded-md bg-white/[0.04] px-2 py-0.5 text-akg-muted">PF {bot.profit_factor}</span>
+                      <span className="rounded-md bg-white/[0.04] px-2 py-0.5 text-akg-muted">DD {bot.drawdown}</span>
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-row items-center justify-between gap-3 sm:flex-col sm:items-end">
@@ -442,6 +462,22 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                 </article>
               </RevealItem>
             ))}
+
+            <RevealItem>
+              <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-5 sm:p-6">
+                <span className="font-data text-[10px] font-bold uppercase tracking-[0.18em] text-akg-gold/80">
+                  Every license includes
+                </span>
+                <ul className="mt-3.5 grid gap-2.5">
+                  {['Free lifetime updates', 'Cryptographic account binding', 'Hard stop-loss on every position', 'Priority desk support'].map((t) => (
+                    <li key={t} className="flex items-center gap-2.5 text-sm text-akg-silver">
+                      <Check className="h-3.5 w-3.5 shrink-0 text-akg-green" strokeWidth={2.5} />
+                      <span>{t}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </RevealItem>
           </RevealGroup>
         </div>
 
@@ -462,17 +498,23 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
           5. SIGNAL PLANS — duo with metallic VIP treatment
       ============================================================ */}
       <section className="border-y border-white/[0.07] bg-[#0A0D12]">
-        <div className="mx-auto max-w-5xl px-4 py-20 sm:py-24">
+        <div className="mx-auto max-w-5xl px-4 py-14 sm:py-20">
           <Reveal>
-            <h2 className="text-center font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-              Signal desks
+            <div className="text-center">
+              <span className="font-data text-[10px] font-bold uppercase tracking-[0.22em] text-akg-gold/80">
+                02 · Signal desks
+              </span>
+            </div>
+            <h2 className="mt-2.5 text-center font-display text-3xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-4xl">
+              Live coordinates,<br className="hidden sm:block" />{' '}
+              <span className="text-metallic">every session.</span>
             </h2>
-            <p className="mx-auto mt-2 max-w-[55ch] text-center text-sm text-akg-muted">
+            <p className="mx-auto mt-3 max-w-[55ch] text-center text-sm text-akg-muted sm:text-[15px]">
               Real-time setups with pre-calculated entry, stop-loss, and take-profit coordinates.
             </p>
           </Reveal>
 
-          <RevealGroup className="mt-12 grid gap-6 md:grid-cols-2" stagger={0.12}>
+          <RevealGroup className="mt-10 grid gap-6 md:grid-cols-2 sm:mt-12" stagger={0.12}>
             {PLANS.map((plan) => (
               <RevealItem key={plan.id}>
                 <article
@@ -526,19 +568,22 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       {/* ============================================================
           6. HOW IT WORKS — vertical flow, verb-noun labels
       ============================================================ */}
-      <section className="mx-auto max-w-3xl px-4 py-20 sm:py-24">
+      <section className="mx-auto max-w-3xl px-4 py-14 sm:py-20">
         <Reveal>
-          <h2 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-            From checkout to execution
+          <span className="font-data text-[10px] font-bold uppercase tracking-[0.22em] text-akg-gold/80">
+            03 · Setup
+          </span>
+          <h2 className="mt-2.5 font-display text-3xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-4xl">
+            From checkout to <span className="text-metallic">execution.</span>
           </h2>
         </Reveal>
 
-        <div className="mt-12 space-y-0">
+        <div className="mt-10 space-y-0 sm:mt-12">
           {STEPS.map((step, i) => {
             const Icon = step.icon;
             return (
               <Reveal key={step.label} delay={i * 0.08}>
-                <div className="relative flex gap-6 pb-10 last:pb-0">
+                <div className="relative flex gap-5 pb-10 last:pb-0 sm:gap-6">
                   {/* connector line */}
                   {i < STEPS.length - 1 && (
                     <div className="absolute left-[27px] top-14 h-[calc(100%-3.5rem)] w-px bg-gradient-to-b from-[#F3C653]/40 to-white/[0.06]" />
@@ -547,7 +592,10 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                     <Icon className="h-6 w-6 text-akg-gold" strokeWidth={1.75} />
                   </div>
                   <div className="pt-1">
-                    <h3 className="font-display text-lg font-bold text-white">{step.label}</h3>
+                    <h3 className="font-display text-lg font-bold text-white">
+                      <span className="mr-2 font-data text-[11px] font-bold text-akg-gold/70">0{i + 1}</span>
+                      {step.label}
+                    </h3>
                     <p className="mt-1.5 max-w-[55ch] text-sm leading-relaxed text-akg-muted">{step.body}</p>
                   </div>
                 </div>
@@ -562,14 +610,17 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       ============================================================ */}
       {briefings.length > 0 && (
         <section className="border-y border-white/[0.07] bg-[#0A0D12]">
-          <div className="mx-auto max-w-5xl px-4 py-16 sm:py-20">
+          <div className="mx-auto max-w-5xl px-4 py-12 sm:py-20">
             <div className="flex items-end justify-between gap-6">
               <Reveal>
-                <h2 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-                  Latest from the desk
+                <span className="font-data text-[10px] font-bold uppercase tracking-[0.22em] text-akg-gold/80">
+                  04 · Live from the desk
+                </span>
+                <h2 className="mt-2.5 font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                  Directives &amp; risk calls
                 </h2>
                 <p className="mt-2 max-w-[55ch] text-sm text-akg-muted">
-                  Directives and analysis published live from the trading floor.
+                  Published live from the trading floor as conditions change.
                 </p>
               </Reveal>
               <Reveal delay={0.1}>
@@ -608,9 +659,12 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       {/* ============================================================
           7. FAQ — single column accordion
       ============================================================ */}
-      <section className="mx-auto max-w-3xl px-4 pb-20 sm:pb-24">
+      <section className="mx-auto max-w-3xl px-4 pb-14 pt-14 sm:pt-20 sm:pb-20">
         <Reveal>
-          <h2 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+          <span className="font-data text-[10px] font-bold uppercase tracking-[0.22em] text-akg-gold/80">
+            05 · FAQ
+          </span>
+          <h2 className="mt-2.5 font-display text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
             Questions, answered
           </h2>
         </Reveal>
@@ -634,7 +688,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       ============================================================ */}
       <section className="px-4 pb-4">
         <Reveal>
-          <div className="relative overflow-hidden rounded-3xl border border-[#F3C653]/25 bg-gradient-to-b from-[#14100A] via-akg-surface to-akg-bg px-6 py-16 text-center sm:py-20">
+          <div className="relative overflow-hidden rounded-3xl border border-[#F3C653]/25 bg-gradient-to-b from-[#14100A] via-akg-surface to-akg-bg px-5 py-12 text-center sm:px-6 sm:py-20">
             <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-[#F3C653]/[0.07] blur-3xl" />
 
             <img
@@ -676,35 +730,41 @@ function PerformanceStrip({ onNavigate }) {
   const o = perf.overall;
   const latest = perf.months.slice(0, 3);
   return (
-    <section className="mx-auto max-w-7xl px-4">
+    <section className="mx-auto max-w-7xl px-4 pb-2">
       <Reveal>
-        <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-akg-surface p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-          <div>
-            <h2 className="font-display text-lg font-bold text-white">Real desk record</h2>
-            <p className="mt-1 text-xs text-akg-muted">
-              {o.closed} closed signals · {o.winRate !== null ? `${o.winRate}% win rate` : ''} · computed from settled outcomes, updated live.
-            </p>
-          </div>
-          <div className="flex items-center gap-5">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-4 gap-y-2.5 rounded-full border border-white/10 bg-akg-surface px-5 py-3.5 sm:justify-between sm:gap-x-5 sm:px-6">
+          <span className="inline-flex items-center gap-2 font-display text-sm font-bold text-white">
+            <span className="live-dot" />
+            Real desk record
+          </span>
+
+          <span className="font-data text-[11px] text-akg-muted">
+            {o.closed} closed · {o.winRate !== null ? `${o.winRate}% win` : 'live'}
+          </span>
+
+          <span className="hidden h-4 w-px bg-white/10 sm:block" />
+
+          <div className="flex items-center gap-4">
             {latest.map((m) => (
-              <div key={m.month} className="text-center">
-                <div className="font-data text-[10px] uppercase text-akg-muted">
+              <span key={m.month} className="flex items-baseline gap-1.5 font-data text-xs">
+                <span className="text-[10px] uppercase text-akg-muted">
                   {new Date(m.month + '-02').toLocaleDateString([], { month: 'short' })}
-                </div>
-                <div className={`font-data text-lg font-bold ${m.net >= 0 ? 'text-akg-green' : 'text-rose-300'}`}>
+                </span>
+                <span className={`font-bold ${m.net >= 0 ? 'text-akg-green' : 'text-rose-300'}`}>
                   {m.net > 0 ? '+' : ''}{m.net}
-                </div>
-                <div className="font-data text-[9px] text-akg-muted">pips</div>
-              </div>
+                </span>
+                <span className="text-[9px] text-akg-muted">pips</span>
+              </span>
             ))}
-            <button
-              onClick={() => onNavigate('track')}
-              className="group flex h-10 items-center gap-1.5 rounded-full border border-[#F3C653]/40 px-4 text-xs font-bold text-akg-gold transition-colors hover:bg-[#F3C653]/10"
-            >
-              Full record
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-            </button>
           </div>
+
+          <button
+            onClick={() => onNavigate('track')}
+            className="group flex h-8 items-center gap-1.5 rounded-full border border-[#F3C653]/40 px-3.5 text-[11px] font-bold text-akg-gold transition-colors hover:bg-[#F3C653]/10"
+          >
+            Full record
+            <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+          </button>
         </div>
       </Reveal>
     </section>
