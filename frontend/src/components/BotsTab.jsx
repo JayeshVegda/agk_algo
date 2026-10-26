@@ -5,7 +5,7 @@ import {
   KeyRound, Copy, Check, ArrowRight, X,
   ExternalLink, BarChart3,
   Shield, HardDrive, CreditCard,
-  Clock, AlertCircle, ChevronLeft, FlaskConical, Lock
+  Clock, AlertCircle, ChevronLeft, FlaskConical, Lock, Timer
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
@@ -123,7 +123,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
         notify({
           type: 'info',
           title: 'Verification in Progress',
-          message: `Your payment for ${bot.name} is being verified. The license key is issued automatically once approved.`
+          message: `Your payment for ${bot.name} is being verified. Your license key and Google Drive package link unlock automatically once approved.`
         });
       }
       return;
@@ -202,7 +202,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
         notify({
           type: 'success',
           title: 'Payment Logged for Verification',
-          message: `TXID submitted. Desk will verify the blockchain transfer of $${checkoutBot.price} USDT and issue your license key.`
+          message: `TXID submitted. Desk will verify the blockchain transfer of $${checkoutBot.price} USDT and issue your license key and Drive package link.`
         });
       }
     } catch (err) {
@@ -434,7 +434,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
               )}
             </div>
 
-            {bot.download_url && (
+            {bot.download_url && owned && (
               <div className="rounded-2xl border border-white/10 bg-akg-surface p-5">
                 <div className="flex items-center gap-2 text-xs font-bold text-akg-silver">
                   <HardDrive className="h-4 w-4 text-akg-gold" />
@@ -452,6 +452,18 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                   <span>Open Drive package</span>
                   <ExternalLink className="h-3 w-3" />
                 </a>
+              </div>
+            )}
+
+            {bot.download_url && pending && (
+              <div className="rounded-2xl border border-amber-400/20 bg-amber-400/[0.04] p-5">
+                <div className="flex items-center gap-2 text-xs font-bold text-amber-200">
+                  <Timer className="h-4 w-4 shrink-0" />
+                  Drive package locked
+                </div>
+                <p className="mt-2 text-[11px] leading-relaxed text-akg-muted">
+                  Your payment is being verified. The Google Drive package link unlocks in My Account as soon as the desk approves your payment.
+                </p>
               </div>
             )}
 

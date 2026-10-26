@@ -264,7 +264,7 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
               <div className="p-4 rounded-xl border border-amber-400/20 bg-amber-400/5 text-xs text-amber-200 flex items-start gap-2">
                 <Timer className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>
-                  {pendingBots.length} bot purchase{pendingBots.length === 1 ? '' : 's'} awaiting desk verification. Your license key is issued the moment the payment is approved.
+                  {pendingBots.length} bot purchase{pendingBots.length === 1 ? '' : 's'} awaiting desk verification. Your license key and Google Drive package link appear here the moment the payment is approved — no further action needed from you.
                 </span>
               </div>
             )}
