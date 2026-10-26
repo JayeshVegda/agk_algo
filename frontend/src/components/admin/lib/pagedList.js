@@ -7,13 +7,27 @@ import { pb } from '../../../lib/pocketbase';
  *
  * filter may use {:placeholders}; pass matching `params` (expanded safely via
  * pb.filter). searchKeys are matched with `~` against the search box.
+ *
+ * Fully controlled mode: pass both `search`+`onSearch` and `page`+`onPage`
+ * (e.g. URL-backed from urlState) — the caller also owns resetting to page 1.
  */
-export function usePagedList(collection, { filter = '', params = null, sort = '-created', searchKeys = [], perPage = 20 } = {}) {
+export function usePagedList(collection, {
+  filter = '', params = null, sort = '-created', searchKeys = [], perPage = 20,
+  initialSearch = '', initialPage = 1,
+  search: searchProp, onSearch, // eslint-disable-line react-hooks/exhaustive-deps
+  page: pageProp, onPage,
+} = {}) {
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [search, setSearchRaw] = useState('');
+  const [searchRaw, setSearchRaw] = useState(initialSearch);
+  const [pageSelf, setPageSelf] = useState(initialPage);
   const [loading, setLoading] = useState(true);
+
+  const controlled = !!onSearch && !!onPage;
+  const search = searchProp !== undefined && controlled ? searchProp : searchRaw;
+  const page = pageProp !== undefined && controlled ? pageProp : pageSelf;
+  const setSearch = controlled ? onSearch : ((v) => { setSearchRaw(v); setPageSelf(1); });
+  const setPage = controlled ? onPage : setPageSelf;
 
   const fullFilter = useMemo(() => {
     const q = search.trim();
@@ -44,8 +58,6 @@ export function usePagedList(collection, { filter = '', params = null, sort = '-
     const unsubP = pb.collection(collection).subscribe('*', () => load()).catch(() => null);
     return () => { unsubP?.then?.((u) => u && u()); };
   }, [collection, load]);
-
-  const setSearch = (v) => { setSearchRaw(v); setPage(1); };
 
   return {
     items, total, page, setPage,

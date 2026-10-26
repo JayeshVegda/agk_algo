@@ -1,12 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Command as CommandIcon } from 'lucide-react';
 import { pb } from '../../lib/pocketbase';
 import {
-  LayoutDashboard, CreditCard, Zap, Cpu, Bell, Package, Users as UsersIcon, Radio,
-  RefreshCw, LogOut, Globe, Menu, X, ChevronRight, AlertTriangle, Settings as Cog,
+  RefreshCw, LogOut, Globe, Menu, X, ChevronRight, AlertTriangle,
 } from 'lucide-react';
 import { NotificationBell } from '../NotificationBell';
 import { AdminDataProvider, useAdmin } from './AdminContext';
 import { useStats } from './lib/pagedList';
+import { useUrlQuery, setParams, replaceParams } from './lib/urlState';
+import { MOBILE_TABS, SECTIONS, SECTION_IDS } from './adminNav';
+import { DensityProvider, DensityToggle, useDensity } from './components/Density';
+import CommandPalette from './components/CommandPalette';
 import Overview from './sections/Overview';
 import Payments from './sections/Payments';
 import Signals from './sections/Signals';
@@ -17,20 +21,6 @@ import Users from './sections/Users';
 import Connectors from './sections/Connectors';
 import Settings from './sections/Settings';
 import { cn } from '../../lib/utils';
-
-const SECTIONS = [
-  { id: 'overview', label: 'Overview', short: 'Home', icon: LayoutDashboard, group: 'Main' },
-  { id: 'payments', label: 'Money Queue', short: 'Money', icon: CreditCard, group: 'Main', badge: 'pendingPayments' },
-  { id: 'signals', label: 'Signals', short: 'Signals', icon: Zap, group: 'Main' },
-  { id: 'briefings', label: 'Briefings', short: 'Briefs', icon: Bell, group: 'Desk' },
-  { id: 'bots', label: 'Expert Advisors', short: 'Bots', icon: Cpu, group: 'Desk' },
-  { id: 'resources', label: 'Traders Kit', short: 'Kit', icon: Package, group: 'Desk' },
-  { id: 'users', label: 'Traders', short: 'Traders', icon: UsersIcon, group: 'Desk' },
-  { id: 'connectors', label: 'Managed Accounts', short: 'Accounts', icon: Radio, group: 'Desk', badge: 'pendingConnectors' },
-  { id: 'settings', label: 'Settings', short: 'Settings', icon: Cog, group: 'Desk' },
-];
-
-const MOBILE_TABS = ['overview', 'payments', 'signals'];
 
 export function AdminPortal({ onNavigatePublic, notify }) {
   const [currentUser, setCurrentUser] = useState(pb.authStore.record);
@@ -128,7 +118,9 @@ export function AdminPortal({ onNavigatePublic, notify }) {
   /* ------------------------- console shell ------------------------- */
   return (
     <AdminDataProvider currentUser={currentUser} notify={notify}>
-      <ConsoleShell currentUser={currentUser} onLogout={handleLogout} notify={notify} />
+      <DensityProvider>
+        <ConsoleShell currentUser={currentUser} onLogout={handleLogout} notify={notify} />
+      </DensityProvider>
     </AdminDataProvider>
   );
 }
@@ -136,8 +128,10 @@ export function AdminPortal({ onNavigatePublic, notify }) {
 function ConsoleShell({ currentUser, onLogout, notify }) {
   const admin = useAdmin();
   const { stats } = useStats();
-  const [section, setSection] = useState('overview');
+  const query = useUrlQuery();
+  const [section, setSectionState] = useState(() => (SECTION_IDS.has(query.s) ? query.s : 'overview'));
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   const badges = useMemo(() => ({
     pendingPayments: stats?.payments.pending ?? 0,
@@ -146,11 +140,22 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
 
   const active = SECTIONS.find((s) => s.id === section) || SECTIONS[0];
 
-  const go = (id) => {
-    setSection(id);
+  const go = (id, extra = {}) => {
+    setParams({ s: id, t: extra.t, id: extra.id, f: extra.f, q: extra.q, sort: extra.sort, page: extra.page }, { push: true });
+    setSectionState(id);
     setDrawerOpen(false);
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
+
+  // Back/forward navigation and palette jumps re-read ?s=.
+  useEffect(() => {
+    if (query.s && SECTION_IDS.has(query.s) && query.s !== section) {
+      setSectionState(query.s);
+      setDrawerOpen(false);
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query.s]);
 
   const SectionComponent = {
     overview: Overview,
@@ -165,7 +170,7 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
   }[section];
 
   return (
-    <div className="min-h-[100dvh] bg-akg-bg font-sans text-akg-silver">
+    <div className="admin-shell min-h-[100dvh] bg-akg-bg font-sans text-akg-silver">
       {/* ============ desktop rail ============ */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-white/[0.07] bg-[#0A0D13] lg:flex">
         <div className="flex items-center gap-2.5 border-b border-white/[0.07] px-5 py-4">
@@ -245,11 +250,24 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
           </div>
           <div className="flex items-center gap-2.5">
             {(badges.pendingPayments + badges.pendingConnectors) > 0 && (
-              <span className="flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 font-data text-[11px] font-bold text-amber-300">
+              <button
+                onClick={() => go('payments', { f: 'pending' })}
+                title="Review the Money Queue"
+                className="flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 font-data text-[11px] font-bold text-amber-300 transition-colors hover:bg-amber-400/20"
+              >
                 <AlertTriangle className="h-3.5 w-3.5" />
                 {badges.pendingPayments} deposits · {badges.pendingConnectors} bridges
-              </span>
+              </button>
             )}
+            <button
+              onClick={() => setPaletteOpen(true)}
+              className="flex items-center gap-1.5 rounded-full border border-white/10 bg-[#0A0D13] px-3 py-1.5 font-data text-[10px] text-akg-muted transition-colors hover:border-[#F3C653]/40 hover:text-akg-silver"
+              title="Command palette (Ctrl+K)"
+              aria-label="Open command palette"
+            >
+              <CommandIcon className="h-3 w-3" /> K
+            </button>
+            <DensityToggle />
             <button
               onClick={() => admin.refresh()}
               className="rounded-full border border-white/10 p-2.5 text-akg-muted transition-colors hover:border-[#F3C653]/40 hover:text-akg-gold"
@@ -323,6 +341,7 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
       </nav>
 
       {/* ============ mobile drawer ============ */}
+      <CommandPalette go={go} open={paletteOpen} setOpen={setPaletteOpen} />
       {drawerOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setDrawerOpen(false)} />
