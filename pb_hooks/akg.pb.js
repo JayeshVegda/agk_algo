@@ -22,6 +22,22 @@
 onRecordCreateRequest((e) => {
   const auth = e.auth;
   const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
+  const isFirstRegistration = !isManager;
+
+  // Normalize the email before any uniqueness or entitlement matching: grants
+  // and the ledger key on the exact email string, and PocketBase's index is
+  // case-sensitive. Lowercase + trim prevents duplicate-looking accounts.
+  if (isFirstRegistration) {
+    const rawEmail = String(e.record.get("email") || "").trim().toLowerCase();
+    if (rawEmail) {
+      let existing = null;
+      try { existing = $app.findFirstRecordByFilter("users", "email = {:e}", { e: rawEmail }); } catch {}
+      if (existing) {
+        throw new BadRequestError("Email already registered. Try signing in instead.");
+      }
+      e.record.set("email", rawEmail);
+    }
+  }
 
   if (!isManager) {
     // Registration flood guard: max 20 accounts per rolling minute (DB-backed,
@@ -627,6 +643,24 @@ onRecordCreateRequest((e) => {
   }
   e.next();
 }, "payments");
+
+// notifications: self-service updates may only toggle the read flag. The
+// owner could otherwise rewrite title/body or re-address the note to a
+// different user id, so those fields are restored from the stored record
+// for non-manager updates.
+onRecordUpdateRequest((e) => {
+  const auth = e.auth;
+  const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
+  if (!isManager) {
+    const orig = e.record.original();
+    e.record.set("user", orig.get("user"));
+    e.record.set("title", orig.get("title"));
+    e.record.set("body", orig.get("body"));
+    e.record.set("type", orig.get("type"));
+    e.record.set("dedupe_key", orig.get("dedupe_key"));
+  }
+  e.next();
+}, "notifications");
 // ---------------------------------------------------------------------------
 // Admin console stats (aggregates computed server-side so the browser never
 // downloads full tables just to render KPIs)
