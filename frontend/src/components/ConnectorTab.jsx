@@ -1,442 +1,225 @@
 import React, { useState, useEffect } from 'react';
 import { pb } from '../lib/pocketbase';
-import { 
-  Network, ShieldCheck, CheckCircle2, Lock, AlertTriangle, 
-  Activity, Wifi, Terminal, Zap, Play, RefreshCw, Cpu,
-  Clock, AlertCircle, ArrowRight, Server, Check
-} from 'lucide-react';
+import { ShieldCheck, Lock, Handshake, Send, CheckCircle2, Clock } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
-import { Card } from './ui/Card';
+import { cn } from '../lib/utils';
 
+const STATUS_LABELS = {
+  pending_review: 'Desk review',
+  in_progress: 'Desk reviewing credentials',
+  trading: 'Bots trading your account',
+  settlement: 'Settlement due',
+  paused: 'Paused by desk',
+  rejected: 'Rejected',
+  connected: 'Connected',
+};
+
+const input = 'h-11 w-full rounded-xl border border-white/10 bg-[#0A0D13] px-3.5 text-sm text-white placeholder:text-akg-muted/50 focus:border-[#F3C653]/50 focus:outline-none';
+
+/**
+ * Account Management: hand your MT4/MT4 account to the desk. We run our
+ * Expert Advisors on your balance; profits split 70% you / 30% desk. The
+ * broker password travels once through this form, is stored AES-encrypted,
+ * and is never displayed anywhere again.
+ */
 export function ConnectorTab({ user, onOpenAuth, notify }) {
-  const [accountNumber, setAccountNumber] = useState('');
-  const [server, setServer] = useState('ICMarkets-Demo01');
-  const [platform, setPlatform] = useState('MT5');
-  const [leverage, setLeverage] = useState('1:100');
-  const [riskLevel, setRiskLevel] = useState('medium');
-  const [submitting, setSubmitting] = useState(false);
-  const [latency, setLatency] = useState(0.8);
-  const [simulationLogs, setSimulationLogs] = useState([]);
-  const [simulatingOrder, setSimulatingOrder] = useState(false);
-  const [userRequests, setUserRequests] = useState([]);
-  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [apps, setApps] = useState([]);
+  const [form, setForm] = useState({ platform: 'MT5', account_number: '', password: '', server: '', broker: '', leverage: '1:100' });
+  const [busy, setBusy] = useState(false);
 
-  // Ping fluctuation simulator
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLatency(Number((0.7 + Math.random() * 0.4).toFixed(2)));
-    }, 2800);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Fetch and subscribe to user's real-time connector inquiries
-  const loadUserRequests = async () => {
+  const load = () => {
     if (!user?.email) return;
-    setLoadingRequests(true);
-    try {
-      const records = await pb.collection('connector_requests').getFullList({
-        filter: `user_email = "${user.email}"`,
-        sort: '-created'
-      });
-      setUserRequests(records);
-    } catch (err) {
-      console.error('Failed to load user connector requests:', err);
-    } finally {
-      setLoadingRequests(false);
-    }
+    pb.collection('connector_requests')
+      .getFullList({ filter: `user_email = "${user.email}"`, sort: '-created' })
+      .then(setApps)
+      .catch(() => {});
   };
 
   useEffect(() => {
-    if (user?.email) {
-      loadUserRequests();
-      const unsub = pb.collection('connector_requests').subscribe('*', (e) => {
-        loadUserRequests();
-        if (e.action === 'update' && notify) {
-          notify({
-            type: 'info',
-            title: 'Bridge Status Updated',
-            message: `Desk updated connection status to: ${e.record.status.toUpperCase()}`
-          });
-        }
-      }).catch(() => {});
-
-      return () => { unsub?.then?.((u) => u && u()); };
-    }
+    load();
+    const unsub = pb.collection('connector_requests').subscribe('*', () => load()).catch(() => {});
+    return () => { unsub?.then?.((u) => u && u()); };
   }, [user?.email]);
 
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    if (!user) {
-      onOpenAuth();
+    if (!user) { onOpenAuth?.(); return; }
+    if (!form.account_number.trim() || !form.password.trim() || !form.server.trim()) {
+      notify?.({ type: 'error', title: 'Missing Details', message: 'Account number, password and server are required.' });
       return;
     }
-
-    setSubmitting(true);
+    setBusy(true);
     try {
-      await pb.collection('connector_requests').create({
-        user_email: user.email,
-        account_number: accountNumber.trim(),
-        server: server.trim(),
-        platform,
-        leverage,
-        risk_level: riskLevel,
-        status: 'pending_review',
-        admin_notes: 'Account received. Desk is initiating latency routing.'
-      });
-
-      setAccountNumber('');
-      loadUserRequests();
-
-      if (notify) {
-        notify({
-          type: 'success',
-          title: 'Bridge Inquiry Submitted',
-          message: `Request for ${platform} #${accountNumber} sent to AKG Desk`
-        });
-      }
+      await pb.send('/api/akg/managed/apply', { method: 'POST', body: JSON.stringify(form) });
+      notify?.({ type: 'success', title: 'Application Received', message: 'The desk will review your account and get back to you here.' });
+      setForm({ ...form, account_number: '', password: '' });
+      load();
     } catch (err) {
-      if (notify) {
-        notify({
-          type: 'error',
-          title: 'Submission Failed',
-          message: err.message
-        });
-      }
+      notify?.({ type: 'error', title: 'Submission Failed', message: err.message || 'Try again.' });
     } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleSimulateExecution = () => {
-    setSimulatingOrder(true);
-    setSimulationLogs([]);
-
-    const steps = [
-      { time: '0.0ms', text: `[IPC] Outbound packet created: ${platform} BUY 0.01 XAUUSD @ Market` },
-      { time: '0.3ms', text: '[GATEWAY] Encrypted fiber routed via Equinix LD4 (London)' },
-      { time: '0.7ms', text: '[MATCH] Institutional liquidity provider matched. Slip: 0.0 pips' },
-      { time: '1.0ms', text: `[CONFIRM] Ticket #${Math.floor(100000 + Math.random() * 900000)} executed in 0.94ms` },
-    ];
-
-    steps.forEach((step, idx) => {
-      setTimeout(() => {
-        setSimulationLogs((prev) => [...prev, step]);
-        if (idx === steps.length - 1) {
-          setSimulatingOrder(false);
-          if (notify) {
-            notify({
-              type: 'success',
-              title: 'Packet Executed',
-              message: 'Simulated 0.01 Lot fill confirmed in 0.94ms'
-            });
-          }
-        }
-      }, (idx + 1) * 350);
-    });
-  };
-
-  const getStatusBadge = (st) => {
-    switch (st) {
-      case 'connected':
-        return {
-          label: 'Bridge Online (Equinix LD4)',
-          class: 'bg-[#00D878]/15 text-[#00D878] border-[#00D878]/30',
-          dot: 'bg-[#00D878]'
-        };
-      case 'in_progress':
-        return {
-          label: 'Desk Configuring Bridge',
-          class: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-          dot: 'bg-blue-400 animate-ping'
-        };
-      case 'rejected':
-        return {
-          label: 'Connection Inactive / Rejected',
-          class: 'bg-rose-500/15 text-rose-400 border-rose-500/30',
-          dot: 'bg-rose-400'
-        };
-      default:
-        return {
-          label: 'Awaiting Desk Review',
-          class: 'bg-[#F3C653]/15 text-[#F3C653] border-[#F3C653]/30',
-          dot: 'bg-[#F3C653] animate-pulse'
-        };
+      setBusy(false);
     }
   };
 
   return (
-    <div className="w-full space-y-6 font-sans text-[#E7E9EF]">
-      {/* Header */}
-      <div className="p-6 rounded-2xl border border-white/10 bg-[#10141B] shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <Badge variant="gold" className="gap-2 mb-2 font-mono">
-              <Network className="h-3.5 w-3.5" />
-              <span>TERMINAL CONNECTOR GATEWAY</span>
-            </Badge>
-            <h1 className="text-2xl font-bold text-white tracking-tight">
-              MetaTrader Low-Latency Bridge
-            </h1>
-            <p className="text-xs text-[#A6ADB9] font-mono mt-1">
-              Sub-millisecond signal replication into MetaTrader 4 & MetaTrader 5 demo/live terminals.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 font-mono text-xs">
-            <div className="p-3 rounded-xl border border-white/10 bg-white/5 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-[#00D878] animate-pulse" />
-              <span className="text-[#A6ADB9]">Gateway:</span>
-              <span className="text-[#00D878] font-bold tabular-nums">{latency}ms (Equinix LD4)</span>
-            </div>
-          </div>
-        </div>
+    <div className="mx-auto max-w-3xl font-sans text-akg-silver">
+      <div className="max-w-2xl">
+        <h1 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Account Management</h1>
+        <p className="mt-2 text-sm leading-relaxed text-akg-muted">
+          Let the desk trade for you. We connect our Expert Advisors to your MetaTrader account and manage it
+          professionally. You keep the account in your name; profits split <b className="text-akg-gold">70% you · 30% desk</b>.
+        </p>
       </div>
 
-      {/* TWO-WAY LIVE STATUS CARDS (Real-time updates from Admin Portal) */}
-      {user && userRequests.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs font-mono px-1">
-            <span className="text-white font-bold flex items-center gap-2">
-              <Activity className="h-4 w-4 text-[#00D878]" />
-              <span>Your Registered Bridge Terminals (Live Two-Way Sync)</span>
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="text-[#A6ADB9] text-[11px]">{userRequests.length} Active Accounts</span>
-              <button
-                onClick={loadUserRequests}
-                disabled={loadingRequests}
-                title="Sync Live Status from Desk"
-                className="p-1 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-white cursor-pointer transition-colors"
-              >
-                <RefreshCw className={`h-3 w-3 ${loadingRequests ? 'animate-spin text-[#00D878]' : 'text-[#A6ADB9]'}`} />
-              </button>
+      {/* how it works */}
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        {[
+          { icon: Send, t: 'Submit credentials', d: 'Account number, password and server. Encrypted the moment it reaches us.' },
+          { icon: CheckCircle2, t: 'Desk connects', d: 'We attach the AKG systems sized to your balance and risk profile.' },
+          { icon: Handshake, t: 'Profits split 70/30', d: 'You keep 70% of net profits. Statements shared at every settlement.' },
+        ].map((s, i) => {
+          const Icon = s.icon;
+          return (
+            <div key={i} className="rounded-2xl border border-white/10 bg-akg-surface p-4">
+              <Icon className="h-5 w-5 text-akg-gold" />
+              <div className="mt-2.5 text-sm font-bold text-white">{s.t}</div>
+              <p className="mt-1 text-[11px] leading-relaxed text-akg-muted">{s.d}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* security note */}
+      <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-akg-green/20 bg-akg-green/[0.05] px-4 py-3.5">
+        <Lock className="mt-0.5 h-4 w-4 shrink-0 text-akg-green" />
+        <p className="text-[11px] leading-relaxed text-akg-muted">
+          Your broker password is stored <b className="text-akg-silver">AES-encrypted</b> and never appears in any list,
+          export or log. Only the desk lead can decrypt it, on demand, to connect your account. You can change the
+          password anytime after we go live.
+        </p>
+      </div>
+
+      {/* application form */}
+      <form onSubmit={submit} className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-akg-surface p-5 sm:p-6">
+        <h2 className="font-display text-base font-bold text-white">Apply for management</h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-akg-silver">Platform</label>
+            <div className="flex rounded-xl border border-white/10 bg-[#0A0D13] p-1">
+              {['MT4', 'MT5'].map((p) => (
+                <button key={p} type="button" onClick={() => setForm({ ...form, platform: p })}
+                  className={cn('h-9 flex-1 rounded-lg text-xs font-bold transition-all',
+                    form.platform === p ? 'bg-[#F3C653] text-[#1C1403]' : 'text-akg-muted')}>
+                  {p}
+                </button>
+              ))}
             </div>
           </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-akg-silver">Account number *</label>
+            <input value={form.account_number} onChange={(e) => setForm({ ...form, account_number: e.target.value })}
+              placeholder="e.g. 8849201" className={`${input} font-data`} />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-akg-silver">Account password *</label>
+            <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}
+              placeholder="investor or master password" className={input} autoComplete="new-password" />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-akg-silver">Server *</label>
+            <input value={form.server} onChange={(e) => setForm({ ...form, server: e.target.value })}
+              placeholder="e.g. ICMarketsSC-MT5" className={`${input} font-data text-xs`} />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-akg-silver">Broker</label>
+            <input value={form.broker} onChange={(e) => setForm({ ...form, broker: e.target.value })}
+              placeholder="e.g. IC Markets" className={input} />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold text-akg-silver">Leverage</label>
+            <select value={form.leverage} onChange={(e) => setForm({ ...form, leverage: e.target.value })} className={input}>
+              {['1:100', '1:200', '1:500', '1:1000'].map((l) => <option key={l}>{l}</option>)}
+            </select>
+          </div>
+        </div>
+        <Button type="submit" disabled={busy} className="h-11 w-full justify-center gap-2">
+          <Send className="h-4 w-4" />
+          {busy ? 'Submitting…' : user ? 'Submit Application' : 'Sign in to Apply'}
+        </Button>
+        <p className="text-center text-[11px] text-akg-muted">
+          By applying you agree to the 70/30 profit split and that the desk may trade this account on your behalf.
+        </p>
+      </form>
 
-          <div className="grid gap-3">
-            {userRequests.map((req) => {
-              const statusInfo = getStatusBadge(req.status);
-              const isApproved = req.status === 'approved' || req.status === 'active';
-              const isLive = req.status === 'active';
+      {/* settlement statements */}
+      {user?.email && (
+        <SettlementStatements email={user.email} />
+      )}
 
-              return (
-                <div 
-                  key={req.id}
-                  className="p-5 rounded-2xl border border-white/10 bg-[#10141B] space-y-4 shadow-lg"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-xs text-white">
-                        {req.platform}
-                      </div>
-                      <div>
-                        <div className="font-bold text-sm text-white font-mono">
-                          Account #{req.account_number}
-                        </div>
-                        <div className="text-xs text-[#A6ADB9] flex items-center gap-2 font-mono">
-                          <span>Server: {req.server}</span>
-                          <span>•</span>
-                          <span>Leverage: {req.leverage || '1:100'}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${statusInfo.class}`}>
-                      <span className={`h-2 w-2 rounded-full ${statusInfo.dot}`} />
-                      <span>{statusInfo.label}</span>
-                    </div>
+      {/* my applications */}
+      {apps.length > 0 && (
+        <div className="mt-8">
+          <h2 className="mb-3 font-data text-[11px] uppercase tracking-[0.16em] text-akg-muted">My applications ({apps.length})</h2>
+          <div className="space-y-3">
+            {apps.map((a) => (
+              <div key={a.id} className="rounded-2xl border border-white/10 bg-akg-surface p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <span className="font-data text-sm font-bold text-white">#{a.account_number}</span>
+                    <span className="ml-2 font-data text-[11px] text-akg-muted">{a.platform} · {a.broker || a.server}</span>
                   </div>
-
-                  {/* Operational Lifecycle Stepper */}
-                  <div className="grid grid-cols-3 gap-2 text-[10px] font-mono border-b border-white/5 pb-3">
-                    <div className="p-2 rounded-lg bg-white/5 border border-white/10 space-y-1">
-                      <div className="flex items-center gap-1.5 text-[#00D878] font-bold">
-                        <CheckCircle2 className="h-3 w-3" />
-                        <span>1. Logged</span>
-                      </div>
-                      <div className="text-[#A6ADB9]">Ticket recorded</div>
-                    </div>
-
-                    <div className={`p-2 rounded-lg border space-y-1 ${
-                      isApproved 
-                        ? 'bg-[#00D878]/10 border-[#00D878]/30 text-[#00D878]' 
-                        : 'bg-[#F3C653]/10 border-[#F3C653]/30 text-[#F3C653]'
-                    }`}>
-                      <div className="flex items-center gap-1.5 font-bold">
-                        {isApproved ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                        <span>2. Desk Review</span>
-                      </div>
-                      <div className="text-[#A6ADB9] truncate">{isApproved ? 'Approved by Admin' : 'In Compliance Review'}</div>
-                    </div>
-
-                    <div className={`p-2 rounded-lg border space-y-1 ${
-                      isLive 
-                        ? 'bg-[#00D878]/10 border-[#00D878]/30 text-[#00D878]' 
-                        : 'bg-white/5 border-white/10 text-[#A6ADB9]'
-                    }`}>
-                      <div className="flex items-center gap-1.5 font-bold">
-                        {isLive ? <Zap className="h-3 w-3 text-[#00D878]" /> : <Server className="h-3 w-3" />}
-                        <span>3. LD4 Bridge</span>
-                      </div>
-                      <div className="truncate">{isLive ? '0.8ms Socket Active' : 'Standby Router'}</div>
-                    </div>
-                  </div>
-
-                  {/* Admin Live Notes Directive */}
-                  {req.admin_notes && (
-                    <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-mono space-y-1">
-                      <div className="text-[10px] text-[#00D878] uppercase font-bold tracking-wider flex items-center gap-1.5">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-[#00D878]" />
-                        <span>Desk Administrator Operational Note & Direct Feedback</span>
-                      </div>
-                      <p className="text-white text-xs leading-relaxed font-sans">
-                        "{req.admin_notes}"
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between text-[11px] font-mono text-[#A6ADB9] pt-1">
-                    <span>Equinix Cross-Connect: <span className="text-[#00D878]">LD4 London Slough</span></span>
-                    <span>Direct IPC: <span className="text-white">Active</span></span>
-                  </div>
+                  <Badge variant={a.status === 'trading' ? 'positive' : a.status === 'rejected' ? 'gold' : 'secondary'}>
+                    {STATUS_LABELS[a.status] || a.status}
+                  </Badge>
                 </div>
-              );
-            })}
+                {a.admin_notes && (
+                  <p className="mt-2.5 rounded-xl bg-white/[0.03] px-3.5 py-2.5 text-[11px] leading-relaxed text-akg-silver">{a.admin_notes}</p>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
+    </div>
+  );
+}
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Bridge Configuration Form */}
-        <div className="rounded-2xl border border-white/10 bg-[#10141B] p-6 shadow-xl space-y-5">
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-[#F3C653]" />
-            Request New Terminal Link
-          </h3>
 
-          <div className="flex items-start gap-3 p-3.5 rounded-xl border border-[#F3C653]/30 bg-[#F3C653]/10 text-xs font-mono text-[#F3C653]">
-            <AlertTriangle className="h-4 w-4 shrink-0 text-[#F3C653] mt-0.5" />
-            <p className="leading-relaxed">
-              Security Protocol: Never submit master investor passwords here. Use demo accounts or read-only investor credentials for bridge configuration.
-            </p>
-          </div>
+function SettlementStatements({ email }) {
+  const [rows, setRows] = useState(null);
+  useEffect(() => {
+    pb.collection('managed_settlements').getFullList({
+      filter: `account.user_email = "${email}"`,
+      sort: '-period_end',
+      expand: 'account',
+    })
+      .then(setRows)
+      .catch(() => setRows([]));
+  }, [email]);
 
-          <form onSubmit={handleSubmit} className="space-y-4 text-xs font-mono">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[#A6ADB9] mb-1">Terminal Platform</label>
-                <select
-                  value={platform}
-                  onChange={(e) => setPlatform(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-[#171D26] px-3.5 py-2.5 text-white cursor-pointer"
-                >
-                  <option value="MT5">MetaTrader 5 (MT5)</option>
-                  <option value="MT4">MetaTrader 4 (MT4)</option>
-                </select>
-              </div>
+  if (rows === null || rows.length === 0) return null;
 
-              <div>
-                <label className="block text-[#A6ADB9] mb-1">Account Leverage</label>
-                <select
-                  value={leverage}
-                  onChange={(e) => setLeverage(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-[#171D26] px-3.5 py-2.5 text-white cursor-pointer"
-                >
-                  <option value="1:100">1:100 Standard</option>
-                  <option value="1:200">1:200 Medium</option>
-                  <option value="1:500">1:500 High</option>
-                  <option value="1:30">1:30 EU Regulated</option>
-                </select>
+  return (
+    <div className="mt-8">
+      <h2 className="mb-3 font-data text-[11px] uppercase tracking-[0.16em] text-akg-muted">Profit-share statements</h2>
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-akg-surface">
+        {rows.map((st) => (
+          <div key={st.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.05] p-4 last:border-0">
+            <div>
+              <div className="font-data text-xs font-bold text-white">{st.period_start} → {st.period_end}</div>
+              <div className="mt-0.5 font-data text-[10px] text-akg-muted">
+                acct #{st.expand?.account?.account_number || '-'} · gross ${Number(st.gross_profit).toLocaleString()}
               </div>
             </div>
-
-            <div>
-              <label className="block text-[#A6ADB9] mb-1">Demo / Live Account Number</label>
-              <input
-                type="text"
-                required
-                value={accountNumber}
-                onChange={(e) => setAccountNumber(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-white placeholder:text-[#A6ADB9] focus:border-[#F3C653] focus:outline-none"
-                placeholder="e.g. 50928192"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[#A6ADB9] mb-1">Broker Server Name</label>
-              <input
-                type="text"
-                required
-                value={server}
-                onChange={(e) => setServer(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-white placeholder:text-[#A6ADB9] focus:border-[#F3C653] focus:outline-none"
-                placeholder="e.g. ICMarketsSC-Live02 or Demo01"
-              />
-            </div>
-
-            <Button
-              type="submit"
-              disabled={submitting}
-              className="w-full justify-center text-xs font-bold"
-            >
-              {submitting ? 'Transmitting to Desk...' : 'Submit Bridge Connection Request'}
-            </Button>
-          </form>
-        </div>
-
-        {/* Live Packet Sandbox & Simulation Console */}
-        <div className="rounded-2xl border border-white/10 bg-[#10141B] p-6 shadow-xl flex flex-col justify-between font-mono text-xs space-y-4">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <h3 className="font-bold text-white flex items-center gap-2">
-                <Terminal className="h-4 w-4 text-[#00D878]" />
-                Live Execution Console
-              </h3>
-              <span className="text-[10px] text-[#00D878] flex items-center gap-1 font-bold">
-                <Wifi className="h-3 w-3" />
-                FIBER ONLINE
+            <div className="flex items-center gap-3">
+              <span className="font-data text-sm font-bold text-akg-green">+${Number(st.user_amount).toLocaleString()}</span>
+              <span className={`rounded-full px-2 py-0.5 font-data text-[9px] font-bold uppercase ${st.status === 'paid' ? 'bg-akg-green/15 text-akg-green' : 'bg-amber-400/15 text-amber-300'}`}>
+                {st.status}
               </span>
             </div>
-
-            <div className="mt-4 rounded-xl bg-[#07090D] border border-white/10 p-3.5 h-48 overflow-y-auto space-y-2 text-[11px] font-mono">
-              <div className="text-[#A6ADB9]">--- Real-time IPC Packet Trace ---</div>
-              <div className="text-[#A6ADB9]">[SYSTEM] Bridge daemon listening on 127.0.0.1:8095</div>
-              <div className="text-[#A6ADB9]">[CLOCK] Precision hardware timestamping (TSC) sync</div>
-              
-              {simulationLogs.map((log, idx) => (
-                <div key={idx} className="text-[#00D878] flex items-start gap-2">
-                  <span className="text-[#A6ADB9] tabular-nums">{log.time}</span>
-                  <span>{log.text}</span>
-                </div>
-              ))}
-
-              {simulatingOrder && (
-                <div className="text-[#F3C653] flex items-center gap-2 animate-pulse">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#F3C653]"></span>
-                  <span>Routing liquidity packet...</span>
-                </div>
-              )}
-            </div>
           </div>
-
-          <div className="space-y-3 pt-2 border-t border-white/10">
-            <Button
-              variant="positive"
-              onClick={handleSimulateExecution}
-              disabled={simulatingOrder}
-              className="w-full justify-center gap-2 text-xs font-bold"
-            >
-              <Play className="h-3.5 w-3.5 fill-current" />
-              <span>Dispatch 0.01 Lot Demo Order (XAUUSD)</span>
-            </Button>
-
-            <div className="grid grid-cols-2 gap-2 text-[10px] text-[#A6ADB9]">
-              <div>Protocol: <span className="text-white">FIX 4.4 / WS</span></div>
-              <div>Fill Slippage: <span className="text-[#00D878]">0.0 pips</span></div>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );

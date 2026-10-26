@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { pb } from '../lib/pocketbase';
 import { Zap, X, Lock, Mail, CheckCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/Card';
@@ -12,6 +12,15 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -52,9 +61,9 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         </button>
 
         <CardHeader className="space-y-2 p-4 sm:p-5 pb-2 text-center items-center shrink-0">
-          <img 
-            src="/assets/logos/akg-algo-symbol-transparent.png" 
-            alt="AKG ALGO" 
+          <img
+            src="/assets/logos/akg-algo-metallic-footer.webp"
+            alt="AKG ALGO"
             className="h-10 sm:h-12 w-auto mx-auto object-contain mb-1"
           />
           <div className="flex justify-center">

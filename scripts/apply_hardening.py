@@ -23,7 +23,8 @@ import urllib.error
 
 BASE_URL = "http://127.0.0.1:8095"
 SUPERUSER_EMAIL = "jayeshvegda@gmail.com"
-SUPERUSER_PASSWORD = "root123456"  # local dev superuser; rotate before any deployment
+import os
+SUPERUSER_PASSWORD = os.environ.get("AKG_SUPERUSER_PASSWORD", "")  # required: no insecure default
 
 ADMIN_ONLY = "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.collectionName = '_superusers')"
 

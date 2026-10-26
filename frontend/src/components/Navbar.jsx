@@ -3,7 +3,7 @@ import { pb } from '../lib/pocketbase';
 import { 
   Zap, Cpu, Network, BarChart3, Bell, 
   CreditCard, ChevronDown, User, LogOut, Shield, 
-  Compass, Search, Menu, ArrowRight, CheckCircle2,
+  Compass, Search, Menu, ArrowRight, CheckCircle2, TrendingUp,
   Sparkles, Layers, Download, Link2, KeyRound
 } from 'lucide-react';
 import { 
@@ -38,6 +38,7 @@ import { cn } from '../lib/utils';
 export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNavigateAdmin, onOpenAccount }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleLogout = () => {
     pb.authStore.clear();
@@ -47,7 +48,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
   const tradingSystems = [
     {
       id: 'signals',
-      title: 'Signals Feed',
+      title: 'Signals Desk',
       description: 'Institutional trade entries with strict SL/TP and real-time execution coordinates.',
       icon: Zap,
       badge: 'LIVE',
@@ -55,7 +56,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
     },
     {
       id: 'bots',
-      title: 'Trading Bots (MT4 / MT5)',
+      title: 'Expert Advisors (MT4 / MT5)',
       description: 'Automated Expert Advisors with audited drawdown caps and dynamic lot algorithms.',
       icon: Cpu,
       badge: 'v4.2',
@@ -63,8 +64,8 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
     },
     {
       id: 'connector',
-      title: 'Connector Demo',
-      description: 'Zero-latency MT4/MT5 bridge simulator with direct ticket telemetry.',
+      title: 'Account Management',
+      description: 'Hand your account to the desk: bots trade it for you, profits split 70/30.',
       icon: Network,
       badge: 'DEMO',
       badgeClass: 'bg-white/10 text-[#E7E9EF] border border-white/15',
@@ -73,6 +74,12 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
 
   const marketIntelligence = [
     {
+      id: 'track',
+      title: 'Desk Track Record',
+      description: 'Monthly performance computed from real closed signals. Wins and losses alike.',
+      icon: TrendingUp,
+    },
+    {
       id: 'charts',
       title: 'Live Charts Terminal',
       description: 'TradingView multi-asset technical charts with custom indicators.',
@@ -80,16 +87,16 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
     },
     {
       id: 'broadcasts',
-      title: 'Directives & Bulletins',
-      description: 'Official trade advisories, high-impact news warnings, and risk memos.',
+      title: 'Desk Briefings',
+      description: 'Live desk announcements, risk directives, and desk-lead analysis.',
       icon: Bell,
       badge: 'ALERTS',
       badgeClass: 'bg-[#00D878]/15 text-[#00D878] border border-[#00D878]/30',
     },
     {
       id: 'resources',
-      title: 'Downloads & Useful Links',
-      description: 'Official MT4/MT5 EAs, broker connectivity guides, and trading community feeds.',
+      title: 'Traders Kit',
+      description: 'Official files, vetted brokers and VPS, and the community channels.',
       icon: Download,
       badge: 'KIT',
       badgeClass: 'bg-[#F3C653]/15 text-[#F3C653] border border-[#F3C653]/30',
@@ -97,14 +104,14 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
   ];
 
   const quickSearchItems = [
-    { label: 'Overview / Home', tab: 'home', icon: Compass },
-    { label: 'Signals Terminal (Live Setups)', tab: 'signals', icon: Zap },
-    { label: 'Automated Trading Bots', tab: 'bots', icon: Cpu },
-    { label: 'Interactive Live Charts', tab: 'charts', icon: BarChart3 },
-    { label: 'Connector Execution Demo', tab: 'connector', icon: Network },
-    { label: 'Executive Directives Feed', tab: 'broadcasts', icon: Bell },
-    { label: 'Downloads & Resources Kit', tab: 'resources', icon: Download },
-    { label: 'Subscription Plans & Pricing', tab: 'pricing', icon: CreditCard },
+    { label: 'Overview', tab: 'home', icon: Compass },
+    { label: 'Signals Desk (Live Setups)', tab: 'signals', icon: Zap },
+    { label: 'Expert Advisors', tab: 'bots', icon: Cpu },
+    { label: 'Live Charts', tab: 'charts', icon: BarChart3 },
+    { label: 'Bridge Connector Demo', tab: 'connector', icon: Network },
+    { label: 'Desk Briefings', tab: 'broadcasts', icon: Bell },
+    { label: 'Traders Kit (Downloads & Links)', tab: 'resources', icon: Download },
+    { label: 'Plans & Pricing', tab: 'pricing', icon: CreditCard },
   ];
 
   useEffect(() => {
@@ -112,6 +119,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setSearchOpen((prev) => !prev);
+        setSearchQuery('');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -119,19 +127,19 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#07090D]/90 backdrop-blur-md transition-all">
+    <header className="sticky top-0 z-40 w-full border-b border-white/[0.07] bg-[#07090D]/80 backdrop-blur-xl supports-[backdrop-filter]:bg-[#07090D]/65 transition-all">
       <div className="w-[94%] max-w-[1750px] mx-auto px-2 sm:px-4 h-16 flex items-center justify-between gap-4">
-        
+
         {/* Left: Official Brand Header Logo from Web Kit */}
         <div className="flex items-center gap-8">
-          <div 
+          <div
             onClick={() => setActiveTab('home')}
             className="flex items-center cursor-pointer select-none shrink-0 group"
           >
-            <img 
-              src="/assets/logos/akg-algo-nav.svg" 
-              alt="AKG ALGO — Trade Smarter" 
-              className="h-9 sm:h-10 w-auto hover:opacity-95 transition-opacity"
+            <img
+              src="/assets/logos/akg-algo-metallic-nav.png"
+              alt="AKG ALGO — Trade Smarter"
+              className="h-10 sm:h-11 w-auto group-hover:brightness-110 transition-[filter]"
             />
           </div>
 
@@ -218,7 +226,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                 <NavigationMenuItem>
                   <NavigationMenuTrigger
                     className={cn(
-                      ['charts', 'broadcasts'].includes(activeTab) &&
+                      ['charts', 'broadcasts', 'track'].includes(activeTab) &&
                         'bg-[#F3C653]/15 text-[#F3C653] border border-[#F3C653]/30 font-bold'
                     )}
                   >
@@ -426,9 +434,9 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
               <SheetContent side="right" className="w-[300px] sm:w-[350px] p-0 flex flex-col justify-between bg-[#07090D] border-l border-white/10">
                 <div>
                   <SheetHeader className="p-4 border-b border-white/10">
-                    <img 
-                      src="/assets/logos/akg-algo-symbol-transparent.png" 
-                      alt="AKG ALGO" 
+                    <img
+                      src="/assets/logos/akg-algo-metallic-nav.png"
+                      alt="AKG ALGO"
                       className="h-8 w-auto"
                     />
                   </SheetHeader>
@@ -638,7 +646,9 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
               <input
                 type="text"
                 autoFocus
-                placeholder="Jump to section, tool, or bot..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Jump to section, tool, or kit..."
                 className="w-full bg-transparent text-sm text-[#E7E9EF] focus:outline-none placeholder:text-[#A6ADB9]"
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') setSearchOpen(false);
@@ -656,7 +666,13 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
               <div className="px-3 py-1.5 text-[10px] font-bold text-[#A6ADB9] uppercase tracking-wider">
                 Quick Navigation
               </div>
-              {quickSearchItems.map((item) => {
+              {quickSearchItems
+                .filter((item) =>
+                  searchQuery.trim()
+                    ? item.label.toLowerCase().includes(searchQuery.trim().toLowerCase())
+                    : true
+                )
+                .map((item) => {
                 const Icon = item.icon;
                 return (
                   <button
@@ -674,7 +690,15 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                     <ArrowRight className="h-3.5 w-3.5 text-white/20 group-hover:text-[#F3C653] transition-colors" />
                   </button>
                 );
-              })}
+                })}
+                {searchQuery.trim() &&
+                  quickSearchItems.filter((item) =>
+                    item.label.toLowerCase().includes(searchQuery.trim().toLowerCase())
+                  ).length === 0 && (
+                  <div className="px-3 py-6 text-center text-xs text-[#A6ADB9]">
+                    No matches for "{searchQuery.trim()}"
+                  </div>
+                )}
             </div>
           </div>
         </div>

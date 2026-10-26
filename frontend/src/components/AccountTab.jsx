@@ -15,7 +15,7 @@ const PLAN_LABELS = {
 };
 
 function fmtDateTime(s) {
-  if (!s) return '—';
+  if (!s) return '-';
   return new Date(String(s).replace(' ', 'T')).toLocaleString(undefined, {
     year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
   });
@@ -96,7 +96,12 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
     <div className="space-y-8 max-w-4xl mx-auto font-sans text-[#E7E9EF]">
 
       {/* ================= SECTION 1: MEMBERSHIP STATUS ================= */}
-      <div className="p-5 sm:p-6 rounded-2xl border border-white/10 bg-[#10141B] space-y-4 shadow-xl">
+      <div className={cn(
+          'p-5 sm:p-6 rounded-2xl border space-y-4 shadow-xl',
+          isActive
+            ? 'border-[#F3C653]/30 bg-gradient-to-b from-[#171208] to-[#10141B] shadow-[#F3C653]/10 ring-1 ring-[#F3C653]/20'
+            : 'border-white/10 bg-[#10141B]'
+        )}>
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <span className="text-[11px] font-bold uppercase tracking-wider text-[#A6ADB9] flex items-center gap-1.5">
             <Zap className="h-3.5 w-3.5 text-[#F3C653]" />
@@ -107,14 +112,14 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
 
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <div className="text-2xl font-black text-white">
+            <div className={cn('text-2xl font-black', isActive ? 'text-metallic' : 'text-white')}>
               {PLAN_LABELS[user?.plan] || 'Free Member Access'}
             </div>
             <div className="text-xs text-[#A6ADB9] mt-1">
               {isActive ? (
                 <>Cycle ends <b className="text-white">{new Date(expiry).toLocaleDateString()}</b> · <span className="text-[#F3C653] font-bold">{daysLeft} day{daysLeft === 1 ? '' : 's'} remaining</span></>
               ) : user?.plan && user?.plan !== 'NONE' ? (
-                <>Your previous cycle has ended — renew to restore full signal access.</>
+                <>Your previous cycle has ended. Renew to restore full signal access.</>
               ) : (
                 <>No active 30-day signal cycle yet. Subscribe to unlock the live desk.</>
               )}
@@ -186,7 +191,7 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
               const match = bp.plan.match(/BOT:\s*([^(]+)\s*\(([^#]+)#([^)]+)\)/i);
               const botName = match ? match[1].trim() : bp.plan.replace('BOT:', '').trim();
               const platform = match ? match[2].trim() : 'MT5';
-              const acc = match ? match[3].trim() : '—';
+              const acc = match ? match[3].trim() : 'N/A';
               const matchedBot = bots.find((b) => b.name.toLowerCase().trim() === botName.toLowerCase().trim());
               const isCopied = copiedId === bp.id;
               return (
@@ -259,7 +264,7 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
               <div className="p-4 rounded-xl border border-amber-400/20 bg-amber-400/5 text-xs text-amber-200 flex items-start gap-2">
                 <Timer className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>
-                  {pendingBots.length} bot purchase{pendingBots.length === 1 ? '' : 's'} awaiting desk verification — your license key is issued the moment the payment is approved.
+                  {pendingBots.length} bot purchase{pendingBots.length === 1 ? '' : 's'} awaiting desk verification. Your license key is issued the moment the payment is approved.
                 </span>
               </div>
             )}
@@ -332,13 +337,13 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
                   {p.status === 'pending' && (
                     <div className="text-[11px] text-amber-300/90 flex items-start gap-1.5">
                       <Timer className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                      <span>Awaiting desk verification — you'll get a notification the moment it's reviewed.</span>
+                      <span>Awaiting desk verification. You'll get a notification the moment it's reviewed.</span>
                     </div>
                   )}
                   {p.status === 'confirmed' && !isBot && (
                     <div className="text-[11px] text-[#00D878]/90 flex items-start gap-1.5">
                       <CheckCircle2 className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                      <span>Confirmed — 30-day signal cycle granted.</span>
+                      <span>Confirmed. 30-day signal cycle granted.</span>
                     </div>
                   )}
                 </div>

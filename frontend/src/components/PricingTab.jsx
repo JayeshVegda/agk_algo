@@ -7,8 +7,9 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
+import { useWallets } from '../lib/wallets';
 
-export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
+export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, notify }) {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [network, setNetwork] = useState('USDT-TRC20');
   const [txid, setTxid] = useState('');
@@ -39,11 +40,18 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
     return () => { unsub?.then?.((u) => u && u()); };
   }, [user?.email, loadMyPayments]);
 
-  const WALLETS = {
-    'USDT-TRC20': 'TLa2g9Y8kP2qXvL1b8Jp9wZmN4qK7dEf9A',
-    'USDT-BEP20': '0x71C2B81F1A9D4E72b83A072fCc8295b7A19D38Ef',
-    'USDT-ERC20': '0x71C2B81F1A9D4E72b83A072fCc8295b7A19D38Ef',
-  };
+  // Live wallets from site_settings (rotatable without redeploy); see lib/wallets.
+  const WALLETS = useWallets();
+
+  // Escape closes the checkout modal.
+  useEffect(() => {
+    if (!selectedPlan) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setSelectedPlan(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedPlan]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(WALLETS[network]);
@@ -71,6 +79,17 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
       onOpenAuth();
       return;
     }
+    if (!/^[a-zA-Z0-9]{20,128}$/.test(txid.trim())) {
+      if (notify) {
+        notify({
+          type: 'error',
+          title: 'Invalid TXID',
+          message: 'A transaction hash is 64 hexadecimal characters. Paste the full hash from your wallet.'
+        });
+      }
+      return;
+    }
+
     setSubmitting(true);
     try {
       await pb.collection('payments').create({
@@ -152,7 +171,7 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
       return { label: 'Verification in Progress', icon: 'timer', action: 'none', disabled: true };
     }
     if (isActive && user.plan === plan.id) {
-      return { label: 'Buy Next Month (+30 Days)', icon: 'credit', action: 'checkout' };
+      return { label: 'Buy Next Month', icon: 'credit', action: 'checkout' };
     }
     if (isActive) {
       return { label: `Switch to ${plan.name}`, icon: 'arrow', action: 'checkout' };
@@ -202,7 +221,7 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
                     </Badge>
                     {isCurrentPlan ? (
                       <span className="text-xs font-bold text-[#00D878] flex items-center gap-1 bg-[#00D878]/10 border border-[#00D878]/30 px-2 py-0.5 rounded-full">
-                        <Check className="h-3 w-3" /> Your Plan — {daysLeft}d left
+                        <Check className="h-3 w-3" /> Your Plan: {daysLeft}d left
                       </span>
                     ) : hasPending && user ? (
                       <span className="text-xs font-bold text-amber-300 flex items-center gap-1 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full">
@@ -216,7 +235,7 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
                   </CardTitle>
 
                   <div className="mt-4 flex items-baseline gap-1">
-                    <span className="text-4xl font-black text-white tabular-nums">${plan.price}</span>
+                    <span className={`text-4xl font-black tabular-nums ${plan.popular ? 'text-metallic' : 'text-white'}`}>${plan.price}</span>
                     <span className="text-xs text-[#F3C653] font-bold">USDT</span>
                     <span className="text-xs text-[#A6ADB9] ml-1">/ {plan.period}</span>
                   </div>
@@ -243,7 +262,7 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
                 {isCurrentPlan && (
                   <div className="text-[10px] text-[#A6ADB9] leading-relaxed">
                     Your cycle ends <b className="text-[#E7E9EF]">{new Date(expiry).toLocaleDateString()}</b>. Buying now stacks
-                    30 more days on top — no gap in access.
+                    30 more days on top, with no gap in access.
                   </div>
                 )}
                 <Button
@@ -252,10 +271,10 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, notify }) {
                   disabled={cta.disabled}
                   onClick={() => {
                     if (cta.action === 'none') return;
-                    if (!user) { onOpenAuth(); return; }
-                    setSelectedPlan(plan);
-                    setSubmitted(false);
-                    setTxid('');
+                    sessionStorage.setItem('akg_order', JSON.stringify({
+                      kind: 'plan', id: plan.id, name: plan.name, price: plan.price,
+                    }));
+                    if (onNavigate) onNavigate('checkout');
                   }}
                   className="w-full justify-center gap-2"
                 >

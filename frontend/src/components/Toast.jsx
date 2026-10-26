@@ -45,6 +45,14 @@ export function ToastContainer({ toasts, onDismiss }) {
               <div className="text-[11px] leading-relaxed text-slate-300 break-words">{toast.message}</div>
             </div>
 
+            {toast.action && (
+              <button
+                onClick={() => { toast.action.onClick?.(); onDismiss(toast.id); }}
+                className="shrink-0 rounded-full border border-current px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide transition-opacity hover:opacity-75"
+              >
+                {toast.action.label}
+              </button>
+            )}
             <button
               onClick={() => onDismiss(toast.id)}
               className="shrink-0 text-slate-400 hover:text-white p-0.5 rounded cursor-pointer"

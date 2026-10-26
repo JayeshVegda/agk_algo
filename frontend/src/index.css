@@ -6,13 +6,18 @@
   color-scheme: dark;
   --akg-bg: #07090D;
   --akg-bg-elevated: #10141B;
+  --akg-bg-elevated-2: #171D26;
   --akg-gold: #F3C653;
   --akg-gold-deep: #A87927;
+  --akg-gold-light: #FFE58A;
   --akg-silver: #E7E9EF;
   --akg-silver-dark: #282D36;
   --akg-green: #00D878;
   --akg-muted: #A6ADB9;
-  --akg-font: 'Montserrat', Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --akg-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --akg-font-display: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --akg-font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --akg-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body {
@@ -51,6 +56,109 @@ body {
   width: auto;
 }
 
+/* Metallic gold text: brand gradient clipped to glyphs */
+.text-metallic {
+  background: linear-gradient(115deg, #8A6420 0%, #F3C653 28%, #FFF4D1 46%, #F3C653 62%, #A87927 88%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.text-metallic-silver {
+  background: linear-gradient(115deg, #6E7686 0%, #E7E9EF 30%, #FFFFFF 48%, #C9CEDA 65%, #7C8496 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Frosted glass panel: blur + hairline + inner highlight (web approximation, not Apple Liquid Glass) */
+.surface-glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)), rgba(16, 20, 27, 0.72);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 18px 50px -12px rgba(0, 0, 0, 0.55);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .surface-glass {
+    background: var(--akg-bg-elevated);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Hairline divider: quiet 1px rule */
+.hairline {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Terminal data text */
+.font-data {
+  font-family: var(--akg-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Live indicator dot: semantic status only */
+.live-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--akg-green);
+}
+
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 216, 120, 0.5);
+  animation: live-ping 2.2s var(--akg-ease) infinite;
+}
+
+@keyframes live-ping {
+  0% { transform: scale(0.6); opacity: 1; }
+  80%, 100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* Ticker tape track: content duplicated once, track shifts by -50% */
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll 38s linear infinite;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Metallic sheen sweep for gold CTAs on hover */
+.sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.35) 50%, transparent 60%);
+  transform: translateX(-120%);
+  transition: transform 0.7s var(--akg-ease);
+  pointer-events: none;
+}
+
+.sheen:hover::after {
+  transform: translateX(120%);
+}
+
 /* Sleek Dark Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -71,4 +179,26 @@ body {
 :focus-visible {
   outline: 2px solid #F3C653;
   outline-offset: 1px;
+}
+
+/* Reduced motion: collapse all continuous animation to stillness */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track,
+  .live-dot::after,
+  .animate-pulse-soft,
+  .animate-float-y,
+  .animate-shimmer {
+    animation: none !important;
+  }
+  .sheen::after {
+    display: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { pb } from './lib/pocketbase';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
@@ -9,17 +9,47 @@ import { ConnectorTab } from './components/ConnectorTab';
 import { BroadcastsTab } from './components/BroadcastsTab';
 import { PricingTab } from './components/PricingTab';
 import { ResourcesTab } from './components/ResourcesTab';
-import { AdminPortal } from './components/admin/AdminPortal';
+// The admin portal is a 200+ KB chunk most visitors never open: load on demand.
+const AdminPortal = lazy(() => import('./components/admin/AdminPortal').then((m) => ({ default: m.AdminPortal })));
 import { AuthModal } from './components/AuthModal';
 import { AccountTab } from './components/AccountTab';
+import { CheckoutPage } from './components/CheckoutPage';
+import { TrackRecordPage } from './components/TrackRecordPage';
+import { TermsPage, RefundPage, RiskPage, PrivacyPage } from './components/LegalPages';
 import { ToastContainer } from './components/Toast';
 import { Compass, Zap, Cpu, Network, User } from 'lucide-react';
 
+// Public tab routes: path -> tab id. Tabs are URL-addressable so any page
+// (and any bot product page) can be shared or refreshed directly.
+const TAB_ROUTES = {
+  '/': 'home',
+  '/signals': 'signals',
+  '/bots': 'bots',
+  '/pricing': 'pricing',
+  '/charts': 'charts',
+  '/desk': 'broadcasts',
+  '/kit': 'resources',
+  '/account': 'account',
+  '/checkout': 'checkout',
+  '/track-record': 'track',
+  '/terms': 'terms',
+  '/refund': 'refund',
+  '/risk': 'risk',
+  '/privacy': 'privacy',
+};
+
+const pathToTab = (pathname) => {
+  if (pathname.startsWith('/admin')) return '/admin';
+  if (pathname.startsWith('/bots')) return 'bots'; // includes /bots/<slug> product pages
+  return TAB_ROUTES[pathname] || 'home';
+};
+
 export default function App() {
-  const [currentPath, setCurrentPath] = useState(
-    window.location.pathname.startsWith('/admin') ? '/admin' : window.location.pathname
-  );
-  const [activeTab, setActiveTab] = useState('home');
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  const [activeTab, setActiveTab] = useState(() => {
+    const t = pathToTab(window.location.pathname);
+    return t === '/admin' ? 'home' : t;
+  });
   const [user, setUser] = useState(pb.authStore.record);
   const [authOpen, setAuthOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
@@ -41,16 +71,33 @@ export default function App() {
   // Listen for browser back/forward buttons
   useEffect(() => {
     const onPopState = () => {
-      setCurrentPath(window.location.pathname.startsWith('/admin') ? '/admin' : window.location.pathname);
+      setCurrentPath(window.location.pathname);
+      const t = pathToTab(window.location.pathname);
+      setActiveTab(t === '/admin' ? 'home' : t);
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  // Client-side router navigation helper
+  // Tab switch keeps the URL in sync: every tab is a shareable path.
+  const switchTab = useCallback((tab, botSlug) => {
+    const pathForTab = Object.entries(TAB_ROUTES).find(([, id]) => id === tab)?.[0] || '/';
+    const path = botSlug && tab === 'bots' ? `/bots/${botSlug}` : pathForTab;
+    if (window.location.pathname !== path) {
+      window.history.pushState({}, '', path);
+    }
+    setCurrentPath(path);
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   const navigateTo = (path) => {
     window.history.pushState({}, '', path);
-    setCurrentPath(path.startsWith('/admin') ? '/admin' : path);
+    setCurrentPath(path);
+    if (!path.startsWith('/admin')) {
+      const t = pathToTab(path);
+      setActiveTab(t === '/admin' ? 'home' : t);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -97,10 +144,12 @@ export default function App() {
   if (currentPath === '/admin') {
     return (
       <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
-        <AdminPortal
-          onNavigatePublic={() => navigateTo('/')}
-          notify={notify}
-        />
+        <Suspense fallback={<div className="p-10 text-center text-sm text-slate-500">Loading admin console...</div>}>
+          <AdminPortal
+            onNavigatePublic={() => navigateTo('/')}
+            notify={notify}
+          />
+        </Suspense>
         <ToastContainer toasts={toasts} onDismiss={dismissToast} />
       </div>
     );
@@ -110,47 +159,49 @@ export default function App() {
   // PUBLIC WEBSITE (/)
   // Full consumer experience with market ticker, public navbar, and catalog
   // =========================================================================
+  // Deep-linkable bot product pages: /bots/<slug>
+  const botSlug = currentPath.startsWith('/bots/')
+    ? decodeURIComponent(currentPath.slice('/bots/'.length)) || null
+    : null;
+
   return (
     <div className="min-h-screen bg-[#07090D] text-[#E7E9EF] flex flex-col justify-between selection:bg-[#F3C653]/20 selection:text-[#F3C653] font-sans">
       <div>
         <Navbar
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={switchTab}
           user={user}
           notify={notify}
           onOpenAuth={() => setAuthOpen(true)}
           onNavigateAdmin={() => navigateTo('/admin')}
-          onOpenAccount={() => {
-            setActiveTab('account');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
+          onOpenAccount={() => switchTab('account')}
         />
 
         <main className="w-[94%] max-w-[1750px] mx-auto px-2 sm:px-4 lg:px-6 py-6 pb-24 md:pb-6">
           {activeTab === 'home' && (
             <LandingPage
-              onNavigate={(tab) => {
-                setActiveTab(tab);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              onNavigate={switchTab}
               onOpenAuth={() => setAuthOpen(true)}
               notify={notify}
             />
           )}
 
           {activeTab === 'signals' && (
-            <SignalsTab 
-              user={user} 
-              onOpenPricing={() => setActiveTab('pricing')} 
+            <SignalsTab
+              user={user}
+              onOpenPricing={() => switchTab('pricing')}
               onOpenAuth={() => setAuthOpen(true)}
               notify={notify}
             />
           )}
 
           {activeTab === 'bots' && (
-            <BotsTab 
-              user={user} 
-              onOpenPricing={() => setActiveTab('pricing')}
+            <BotsTab
+              user={user}
+              botSlug={botSlug}
+              onOpenBot={(slug) => switchTab('bots', slug)}
+              onNavigate={(tab) => switchTab(tab)}
+              onOpenPricing={() => switchTab('pricing')}
               onOpenAuth={() => setAuthOpen(true)}
               notify={notify}
             />
@@ -159,25 +210,26 @@ export default function App() {
           {activeTab === 'charts' && <ChartsTab />}
 
           {activeTab === 'connector' && (
-            <ConnectorTab 
-              user={user} 
+            <ConnectorTab
+              user={user}
               onOpenAuth={() => setAuthOpen(true)}
               notify={notify}
             />
           )}
 
           {activeTab === 'broadcasts' && (
-            <BroadcastsTab 
-              user={user} 
+            <BroadcastsTab
+              user={user}
               notify={notify}
             />
           )}
 
           {activeTab === 'pricing' && (
-            <PricingTab 
-              user={user} 
+            <PricingTab
+              user={user}
               onOpenAuth={() => setAuthOpen(true)}
-              onNavigateSignals={() => setActiveTab('signals')}
+              onNavigate={(tab) => switchTab(tab)}
+              onNavigateSignals={() => switchTab('signals')}
               notify={notify}
             />
           )}
@@ -185,17 +237,31 @@ export default function App() {
           {activeTab === 'resources' && (
             <ResourcesTab
               notify={notify}
+              onNavigate={(tab) => switchTab(tab)}
             />
           )}
+
+          {activeTab === 'checkout' && (
+            <CheckoutPage
+              user={user}
+              onOpenAuth={() => setAuthOpen(true)}
+              onNavigate={switchTab}
+              notify={notify}
+            />
+          )}
+
+          {activeTab === 'track' && <TrackRecordPage />}
+
+          {activeTab === 'terms' && <TermsPage />}
+          {activeTab === 'refund' && <RefundPage />}
+          {activeTab === 'risk' && <RiskPage />}
+          {activeTab === 'privacy' && <PrivacyPage />}
 
           {activeTab === 'account' && (
             <AccountTab
               user={user}
               notify={notify}
-              onNavigate={(tab) => {
-                setActiveTab(tab);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              onNavigate={(tab) => switchTab(tab)}
               onOpenAuth={() => setAuthOpen(true)}
             />
           )}
@@ -207,10 +273,11 @@ export default function App() {
         <div className="w-[94%] max-w-[1750px] mx-auto px-2 sm:px-4 space-y-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-2">
-              <img 
-                src="/assets/logos/akg-algo-symbol-transparent.png" 
-                alt="AKG ALGO — Trade Smarter" 
-                className="h-10 w-auto"
+              <img
+                src="/assets/logos/akg-algo-metallic-footer.webp"
+                alt="AKG ALGO — Trade Smarter"
+                className="h-11 w-auto"
+                loading="lazy"
               />
               <p className="text-xs text-[#A6ADB9] max-w-lg leading-relaxed">
                 Automated MetaTrader Expert Advisors and institutional execution signals with strict stop-loss protection.
@@ -219,35 +286,42 @@ export default function App() {
 
             <div className="flex items-center gap-6 text-xs flex-wrap">
               <button 
-                onClick={() => { setActiveTab('signals'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                onClick={() => switchTab('signals')}
                 className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium"
               >
                 Signals
               </button>
               <button 
-                onClick={() => { setActiveTab('bots'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                onClick={() => switchTab('bots')}
                 className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium"
               >
                 Trading Bots
               </button>
               <button 
-                onClick={() => { setActiveTab('connector'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                onClick={() => switchTab('connector')}
                 className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium"
               >
                 Connector Demo
               </button>
               <button 
-                onClick={() => { setActiveTab('pricing'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                onClick={() => switchTab('pricing')}
                 className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium"
               >
                 Plans & Pricing
               </button>
               <button 
-                onClick={() => { setActiveTab('resources'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                onClick={() => switchTab('resources')}
                 className="text-[#A6ADB9] hover:text-[#00D878] transition-colors cursor-pointer font-medium"
               >
-                Downloads & Links
+                Traders Kit
               </button>
+              <span className="text-white/20">|</span>
+              <button onClick={() => switchTab('track')} className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium">Track Record</button>
+              <span className="text-white/20">|</span>
+              <button onClick={() => switchTab('terms')} className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium">Terms</button>
+              <button onClick={() => switchTab('refund')} className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium">Refunds</button>
+              <button onClick={() => switchTab('risk')} className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium">Risk</button>
+              <button onClick={() => switchTab('privacy')} className="text-[#A6ADB9] hover:text-[#F3C653] transition-colors cursor-pointer font-medium">Privacy</button>
               {user?.role === 'admin' && (
                 <button
                   onClick={() => navigateTo('/admin')}
@@ -291,7 +365,7 @@ export default function App() {
       {/* Mobile Bottom Navigation Dock for Android & Mobile Web */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#07090D]/95 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-pb">
         <button
-          onClick={() => { setActiveTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          onClick={() => switchTab('home')}
           className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all ${
             activeTab === 'home' ? 'text-[#F3C653]' : 'text-[#A6ADB9] hover:text-white'
           }`}
@@ -301,7 +375,7 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => { setActiveTab('signals'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          onClick={() => switchTab('signals')}
           className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all relative ${
             activeTab === 'signals' ? 'text-[#00D878]' : 'text-[#A6ADB9] hover:text-white'
           }`}
@@ -314,7 +388,7 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => { setActiveTab('bots'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          onClick={() => switchTab('bots')}
           className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all ${
             activeTab === 'bots' ? 'text-[#F3C653]' : 'text-[#A6ADB9] hover:text-white'
           }`}
@@ -324,20 +398,19 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => { setActiveTab('connector'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          onClick={() => switchTab('connector')}
           className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all ${
             activeTab === 'connector' ? 'text-purple-400' : 'text-[#A6ADB9] hover:text-white'
           }`}
         >
           <Network className="h-5 w-5" />
-          <span className="text-[10px] font-bold">Bridge</span>
+          <span className="text-[10px] font-bold">Manage</span>
         </button>
 
         <button
           onClick={() => {
             if (user) {
-              setActiveTab('account');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              switchTab('account');
             } else {
               setAuthOpen(true);
             }

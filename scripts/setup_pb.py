@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import urllib.request
 import json
 import sys
@@ -40,8 +41,8 @@ def get(url, token=None):
 def main():
     print("1. Authenticating as Superuser...")
     auth_res = post("/api/collections/_superusers/auth-with-password", {
-        "identity": "jayeshvegda@gmail.com",
-        "password": "root123456"
+        "identity": os.environ.get("AKG_SUPERUSER_EMAIL", "jayeshvegda@gmail.com"),
+        "password": os.environ.get("AKG_SUPERUSER_PASSWORD", "")
     })
     token = auth_res["token"]
     print("✓ Superuser authenticated.")
@@ -206,8 +207,8 @@ def main():
     if "jayeshvegda@gmail.com" not in existing_users:
         post("/api/collections/users/records", {
             "email": "jayeshvegda@gmail.com",
-            "password": "root1234",
-            "passwordConfirm": "root1234",
+            "password": os.environ.get("AKG_ADMIN_PASSWORD", ""),
+            "passwordConfirm": os.environ.get("AKG_ADMIN_PASSWORD", ""),
             "name": "Jayesh Vegda",
             "role": "admin",
             "plan": "PERFECT_SIGNAL_BOX",
@@ -218,8 +219,8 @@ def main():
     if "user@akgalgo.local" not in existing_users:
         post("/api/collections/users/records", {
             "email": "user@akgalgo.local",
-            "password": "root1234",
-            "passwordConfirm": "root1234",
+            "password": os.environ.get("AKG_DEMO_PASSWORD", os.environ.get("AKG_ADMIN_PASSWORD", "")),
+            "passwordConfirm": os.environ.get("AKG_DEMO_PASSWORD", os.environ.get("AKG_ADMIN_PASSWORD", "")),
             "name": "Alex Trader",
             "role": "user",
             "plan": "PERFECT_SIGNAL_BOX",

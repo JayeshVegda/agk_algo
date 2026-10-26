@@ -24,3 +24,14 @@ npm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Runtime database (contains real user emails once live; never commit)
+pb_data/
+# Backups
+backups/
+# Windows binary bloat (rebuild from source or download per-platform)
+bin/pocketbase.exe
+# Local env
+.env
+node_modules/
+dist/

@@ -24,6 +24,23 @@ onRecordCreateRequest((e) => {
   const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
 
   if (!isManager) {
+    // Registration flood guard: max 20 accounts per rolling minute (DB-backed,
+    // so the cap holds across all prewarmed JSVM runtimes).
+    const pad = (n) => String(n).padStart(2, "0");
+    const cutoff = new Date(Date.now() - 60 * 1000);
+    const cutoffStr = cutoff.getUTCFullYear() + "-" + pad(cutoff.getUTCMonth() + 1) + "-" +
+      pad(cutoff.getUTCDate()) + " " + pad(cutoff.getUTCHours()) + ":" +
+      pad(cutoff.getUTCMinutes()) + ":" + pad(cutoff.getUTCSeconds()) + ".000Z";
+    let recent = [];
+    try {
+      recent = $app.findRecordsByFilter("users", "created >= {:c}", "-created", 21, 0, { c: cutoffStr });
+    } catch {
+      recent = [];
+    }
+    if (recent.length >= 20) {
+      throw new BadRequestError("Too many sign-ups right now. Please try again in a minute.");
+    }
+
     // Self-registration: force safe defaults, ignore whatever the client sent.
     e.record.set("role", "user");
     e.record.set("plan", "NONE");
@@ -64,6 +81,63 @@ onRecordCreateRequest((e) => {
     // file a payment on behalf of a customer, so their provided email is kept.
     e.record.set("user_email", e.auth.get("email"));
     e.record.set("status", "pending");
+
+    // Anti-flood: reject new submissions while the member already has 3+
+    // payments awaiting verification (catches double-clicks, retries and spam).
+    let pendingOwn = [];
+    try {
+      pendingOwn = $app.findRecordsByFilter(
+        "payments",
+        "user_email = {:email} && status = 'pending'",
+        "-created", 20, 0,
+        { email: e.auth.get("email") }
+      );
+    } catch {
+      pendingOwn = [];
+    }
+    let maxPending = 3;
+    try {
+      const settingsRec = $app.findFirstRecordByFilter("site_settings", "id != ''");
+      const v = settingsRec.getInt("max_pending_payments");
+      if (v > 0) maxPending = v;
+    } catch {}
+    if (pendingOwn.length >= maxPending) {
+      throw new BadRequestError(
+        "You already have " + pendingOwn.length + " payments awaiting desk verification. Please wait for review before submitting another."
+      );
+    }
+
+    // Server-side reference sanity, per method: crypto TXIDs are 20-128
+    // alphanumerics (all three networks use 64-hex); UPI UTRs are 8-30 digits.
+    const refRaw = String(e.record.get("txid") || "").trim();
+    const isUpi = e.record.get("method") === "upi" || e.record.get("network") === "INR-UPI";
+    const refOk = isUpi ? /^[0-9]{8,30}$/.test(refRaw) : /^[a-zA-Z0-9]{20,128}$/.test(refRaw);
+    if (!refOk) {
+      throw new BadRequestError(isUpi
+        ? "Invalid UTR. Paste the 12-digit UPI reference from your payment app."
+        : "Invalid transaction hash. Paste the full TXID from your wallet.");
+    }
+
+    // Duplicate-reference guard: the same TXID/UTR must not already be pending
+    // or confirmed on another payment. Resubmission after a REJECTED payment
+    // is allowed (the trader may fix the amount and reuse the transfer).
+    let dupe = [];
+    try {
+      dupe = $app.findRecordsByFilter(
+        "payments",
+        "txid = {:t} && status != 'rejected'",
+        "-created", 1, 0,
+        { t: refRaw }
+      );
+    } catch {
+      dupe = [];
+    }
+    if (dupe.length > 0) {
+      throw new BadRequestError(
+        "This " + (isUpi ? "UTR" : "TXID") + " was already submitted and is " +
+        dupe[0].get("status") + ". If it was rejected, please contact support before resubmitting."
+      );
+    }
 
     // Alert every admin in real time: a member filed a payment for review.
     try {
@@ -446,4 +520,245 @@ cronAdd("akg_expiry_reminders", "17 3 * * *", () => {
       console.log("akg: expiry notification failed:", err);
     }
   }
+});
+
+// ---------------------------------------------------------------------------
+// Managed accounts: credential encryption
+// ---------------------------------------------------------------------------
+// Users submit their MT4/MT5 login + PASSWORD + server for the managed
+// account service. The password is stored AES-encrypted (never returned by
+// the API - the field is schema-hidden) and can only be decrypted through the
+// admin-only /api/akg/creds/{id} route below. Key comes from the
+// AKG_CRED_KEY environment variable (set a strong one in production).
+
+routerAdd("GET", "/api/akg/creds/{id}", (e) => {
+  const auth = e.auth;
+  const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
+  if (!isManager) {
+    e.json(403, { message: "Administrators only." });
+    return;
+  }
+
+  let rec;
+  try {
+    rec = $app.findRecordById("connector_requests", e.request.pathValue("id"));
+  } catch {
+    e.json(404, { message: "Application not found." });
+    return;
+  }
+
+  const enc = rec.getString("account_password").replace(/^enc:/, "");
+  let password = "";
+  if (enc) {
+    try {
+      password = $security.decrypt(enc, $os.getenv("AKG_CRED_KEY") || "akg-dev-cred-key");
+    } catch {
+      password = "(undecryptable - key changed?)";
+    }
+  }
+
+  e.json(200, {
+    id: rec.id,
+    account_number: rec.getString("account_number"),
+    server: rec.getString("server"),
+    broker: rec.getString("broker"),
+    platform: rec.getString("platform"),
+    password: password,
+  });
+});
+
+// Managed-account application intake. The `account_password` field is schema
+// hidden (never returned by the API and not settable through the collection
+// endpoints), so the public form posts to this route; the password is
+// encrypted here before the record is ever persisted.
+routerAdd("POST", "/api/akg/managed/apply", (e) => {
+  try {
+  const auth = e.auth;
+  if (!auth) {
+    e.json(401, { message: "Sign in to apply for account management." });
+    return;
+  }
+
+  const data = e.requestInfo().body || {};
+  const required = ["account_number", "server", "platform", "password"];
+  for (const k of required) {
+    if (!data[k] || String(data[k]).trim() === "") {
+      e.json(400, { message: "Missing field: " + k });
+      return;
+    }
+  }
+
+  const col = $app.findCollectionByNameOrId("connector_requests");
+  const rec = new Record(col);
+  rec.set("user_email", auth.get("email"));
+  rec.set("account_number", String(data.account_number).trim());
+  rec.set("server", String(data.server).trim());
+  rec.set("platform", String(data.platform).trim());
+  rec.set("broker", String(data.broker || "").trim());
+  rec.set("leverage", String(data.leverage || "1:100").trim());
+  rec.set("risk_level", String(data.risk_level || "moderate").trim());
+  rec.set("status", "pending_review");
+  rec.set("admin_notes", "");
+    let userShare = 70;
+  try {
+    const settingsRec = $app.findFirstRecordByFilter("site_settings", "id != ''");
+    const v = settingsRec.getInt("default_user_share");
+    if (v >= 10 && v <= 90) userShare = v;
+  } catch {}
+  rec.set("user_profit_share", userShare);
+  rec.set("account_password", "enc:" + $security.encrypt(String(data.password), $os.getenv("AKG_CRED_KEY") || "akg-dev-cred-key"));
+  $app.save(rec);
+
+  e.json(200, { id: rec.id, message: "Application received. The desk will review your account." });
+  } catch (err) {
+    e.json(400, { message: "apply error: " + String(err && err.message ? err.message : err) });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Payments: UPI/GPay settlement
+// ---------------------------------------------------------------------------
+// A upi-method payment carries the UTR/reference id in `txid`, the rupee
+// amount in `inr_amount`, and still records the USDT-equivalent plan price in
+// `amount` so ledger math stays uniform. Same desk-verification flow.
+onRecordCreateRequest((e) => {
+  if (e.record.get("method") === "upi") {
+    e.record.set("network", "INR-UPI");
+  }
+  e.next();
+}, "payments");
+// ---------------------------------------------------------------------------
+// Admin console stats (aggregates computed server-side so the browser never
+// downloads full tables just to render KPIs)
+// ---------------------------------------------------------------------------
+routerAdd("GET", "/api/akg/stats", (e) => {
+  const auth = e.auth;
+  const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
+  if (!isManager) {
+    e.json(403, { message: "Administrators only." });
+    return;
+  }
+
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const iso = (ms) => new Date(ms).toISOString().replace("T", " ").slice(0, 23) + "Z";
+  const nowIso = iso(now);
+  const in3dIso = iso(now + 3 * DAY_MS);
+
+  // findRecordsByFilter-based helpers (proven API in this JSVM build).
+  const list = (col, filter, sort, params) => {
+    try {
+      return $app.findRecordsByFilter(col, filter, sort || "-created", 100000, 0, params || {});
+    } catch {
+      return [];
+    }
+  };
+  const cP = (status) => list("payments", "status = {:s}", "-created", { s: status }).length;
+  const cU = (filter, params) => list("users", filter, "created", params).length;
+
+  const sumConfirmed = (sinceMs) => {
+    try {
+      const filter = sinceMs ? "status = 'confirmed' && created >= {:c}" : "status = 'confirmed'";
+      const records = $app.findRecordsByFilter("payments", filter, "-created", 100000, 0, sinceMs ? { c: iso(now - sinceMs) } : {});
+      let sum = 0;
+      for (const r of records) sum += r.getInt("amount");
+      return sum;
+    } catch {
+      return 0;
+    }
+  };
+
+  let expiring = [];
+  try {
+    expiring = $app.findRecordsByFilter(
+      "users",
+      "role != 'admin' && plan != 'NONE' && plan != '' && cycle_expires_at >= {:now} && cycle_expires_at <= {:in3d}",
+      "cycle_expires_at", 10, 0,
+      { now: nowIso, in3d: in3dIso }
+    ).map((u) => ({
+      id: u.id,
+      email: u.get("email"),
+      plan: u.get("plan"),
+      cycle_expires_at: u.getString("cycle_expires_at"),
+    }));
+  } catch {
+    expiring = [];
+  }
+
+  e.json(200, {
+    payments: {
+      pending: cP("pending"),
+      confirmed: cP("confirmed"),
+      rejected: cP("rejected"),
+      total: list("payments").length,
+    },
+    revenue: {
+      total: sumConfirmed(0),
+      last24h: sumConfirmed(DAY_MS),
+      last7d: sumConfirmed(7 * DAY_MS),
+      last30d: sumConfirmed(30 * DAY_MS),
+    },
+    users: {
+      total: cU("role != 'admin'"),
+      active: cU("role != 'admin' && plan != 'NONE' && plan != '' && cycle_expires_at >= {:n}", { n: nowIso }),
+    },
+    signals: {
+      active: list("signals", "status = 'active'").length,
+      total: list("signals").length,
+    },
+    connectors: {
+      pending: list("connector_requests", "status = 'pending_review' || status = 'pending'").length,
+      trading: list("connector_requests", "status = 'trading'").length,
+      total: list("connector_requests").length,
+    },
+    expiring: expiring,
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+// Public desk track record: monthly aggregates computed from CLOSED signals.
+// Only aggregate numbers leave the server - never entries or coordinates.
+// ---------------------------------------------------------------------------
+routerAdd("GET", "/api/akg/track-record", (e) => {
+  const parsePips = (raw) => {
+    const m = String(raw || "").match(/(-?\d+(?:\.\d+)?)/);
+    return m ? parseFloat(m[1]) : null;
+  };
+
+  let closed = [];
+  try {
+    closed = $app.findRecordsByFilter("signals", "status = 'closed'", "-created", 100000, 0);
+  } catch {
+    closed = [];
+  }
+
+  const months = {};
+  let wins = 0, losses = 0, be = 0, net = 0, counted = 0;
+  for (const s of closed) {
+    const month = String(s.get("created") || "").slice(0, 7); // YYYY-MM
+    if (!months[month]) months[month] = { month, closed: 0, wins: 0, losses: 0, be: 0, net: 0 };
+    const m = months[month];
+    m.closed += 1;
+    const pips = parsePips(s.get("pnl"));
+    if (pips === null) { m.be += 1; be += 1; continue; }
+    if (pips > 0) { m.wins += 1; wins += 1; }
+    else if (pips < 0) { m.losses += 1; losses += 1; }
+    else { m.be += 1; be += 1; }
+    m.net = Math.round((m.net + pips) * 10) / 10;
+    net = Math.round((net + pips) * 10) / 10;
+    counted += 1;
+  }
+
+  const list = Object.values(months).sort((a, b) => b.month.localeCompare(a.month)).slice(0, 12);
+  const decided = wins + losses;
+  e.json(200, {
+    months: list,
+    overall: {
+      closed: closed.length,
+      wins, losses, be,
+      netPips: net,
+      winRate: decided > 0 ? Math.round((wins / decided) * 1000) / 10 : null,
+    },
+  });
 });

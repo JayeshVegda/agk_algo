@@ -1,13 +1,20 @@
+# AKG ALGO reverse proxy.
+# Production: replace the ":80" site line below with your real domain, e.g.
+#   akgalgo.yourdomain.com {
+# Caddy then provisions and renews HTTPS automatically (ports 80/443 must be open).
 :80 {
-    encode gzip zstd
+	encode gzip zstd
 
-    header {
-        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
-        X-Content-Type-Options "nosniff"
-        X-Frame-Options "DENY"
-        Referrer-Policy "strict-origin-when-cross-origin"
-        Permissions-Policy "camera=(), microphone=(), geolocation=()"
-    }
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	}
 
-    reverse_proxy web:3000
+	# SSE-friendly proxy: flush immediately so realtime signals stream instantly.
+	reverse_proxy pocketbase:8090 {
+		flush_interval -1
+	}
 }

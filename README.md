@@ -68,17 +68,20 @@ python3 scripts/apply_hardening.py  # lock API rules, masked preview view, data 
 
 ---
 
-## 👑 Admin & Demo Credentials
-* **Admin Access**:
-  * Email: `jayeshvegda@gmail.com`
-  * Password: `root1234`
-  * Unlocks the **👑 Admin Desk** tab for full CRUD on Signals, Payments/TXID approvals, Announcements, Bots, and User Plans.
-* **Trader Demo Member**:
-  * Email: `user@akgalgo.local`
-  * Password: `root1234`
-  * Unlocks active 30-day membership cycle parameters.
+## 👑 Admin & Demo Accounts
+* **Admin Access**: the owner account (`role=admin`) unlocks the Admin Desk for full CRUD on Signals, Payments/TXID approvals, Announcements, Bots, and User Plans.
+* Credentials are intentionally **not stored in this repo**. Both the PocketBase superuser and the app admin password were rotated to strong secrets; they live in the owner's password manager only.
+* To reset a superuser locally: `./bin/pocketbase superuser upsert <email> <newpass> --dir=pb_data`
+* To reset the app admin password: `./bin/pocketbase superuser auth <email> <superpass>` then PATCH the users record, or use the Dashboard at `/_/`.
+* Before public deployment: remove the seeded demo member (`user@akgalgo.local`) or rotate its password too.
 
 ---
+
+## 🧾 Legal, Track Record & Ops
+* Public pages: `/terms` `/refund` `/risk` `/privacy` and a live `/track-record` computed from closed signals.
+* Settlements: managed-account profit splits are recorded per period (`managed_settlements`) and visible to the owning trader.
+* Exports: CSV export on admin Payments and Traders (respects the active filter).
+* Fraud guard: duplicate TXID/UTR submissions are rejected server-side.
 
 ## 🔄 Realtime Features & CRUD
 * **Live Signals Desk**: Real-time broadcast of institutional entry zones, stop losses, and TP targets.

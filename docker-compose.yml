@@ -1,17 +1,37 @@
+# AKG ALGO production stack: PocketBase (with security hooks) behind Caddy.
+# Usage: docker compose up -d --build
 services:
   pocketbase:
-    image: ghcr.io/muchobien/pocketbase:latest
+    build: .
     container_name: akg_pocketbase
     restart: unless-stopped
     ports:
-      - "8095:8090"
+      - "8095:8090" # direct access for local dev; close this in production and go through Caddy
     volumes:
-      - ./pb_data:/pb_data
-      - ./pb_public:/pb_public
-    networks:
-      - default
-      - proxy-net
+      - ./pb_data:/app/pb_data # SQLite database (BACK THIS UP)
+      - ./pb_public:/app/pb_public # compiled frontend
+      - ./pb_hooks:/app/pb_hooks # security hooks (mounted so edits apply on restart)
+      - ./private_downloads:/app/private_downloads # gated EA binaries
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
-networks:
-  proxy-net:
-    external: true
+  caddy:
+    image: caddy:2-alpine
+    container_name: akg_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data # TLS certificates
+      - caddy_config:/config
+    depends_on:
+      - pocketbase
+
+volumes:
+  caddy_data:
+  caddy_config:

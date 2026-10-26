@@ -42,34 +42,43 @@ export function ChartsTab() {
     containerRef.current.appendChild(script);
   }, [selectedSymbol]);
 
+  const activeSymbol = SYMBOLS.find((s) => s.id === selectedSymbol);
+
   return (
-    <div className="space-y-4 font-sans text-[#E7E9EF]">
-      {/* Top Header & Symbol Switcher */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl border border-white/10 bg-[#10141B] shadow-xl">
-        <div className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-xl bg-[#F3C653]/15 border border-[#F3C653]/30 text-[#F3C653] flex items-center justify-center">
-            <BarChart3 className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-white font-sans">Institutional Multi-Asset Terminal</h2>
-            <div className="text-xs font-mono text-[#A6ADB9]">TradingView Feeds · Real-Time Market Telemetry</div>
-          </div>
+    <div className="space-y-6 font-sans text-akg-silver">
+      {/* Page Header */}
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <span className="inline-flex items-center gap-2 font-data text-[11px] uppercase tracking-[0.18em] text-akg-gold">
+            <BarChart3 className="h-3.5 w-3.5" />
+            Market Charts
+          </span>
+          <h1 className="mt-3 font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+            Multi-Asset Terminal
+          </h1>
+          <p className="mt-2 text-sm text-akg-muted">
+            TradingView feeds covering metals, forex, crypto and index futures.
+          </p>
         </div>
 
-        {/* Quick Symbol Switcher Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-mono">
+        {/* Symbol Switcher Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
           {SYMBOLS.map((s) => (
             <button
               key={s.id}
               onClick={() => setSelectedSymbol(s.id)}
-              className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+              className={`flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${
                 selectedSymbol === s.id
-                  ? 'bg-[#F3C653]/15 border-[#F3C653] text-[#F3C653] font-bold shadow-sm'
-                  : 'border-white/10 bg-white/5 text-[#A6ADB9] hover:text-white hover:bg-white/10'
+                  ? 'border-[#F3C653] bg-[#F3C653] text-[#1C1403] shadow-md shadow-[#F3C653]/20'
+                  : 'border-white/10 bg-white/[0.03] text-akg-muted hover:border-[#F3C653]/40 hover:text-akg-silver'
               }`}
             >
               <span>{s.label}</span>
-              <span className="text-[9px] px-1 py-0.2 rounded bg-black/40 text-[#A6ADB9] font-normal">
+              <span
+                className={`rounded px-1 py-px font-data text-[9px] tracking-wide ${
+                  selectedSymbol === s.id ? 'bg-black/20 text-[#1C1403]' : 'bg-white/5 text-akg-muted'
+                }`}
+              >
                 {s.tag}
               </span>
             </button>
@@ -78,8 +87,19 @@ export function ChartsTab() {
       </div>
 
       {/* Embedded Chart Viewport */}
-      <div className="w-full h-[650px] rounded-2xl border border-white/10 bg-[#10141B] overflow-hidden shadow-2xl relative">
-        <div id="tradingview_widget_container" className="w-full h-full" ref={containerRef} />
+      <div className="w-full overflow-hidden rounded-2xl border border-white/10 bg-akg-surface shadow-card transition-colors duration-200 hover:border-white/20">
+        <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-3">
+          <div className="flex items-center gap-2.5">
+            <span className="live-dot" />
+            <span className="font-data text-[11px] uppercase tracking-[0.16em] text-akg-silver">
+              Chart feed
+            </span>
+          </div>
+          <span className="font-data text-xs text-akg-muted">{activeSymbol?.label}</span>
+        </div>
+        <div className="relative h-[650px] w-full">
+          <div id="tradingview_widget_container" className="h-full w-full" ref={containerRef} />
+        </div>
       </div>
     </div>
   );

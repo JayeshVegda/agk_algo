@@ -51,3 +51,19 @@ Use **Montserrat** (weights 500–800) for brand headings and UI. `brand.css` im
 ## Notes
 
 The full illustrated logo is supplied as a high-resolution PNG (not a true editable vector). The compact header logo and app icon are SVGs and scale cleanly. Review the images at final production size before publishing.
+
+---
+
+## 2026 metallic rebrand (current, used by the site)
+
+The site now renders the **metallic gold bull lockup** everywhere. Web-optimized variants live in `logos/`:
+
+| File | Size | Use |
+|---|---|---|
+| `logos/akg-algo-metallic-nav.png` | 576w PNG, 106 KB | Navbar + mobile drawer (transparent, crisp at h-40/44px) |
+| `logos/akg-algo-metallic-footer.webp` | 864w WebP, 59 KB | Footer, auth modal, final CTA |
+| `logos/akg-algo-metallic-hero.webp` | 1440w WebP, 135 KB | Large hero/brand placements |
+
+Icons in `icons/` (favicon.ico, favicon-*.png, apple-touch-icon.png, akg-algo-icon-512.png) and all `social/` cards were regenerated from the metallic mark in October 2026. The bull-head favicon crop lives at `icons/favicon-512.png`. The full-resolution source file is versioned at `docs/brand/akg-algo-metallic-source.png` in the repository root (not web-served).
+
+Typography note: the site now uses **Inter** (body), **Plus Jakarta Sans** (display headings) and **JetBrains Mono** (terminal data). Montserrat is no longer referenced.

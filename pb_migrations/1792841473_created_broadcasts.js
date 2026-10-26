@@ -73,7 +73,27 @@ migrate((app) => {
         "required": false,
         "system": false,
         "type": "text"
-      }
+      },
+      {
+        "hidden": false,
+        "id": "_clone_crtd",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "_clone_updtd",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
     ],
     "id": "pbc_686950516",
     "indexes": [],

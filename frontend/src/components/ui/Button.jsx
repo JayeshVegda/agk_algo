@@ -3,13 +3,14 @@ import { cva } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center rounded-xl text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F3C653] focus-visible:ring-offset-2 focus-visible:ring-offset-[#07090D] disabled:pointer-events-none disabled:opacity-50 cursor-pointer select-none',
+  'inline-flex items-center justify-center rounded-full text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F3C653] focus-visible:ring-offset-2 focus-visible:ring-offset-[#07090D] disabled:pointer-events-none disabled:opacity-50 cursor-pointer select-none',
   {
     variants: {
       variant: {
-        default: 'bg-[#F3C653] text-[#07090D] hover:bg-[#FFE58A] active:bg-[#A87927] shadow-md shadow-[#F3C653]/15',
-        gold: 'bg-[#F3C653] text-[#07090D] hover:bg-[#FFE58A] active:bg-[#A87927] shadow-md shadow-[#F3C653]/15',
-        positive: 'bg-[#00D878] text-[#07090D] hover:bg-[#00F09A] shadow-md shadow-[#00D878]/15',
+        default:
+          'sheen bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] text-[#1C1403] hover:brightness-[1.07] active:brightness-95 shadow-md shadow-[#F3C653]/20',
+        gold: 'sheen bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] text-[#1C1403] hover:brightness-[1.07] active:brightness-95 shadow-md shadow-[#F3C653]/20',
+        positive: 'bg-[#00D878] text-[#052012] hover:bg-[#00F09A] shadow-md shadow-[#00D878]/15',
         secondary: 'bg-[#171D26] text-[#E7E9EF] hover:bg-[#202733] border border-white/10',
         outline: 'border border-white/15 bg-transparent text-[#E7E9EF] hover:bg-white/5 hover:border-[#F3C653]/40',
         ghost: 'text-[#A6ADB9] hover:bg-white/5 hover:text-[#E7E9EF]',

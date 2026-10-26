@@ -7,6 +7,7 @@ import {
   LayoutGrid, Table as TableIcon, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Activity, Filter
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
+import { Send, Bell, BellOff } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 
@@ -21,6 +22,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
   const [editingSignal, setEditingSignal] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [assetFilter, setAssetFilter] = useState('all');
+  const [alertsOn, setAlertsOn] = useState(() => localStorage.getItem('akg_signal_alerts') === '1');
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
 
@@ -46,16 +48,60 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
       new Date(user.cycle_expires_at) > new Date());
   const signalsSource = hasAccess ? 'signals' : 'signal_previews';
 
+  const chime = () => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [880, 1174].forEach((f, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.frequency.value = f;
+        o.type = 'sine';
+        g.gain.setValueAtTime(0.001, ctx.currentTime + i * 0.14);
+        g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + i * 0.14 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.14 + 0.16);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(ctx.currentTime + i * 0.14); o.stop(ctx.currentTime + i * 0.14 + 0.2);
+      });
+    } catch { /* audio blocked until first interaction */ }
+  };
+
+  const toggleAlerts = async () => {
+    if (!alertsOn) {
+      if ('Notification' in window && Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+      chime();
+    }
+    localStorage.setItem('akg_signal_alerts', !alertsOn ? '1' : '0');
+    setAlertsOn(!alertsOn);
+  };
+
   const loadSignals = async () => {
     try {
-      const records = await pb.collection(signalsSource).getFullList({
+      // Bounded fetch: newest 500 only, so a long-lived desk stays fast.
+      const result = await pb.collection(signalsSource).getList(1, 500, {
         sort: '-created',
       });
-      setSignals(records);
+      setSignals(result.items);
     } catch (err) {
       console.error('Failed to load signals:', err);
     }
   };
+
+  const [lockedTeasers, setLockedTeasers] = useState([]);
+
+  useEffect(() => {
+    // SR members: premium signals appear as blurred teasers (upgrade path).
+    if (hasAccess && user?.plan === 'SR_SIGNAL_BOX') {
+      pb.collection('signal_previews').getFullList({ sort: '-created' })
+        .then((previews) => setLockedTeasers(
+          previews.filter((p) => p.plan_tier === 'PERFECT_SIGNAL_BOX' && p.status === 'active').slice(0, 6)
+        ))
+        .catch(() => setLockedTeasers([]));
+    } else {
+      setLockedTeasers([]);
+    }
+  }, [hasAccess, user?.plan]);
 
   useEffect(() => {
     loadSignals();
@@ -63,6 +109,16 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
     const unsubPromise = pb.collection(signalsSource).subscribe('*', (e) => {
       if (e.action === 'create') {
         setSignals((prev) => [e.record, ...prev]);
+        if (localStorage.getItem('akg_signal_alerts') === '1') {
+          chime();
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+              new Notification(`AKG ALGO · ${e.record.symbol} ${e.record.direction}`, {
+                body: hasAccess ? `Entry ${e.record.entry} · SL ${e.record.stop_loss} · TP ${e.record.take_profit_1}` : 'New signal posted. Open the desk for details.',
+              });
+            } catch { /* notifications unavailable */ }
+          }
+        }
         if (notify) {
           notify({
             type: 'info',
@@ -81,6 +137,19 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
       unsubPromise.then((unsub) => unsub());
     };
   }, [notify, signalsSource]);
+
+  const handleCopyTelegram = (s) => {
+    const text = [
+      'AKG ALGO SIGNAL',
+      `${s.symbol} ${s.direction}`,
+      `Entry: ${s.entry}`,
+      `SL: ${s.stop_loss}`,
+      `TP1: ${s.take_profit_1}`,
+      s.take_profit_2 ? `TP2: ${s.take_profit_2}` : null,
+    ].filter(Boolean).join('\n');
+    navigator.clipboard.writeText(text);
+    if (notify) notify({ type: 'copy', title: 'Copied for Telegram', message: `${s.symbol} ${s.direction}` });
+  };
 
   const handleCopyParams = (s) => {
     const text = `AKG ALGO SIGNAL\n${s.symbol} ${s.direction}\nEntry: ${s.entry}\nSL: ${s.stop_loss}\nTP1: ${s.take_profit_1}${s.take_profit_2 ? `\nTP2: ${s.take_profit_2}` : ''}`;
@@ -246,12 +315,27 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
   return (
     <div className="space-y-6 font-sans text-[#E7E9EF]">
       
+      {/* 0. Alert toggle row */}
+      <div className="flex items-center justify-between">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-akg-muted">Signal Desk</div>
+        <button
+          onClick={toggleAlerts}
+          className={`flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-bold transition-colors ${
+            alertsOn ? 'border-akg-green/40 bg-akg-green/10 text-akg-green' : 'border-white/15 text-akg-muted hover:text-white'
+          }`}
+          title="Sound + desktop alerts when a new signal drops"
+        >
+          {alertsOn ? <Bell className="h-3.5 w-3.5" /> : <BellOff className="h-3.5 w-3.5" />}
+          {alertsOn ? 'Alerts on' : 'Alerts off'}
+        </button>
+      </div>
+
       {/* 1. Header / Real Data KPI Strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="p-4 rounded-2xl border border-white/10 bg-[#10141B] shadow-xl flex items-center justify-between">
           <div>
             <div className="text-[10px] font-bold text-[#A6ADB9] uppercase tracking-wider">Active Signals</div>
-            <div className="text-xl font-bold text-white mt-0.5 tabular-nums flex items-center gap-2">
+            <div className="text-xl font-bold text-white mt-0.5 font-data flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-[#00D878] animate-pulse" />
               <span>{activeCount} Live</span>
             </div>
@@ -262,7 +346,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
         <div className="p-4 rounded-2xl border border-white/10 bg-[#10141B] shadow-xl flex items-center justify-between">
           <div>
             <div className="text-[10px] font-bold text-[#A6ADB9] uppercase tracking-wider">Historical Setups</div>
-            <div className="text-xl font-bold text-white mt-0.5 tabular-nums">
+            <div className="text-xl font-bold text-white mt-0.5 font-data">
               {closedCount} Logged
             </div>
           </div>
@@ -304,7 +388,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
               <button
                 key={btn.id}
                 onClick={() => { setFilter(btn.id); setPage(1); }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                   filter === btn.id
                     ? 'bg-[#F3C653] text-[#07090D] shadow-xs'
                     : 'bg-white/5 text-[#A6ADB9] hover:text-white hover:bg-white/10'
@@ -472,6 +556,30 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {hasAccess && lockedTeasers.map((t) => (
+            <div key={`locked-${t.id}`} className="relative overflow-hidden rounded-2xl border border-[#F3C653]/25 bg-akg-surface">
+              <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-[#07090D]/70 backdrop-blur-[6px]">
+                <Lock className="h-5 w-5 text-akg-gold" />
+                <span className="text-xs font-bold text-white">Premium signal</span>
+                <button
+                  onClick={() => onOpenPricing && onOpenPricing()}
+                  className="rounded-full bg-[#F3C653] px-4 py-1.5 text-[11px] font-bold text-[#1C1403]"
+                >
+                  Upgrade to Perfect Box
+                </button>
+              </div>
+              <div className="space-y-3 p-5 blur-[5px] select-none" aria-hidden="true">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-sm font-bold text-white">{t.symbol}</span>
+                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${t.direction === 'BUY' ? 'bg-[#00D878]/15 text-[#00D878]' : 'bg-rose-500/15 text-rose-400'}`}>{t.direction}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-[#A6ADB9]">
+                  <span>Entry ••••••</span><span>SL ••••••</span>
+                  <span>TP1 ••••••</span><span>{t.pnl || 'running'}</span>
+                </div>
+              </div>
+            </div>
+          ))}
           {paginatedSignals.map((s) => {
             const isBuy = s.direction === 'BUY';
             const signalUnlocked = hasAccess;
@@ -559,7 +667,7 @@ export function SignalsTab({ user, onOpenPricing, onOpenAuth, notify }) {
                         onClick={user ? onOpenPricing : onOpenAuth}
                         className="absolute inset-0 bg-[#10141B]/80 backdrop-blur-[2px] flex items-center justify-center rounded-xl cursor-pointer hover:bg-[#10141B]/60 transition-all border border-[#F3C653]/30"
                       >
-                        <span className="px-3 py-1.5 rounded-xl bg-[#F3C653] text-[#07090D] font-bold text-[11px] shadow-sm flex items-center gap-1.5">
+                        <span className="px-3.5 py-1.5 rounded-full bg-[#F3C653] text-[#1C1403] font-bold text-[11px] shadow-sm flex items-center gap-1.5">
                           <Lock className="h-3 w-3" />
                           Unlock Coordinates
                         </span>
