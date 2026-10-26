@@ -16,25 +16,30 @@ import { useSiteSettings } from '../lib/wallets';
 const botSlug = (name) =>
   String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-/* Static fallbacks shown if the API is unreachable */
+/* Performance stats render only when an admin actually entered them in PocketBase. */
+const hasStats = (bot) => Boolean(bot?.win_rate || bot?.profit_factor || bot?.drawdown);
+
+/* Static fallbacks shown if the API is unreachable.
+   No performance stats here — win rate / P.F. / drawdown stat displays
+   only render when they come from admin-entered PocketBase records. */
 const FALLBACK_BOTS = [
   {
     id: 'gold-trap', name: 'AKG Gold Trap EA', platform: 'MT4', pairs: 'XAUUSD (Gold)',
-    price: 299, version: 'v3.2', win_rate: '81.4%', profit_factor: '2.64', drawdown: '5.8%',
+    price: 299, version: 'v3.2',
     description: 'Liquidity-sweep reversal algorithm engineered for Gold sessions with volatility trailing stops.',
     features: 'Hard Stop-Loss on every trade, Dynamic lot-sizing, Built for volatile Gold sessions, Recommended deposit: $500+',
     image_url: '',
   },
   {
     id: 'momentum-hunter', name: 'AKG Momentum Hunter', platform: 'MT5', pairs: 'EURUSD, GBPUSD',
-    price: 349, version: 'v2.8', win_rate: '78.2%', profit_factor: '2.31', drawdown: '6.4%',
+    price: 349, version: 'v2.8',
     description: 'Multi-session trend-following algorithm specialized for currency breakout expansions.',
     features: 'Session momentum filter, Automated trailing stop, Prop firm FIFO compatible, Recommended deposit: $1,000+',
     image_url: '',
   },
   {
     id: 'scalper-pro', name: 'AKG Scalper Pro', platform: 'MT4 / MT5', pairs: 'Majors & Indices',
-    price: 399, version: 'v4.1', win_rate: '83.0%', profit_factor: '2.87', drawdown: '4.9%',
+    price: 399, version: 'v4.1',
     description: 'Low-latency M1 and M5 scalper engineered for liquid market hours with spread protection.',
     features: 'Spread spike filter, Multi-tier profit targets, Zero martingale exposure, Recommended deposit: $300+',
     image_url: '',
@@ -70,10 +75,10 @@ const PLANS = [
     name: 'SR Signal Box',
     price: 10,
     tier: 'Standard',
-    blurb: 'Currency majors with full coordinates, delivered in real time.',
+    blurb: 'Daily EURUSD and GBPUSD setups, delivered in real time.',
     features: [
       'Currency pairs (EURUSD, GBPUSD)',
-      'Pre-calculated entry, stop loss & take profit',
+      'Entry, stop-loss and take-profit included',
       'Real-time browser alerts',
       '30-day signal archive access',
     ],
@@ -83,13 +88,13 @@ const PLANS = [
     id: 'PERFECT_SIGNAL_BOX',
     name: 'Perfect Signal Box',
     price: 20,
-    tier: 'Institutional VIP',
-    blurb: 'High-volatility desks: Gold, BTC and indices with priority directives.',
+    tier: 'VIP',
+    blurb: 'Gold, bitcoin and index setups during high-volatility sessions.',
     features: [
       'High-volatility assets: XAUUSD, BTC & indices',
-      'Multi-tier take profit & trailing invalidation',
+      'Multiple take-profit levels and trailing stops',
       'All bot presets & MT4/MT5 templates',
-      'Priority admin execution directives',
+      'Priority desk alerts',
     ],
     vip: true,
   },
@@ -339,24 +344,18 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       </section>
 
       {/* ============================================================
-          3.5 DESK PERFORMANCE — real numbers teaser
-      ============================================================ */}
-      <PerformanceStrip onNavigate={onNavigate} />
-
-      {/* ============================================================
           4. BOTS SHOWCASE — featured card + compact pair (asymmetric)
       ============================================================ */}
       <section className="mx-auto max-w-7xl px-4 py-14 sm:py-20">
         <Reveal>
           <span className="font-data text-[10px] font-bold uppercase tracking-[0.22em] text-akg-gold/80">
-            01 · EA catalog
+            EA catalog
           </span>
           <h2 className="mt-2.5 font-display text-3xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-4xl">
-            Perpetual licenses,<br className="hidden sm:block" />{' '}
-            <span className="text-metallic">institutional edges.</span>
+            Buy once, own it for good.
           </h2>
           <p className="mt-3 max-w-[60ch] text-sm text-akg-muted sm:text-[15px]">
-            License keys bind cryptographically to your MetaTrader account. Pay once, run forever.
+            Every license is locked to your MetaTrader account number. One payment, no renewals.
           </p>
         </Reveal>
 
@@ -370,18 +369,22 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                     <Badge variant="gold" className="gap-1 border border-[#F3C653]/40">
                       Most deployed
                     </Badge>
-                    <span className="ml-auto whitespace-nowrap font-data text-[10px] text-akg-muted">
-                      Illustrative equity profile
-                    </span>
+                    {hasStats(featured) && (
+                      <span className="ml-auto whitespace-nowrap font-data text-[10px] text-akg-muted">
+                        Illustrative equity profile
+                      </span>
+                    )}
                   </div>
-                  <EquityCurve
-                    seed={featured.name}
-                    profitFactor={featured.profit_factor}
-                    drawdown={featured.drawdown}
-                    winRate={featured.win_rate}
-                    points={90}
-                    className="h-32 w-full sm:h-36"
-                  />
+                  {hasStats(featured) && (
+                    <EquityCurve
+                      seed={featured.name}
+                      profitFactor={featured.profit_factor}
+                      drawdown={featured.drawdown}
+                      winRate={featured.win_rate}
+                      points={90}
+                      className="h-32 w-full sm:h-36"
+                    />
+                  )}
                 </div>
 
                 <div className="flex flex-1 flex-col p-5 sm:p-7">
@@ -398,18 +401,20 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                   <p className="mt-2 text-sm leading-relaxed text-akg-muted">{featured.description}</p>
 
                   {/* Terminal stat strip */}
-                  <div className="mt-5 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.04]">
-                    {[
-                      { k: 'Win rate', v: featured.win_rate },
-                      { k: 'Profit factor', v: featured.profit_factor },
-                      { k: 'Max drawdown', v: featured.drawdown },
-                    ].map((s) => (
-                      <div key={s.k} className="bg-akg-surface px-3 py-2.5 text-center">
-                        <div className="font-data text-sm font-semibold text-akg-green">{s.v}</div>
-                        <div className="mt-0.5 text-[10px] uppercase tracking-wide text-akg-muted">{s.k}</div>
-                      </div>
-                    ))}
-                  </div>
+                  {hasStats(featured) && (
+                    <div className="mt-5 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.04]">
+                      {[
+                        { k: 'Win rate', v: featured.win_rate },
+                        { k: 'Profit factor', v: featured.profit_factor },
+                        { k: 'Max drawdown', v: featured.drawdown },
+                      ].filter((s) => s.v).map((s) => (
+                        <div key={s.k} className="bg-akg-surface px-3 py-2.5 text-center">
+                          <div className="font-data text-sm font-semibold text-akg-green">{s.v}</div>
+                          <div className="mt-0.5 text-[10px] uppercase tracking-wide text-akg-muted">{s.k}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="mt-auto flex flex-wrap items-end justify-between gap-4 pt-6">
                     <div>
@@ -445,11 +450,19 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                     <p className="mt-2.5 line-clamp-2 text-xs leading-relaxed text-akg-muted">
                       {bot.description}
                     </p>
-                    <div className="mt-3 flex flex-wrap gap-1.5 font-data text-[11px]">
-                      <span className="rounded-md bg-akg-green/[0.08] px-2 py-0.5 text-akg-green">{bot.win_rate} win</span>
-                      <span className="rounded-md bg-white/[0.04] px-2 py-0.5 text-akg-muted">PF {bot.profit_factor}</span>
-                      <span className="rounded-md bg-white/[0.04] px-2 py-0.5 text-akg-muted">DD {bot.drawdown}</span>
-                    </div>
+                    {hasStats(bot) && (
+                      <div className="mt-3 flex flex-wrap gap-1.5 font-data text-[11px]">
+                        {bot.win_rate && (
+                          <span className="rounded-md bg-akg-green/[0.08] px-2 py-0.5 text-akg-green">{bot.win_rate} win</span>
+                        )}
+                        {bot.profit_factor && (
+                          <span className="rounded-md bg-white/[0.04] px-2 py-0.5 text-akg-muted">PF {bot.profit_factor}</span>
+                        )}
+                        {bot.drawdown && (
+                          <span className="rounded-md bg-white/[0.04] px-2 py-0.5 text-akg-muted">DD {bot.drawdown}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="flex shrink-0 flex-row items-center justify-between gap-3 sm:flex-col sm:items-end">
                     <div className="font-display text-lg font-extrabold text-white tabular-nums">
@@ -502,15 +515,14 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
           <Reveal>
             <div className="text-center">
               <span className="font-data text-[10px] font-bold uppercase tracking-[0.22em] text-akg-gold/80">
-                02 · Signal desks
+                Signal plans
               </span>
             </div>
             <h2 className="mt-2.5 text-center font-display text-3xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-4xl">
-              Live coordinates,<br className="hidden sm:block" />{' '}
-              <span className="text-metallic">every session.</span>
+              Live signals, complete setups.
             </h2>
             <p className="mx-auto mt-3 max-w-[55ch] text-center text-sm text-akg-muted sm:text-[15px]">
-              Real-time setups with pre-calculated entry, stop-loss, and take-profit coordinates.
+              Every alert comes with the entry, stop-loss, and take-profit already worked out.
             </p>
           </Reveal>
 
@@ -571,10 +583,10 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       <section className="mx-auto max-w-3xl px-4 py-14 sm:py-20">
         <Reveal>
           <span className="font-data text-[10px] font-bold uppercase tracking-[0.22em] text-akg-gold/80">
-            03 · Setup
+            Setup
           </span>
           <h2 className="mt-2.5 font-display text-3xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-4xl">
-            From checkout to <span className="text-metallic">execution.</span>
+            How it works
           </h2>
         </Reveal>
 
@@ -614,13 +626,13 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
             <div className="flex items-end justify-between gap-6">
               <Reveal>
                 <span className="font-data text-[10px] font-bold uppercase tracking-[0.22em] text-akg-gold/80">
-                  04 · Live from the desk
+                  From the desk
                 </span>
                 <h2 className="mt-2.5 font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-                  Directives &amp; risk calls
+                  Latest briefings
                 </h2>
                 <p className="mt-2 max-w-[55ch] text-sm text-akg-muted">
-                  Published live from the trading floor as conditions change.
+                  Short desk notes as market conditions change.
                 </p>
               </Reveal>
               <Reveal delay={0.1}>
@@ -662,10 +674,10 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       <section className="mx-auto max-w-3xl px-4 pb-14 pt-14 sm:pt-20 sm:pb-20">
         <Reveal>
           <span className="font-data text-[10px] font-bold uppercase tracking-[0.22em] text-akg-gold/80">
-            05 · FAQ
+            FAQ
           </span>
           <h2 className="mt-2.5 font-display text-2xl font-extrabold tracking-tight text-white sm:text-4xl">
-            Questions, answered
+            Frequently asked questions
           </h2>
         </Reveal>
 
@@ -717,56 +729,5 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
         </Reveal>
       </section>
     </div>
-  );
-}
-
-
-function PerformanceStrip({ onNavigate }) {
-  const [perf, setPerf] = useState(null);
-  useEffect(() => {
-    pb.send('/api/akg/track-record', { method: 'GET' }).then(setPerf).catch(() => {});
-  }, []);
-  if (!perf || perf.months.length === 0) return null;
-  const o = perf.overall;
-  const latest = perf.months.slice(0, 3);
-  return (
-    <section className="mx-auto max-w-7xl px-4 pb-2">
-      <Reveal>
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-4 gap-y-2.5 rounded-full border border-white/10 bg-akg-surface px-5 py-3.5 sm:justify-between sm:gap-x-5 sm:px-6">
-          <span className="inline-flex items-center gap-2 font-display text-sm font-bold text-white">
-            <span className="live-dot" />
-            Real desk record
-          </span>
-
-          <span className="font-data text-[11px] text-akg-muted">
-            {o.closed} closed · {o.winRate !== null ? `${o.winRate}% win` : 'live'}
-          </span>
-
-          <span className="hidden h-4 w-px bg-white/10 sm:block" />
-
-          <div className="flex items-center gap-4">
-            {latest.map((m) => (
-              <span key={m.month} className="flex items-baseline gap-1.5 font-data text-xs">
-                <span className="text-[10px] uppercase text-akg-muted">
-                  {new Date(m.month + '-02').toLocaleDateString([], { month: 'short' })}
-                </span>
-                <span className={`font-bold ${m.net >= 0 ? 'text-akg-green' : 'text-rose-300'}`}>
-                  {m.net > 0 ? '+' : ''}{m.net}
-                </span>
-                <span className="text-[9px] text-akg-muted">pips</span>
-              </span>
-            ))}
-          </div>
-
-          <button
-            onClick={() => onNavigate('track')}
-            className="group flex h-8 items-center gap-1.5 rounded-full border border-[#F3C653]/40 px-3.5 text-[11px] font-bold text-akg-gold transition-colors hover:bg-[#F3C653]/10"
-          >
-            Full record
-            <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-          </button>
-        </div>
-      </Reveal>
-    </section>
   );
 }

@@ -153,7 +153,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                   <button
                     onClick={() => setActiveTab('home')}
                     className={cn(
-                      'inline-flex h-9 items-center justify-center rounded-xl px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer',
+                      'inline-flex h-9 items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer',
                       activeTab === 'home'
                         ? 'bg-[#F3C653]/15 text-[#F3C653] font-bold border border-[#F3C653]/30 shadow-sm'
                         : 'text-[#A6ADB9] hover:text-[#E7E9EF] hover:bg-white/5 border border-transparent'
@@ -286,7 +286,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                   <button
                     onClick={() => setActiveTab('pricing')}
                     className={cn(
-                      'inline-flex h-9 items-center justify-center rounded-xl px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer gap-1.5',
+                      'inline-flex h-9 items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer gap-1.5',
                       activeTab === 'pricing'
                         ? 'bg-[#F3C653]/15 text-[#F3C653] font-bold border border-[#F3C653]/30 shadow-sm'
                         : 'text-[#A6ADB9] hover:text-[#E7E9EF] hover:bg-white/5 border border-transparent'
@@ -313,12 +313,12 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
           {/* Quick Search Trigger */}
           <button
             onClick={() => setSearchOpen(true)}
-            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 bg-[#10141B] hover:bg-white/5 text-[#A6ADB9] text-xs transition-colors cursor-pointer"
+            className="hidden md:flex items-center gap-2 px-2.5 py-1.5 xl:px-3 rounded-xl border border-white/10 bg-[#10141B] hover:bg-white/5 text-[#A6ADB9] text-xs transition-colors cursor-pointer lg:px-3"
             title="Press Cmd+K to search"
           >
             <Search className="h-3.5 w-3.5 text-[#A6ADB9]" />
-            <span>Search systems...</span>
-            <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-[#A6ADB9] bg-white/5 border border-white/10 rounded">
+            <span className="hidden xl:inline">Search systems...</span>
+            <kbd className="hidden xl:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-[#A6ADB9] bg-white/5 border border-white/10 rounded">
               ⌘K
             </kbd>
           </button>
@@ -333,16 +333,16 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                       {(user.name || user.email || 'U')[0].toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="text-left hidden sm:block leading-tight">
+                  <div className="text-left hidden md:block leading-tight max-w-[120px]">
                     <div className="text-xs font-bold text-[#E7E9EF] flex items-center gap-1.5">
-                      <span>{user.name || user.email.split('@')[0]}</span>
+                      <span className="max-w-[96px] truncate">{user.name || user.email.split('@')[0]}</span>
                       {user.role === 'admin' && (
                         <span className="px-1.5 py-0.2 rounded bg-[#F3C653]/20 text-[#F3C653] border border-[#F3C653]/30 text-[9px] font-extrabold uppercase">
                           ADMIN
                         </span>
                       )}
                     </div>
-                    <div className="text-[10px] text-[#00D878] font-semibold uppercase">
+                    <div className="text-[10px] text-[#00D878] font-semibold uppercase truncate">
                       {user.role === 'admin' ? 'Executive Desk' : (user.plan || 'Free Tier')}
                     </div>
                   </div>
