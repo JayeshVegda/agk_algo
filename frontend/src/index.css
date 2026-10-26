@@ -186,6 +186,40 @@ body {
   outline-offset: 1px;
 }
 
+/* Bot card gold hover-glow: shadow painted once on the pseudo-element,
+   hover only animates its opacity (compositor-only, re-skinned from the
+   iart-ai 60fps-animation pattern). */
+.bot-card {
+  position: relative;
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 240ms ease;
+}
+.bot-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 14px 34px -8px rgba(243, 198, 83, 0.35),
+    0 4px 14px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 240ms ease;
+  pointer-events: none;
+}
+.bot-card:hover {
+  border-color: rgba(243, 198, 83, 0.4);
+  transform: translateY(-3px);
+}
+.bot-card:hover::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Tier 2: drop the displacement, keep fade-only hover cue */
+  .bot-card {
+    transform: none !important;
+  }
+}
+
 /* Reduced motion: collapse all continuous animation to stillness */
 @media (prefers-reduced-motion: reduce) {
   .ticker-track,
