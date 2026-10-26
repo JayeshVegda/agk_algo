@@ -315,7 +315,6 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
             <h1 className="mt-3 font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
               {bot.name}
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-akg-muted">{bot.description}</p>
             <p className="mt-2 font-data text-xs text-akg-muted">
               {bot.pairs} · {bot.strategy_type}
             </p>
@@ -388,7 +387,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
           <div className="space-y-8">
             <section>
               <h2 className="font-display text-lg font-bold text-white">The strategy</h2>
-              <p className="mt-3 text-sm leading-relaxed text-akg-muted">{bot.description}</p>
+              <p className="mt-3 font-body text-[15px] leading-[1.75] text-akg-silver">{bot.description}</p>
               {bot.strategy_type && (
                 <p className="mt-3 font-data text-xs text-akg-silver">
                   Core logic: <span className="text-akg-gold">{bot.strategy_type}</span>
@@ -437,7 +436,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                 ${bot.price}
                 <span className="ml-1.5 text-xs font-bold text-akg-gold">USDT</span>
               </div>
-              <div className="mt-1 text-[11px] text-akg-muted">One-time payment. Perpetual license, no subscription.</div>
+              <div className="mt-1 text-[11px] text-akg-muted">You pay once. The license stays yours — no renewals, no subscription.</div>
               <Button
                 variant={owned ? 'positive' : 'default'}
                 className="mt-4 w-full justify-center gap-2"
@@ -465,7 +464,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                   Distribution package
                 </div>
                 <p className="mt-2 text-[11px] leading-relaxed text-akg-muted">
-                  Official mirror hosted on Google Drive, kept current with each release.
+                  The package is served from Google Drive and updated with every release.
                 </p>
                 <a
                   href={bot.download_url}

@@ -17,6 +17,7 @@
   --akg-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --akg-font-display: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
   --akg-font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --akg-font-serif: 'Source Serif 4', 'Iowan Old Style', Georgia, serif;
   --akg-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -94,6 +95,10 @@ body {
 }
 
 /* Terminal data text */
+.font-body {
+  font-family: var(--akg-font-serif);
+}
+
 .font-data {
   font-family: var(--akg-font-mono);
   font-variant-numeric: tabular-nums;

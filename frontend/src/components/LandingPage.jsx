@@ -708,8 +708,8 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       {/* ============================================================
           5.5 MEMBERSHIP GAINS — tabbed checks + live panel
       ============================================================ */}
-      <section className="relative border-y border-white/[0.07] bg-[#0A0D12]">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:py-20">
+      <section className="mx-auto max-w-6xl px-4 pt-14 sm:pt-20">
+        <div className="rounded-3xl border border-white/[0.07] bg-[#0A0D12] px-5 py-12 sm:px-8 sm:py-16">
           <Reveal>
             <div className="text-center">
               <span className="font-data text-[10px] font-bold uppercase tracking-[0.22em] text-akg-gold/80">
