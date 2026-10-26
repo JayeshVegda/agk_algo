@@ -59,6 +59,19 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
         sort: '-created'
       });
       setMyPurchases(records);
+      pendingRef.current = records.some((p) => p.status === 'pending');
+      const confirmed = records.filter((p) => p.status === 'confirmed').map((p) => p.plan || '');
+      if (knownConfirmedRef.current) {
+        const fresh = confirmed.filter((plan) => !knownConfirmedRef.current.includes(plan));
+        if (fresh.length && notify) {
+          notify({
+            type: 'success',
+            title: 'Payment Approved',
+            message: 'Your license key and Google Drive package link are unlocked below.'
+          });
+        }
+      }
+      knownConfirmedRef.current = confirmed;
     } catch (err) {
       console.error('Failed to load user bot purchases:', err);
     }
@@ -78,11 +91,22 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
     return () => window.removeEventListener('keydown', onKey);
   }, [checkoutBot]);
 
+  const pendingRef = React.useRef(false);
+  const knownConfirmedRef = React.useRef(null);
+
   useEffect(() => {
     if (user?.email) {
       loadUserPurchases();
       const unsub = pb.collection('payments').subscribe('*', () => loadUserPurchases()).catch(() => {});
-      return () => { unsub?.then?.((u) => u && u()); };
+      // Belt and braces: realtime can silently drop (PB restart, network
+      // flap). While any payment is pending, poll slowly so the license
+      // key + Drive link unlock appears without a manual reload.
+      const timer = setInterval(() => {
+        if (document.visibilityState === 'visible' && pendingRef.current) {
+          loadUserPurchases();
+        }
+      }, 10000);
+      return () => { unsub?.then?.((u) => u && u()); clearInterval(timer); };
     }
   }, [user?.email]);
 

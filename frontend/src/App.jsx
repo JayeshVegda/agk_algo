@@ -2,23 +2,35 @@ import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { pb } from './lib/pocketbase';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
-import { SignalsTab } from './components/SignalsTab';
-import { BotsTab } from './components/BotsTab';
-import { ChartsTab } from './components/ChartsTab';
-import { ConnectorTab } from './components/ConnectorTab';
-import { BroadcastsTab } from './components/BroadcastsTab';
-import { PricingTab } from './components/PricingTab';
-import { ResourcesTab } from './components/ResourcesTab';
-// The admin portal is a 200+ KB chunk most visitors never open: load on demand.
-const AdminPortal = lazy(() => import('./components/admin/AdminPortal').then((m) => ({ default: m.AdminPortal })));
 import { AuthModal } from './components/AuthModal';
-import { AccountTab } from './components/AccountTab';
-import { CheckoutPage } from './components/CheckoutPage';
-import { TrackRecordPage } from './components/TrackRecordPage';
-import { TermsPage, RefundPage, RiskPage, PrivacyPage } from './components/LegalPages';
 import { ToastContainer } from './components/Toast';
 import { Footer } from './components/Footer';
 import { Compass, Zap, Cpu, Network, User } from 'lucide-react';
+
+// Rest of the SPA streams in on first visit to each tab (per-tab chunks)
+const lazily = (loader, name) => lazy(() => loader().then((m) => ({ default: m[name] })));
+const SignalsTab = lazily(() => import('./components/SignalsTab'), 'SignalsTab');
+const BotsTab = lazily(() => import('./components/BotsTab'), 'BotsTab');
+const ChartsTab = lazily(() => import('./components/ChartsTab'), 'ChartsTab');
+const ConnectorTab = lazily(() => import('./components/ConnectorTab'), 'ConnectorTab');
+const BroadcastsTab = lazily(() => import('./components/BroadcastsTab'), 'BroadcastsTab');
+const PricingTab = lazily(() => import('./components/PricingTab'), 'PricingTab');
+const ResourcesTab = lazily(() => import('./components/ResourcesTab'), 'ResourcesTab');
+const AccountTab = lazily(() => import('./components/AccountTab'), 'AccountTab');
+const CheckoutPage = lazily(() => import('./components/CheckoutPage'), 'CheckoutPage');
+const TrackRecordPage = lazily(() => import('./components/TrackRecordPage'), 'TrackRecordPage');
+const TermsPage = lazily(() => import('./components/LegalPages'), 'TermsPage');
+const RefundPage = lazily(() => import('./components/LegalPages'), 'RefundPage');
+const RiskPage = lazily(() => import('./components/LegalPages'), 'RiskPage');
+const PrivacyPage = lazily(() => import('./components/LegalPages'), 'PrivacyPage');
+const AdminPortal = lazy(() => import('./components/admin/AdminPortal').then((m) => ({ default: m.AdminPortal })));
+
+const TabFallback = () => (
+  <div className="flex flex-col items-center justify-center gap-3 py-28 text-center">
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-akg-gold/30 border-t-akg-gold" />
+    <p className="font-data text-[10px] uppercase tracking-[0.2em] text-akg-muted">Loading desk module…</p>
+  </div>
+);
 
 // Public tab routes: path -> tab id. Tabs are URL-addressable so any page
 // (and any bot product page) can be shared or refreshed directly.
@@ -179,6 +191,7 @@ export default function App() {
         />
 
         <main className="w-[94%] max-w-[1750px] mx-auto px-2 sm:px-4 lg:px-6 py-6 pb-24 md:pb-6">
+          <Suspense fallback={<TabFallback />}>
           {activeTab === 'home' && (
             <LandingPage
               onNavigate={switchTab}
@@ -266,6 +279,7 @@ export default function App() {
               onOpenAuth={() => setAuthOpen(true)}
             />
           )}
+          </Suspense>
         </main>
       </div>
 

@@ -12,7 +12,7 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './ui/Accordion';
 import Reveal, { RevealGroup, RevealItem } from './motion/Reveal';
-import { motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import CountUp from './motion/CountUp';
 import Ticker from './motion/Ticker';
 import EquityCurve from './EquityCurve';
@@ -160,7 +160,9 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
   const [botsSel, setBotsSel] = useState(0);
   const [botsSnaps, setBotsSnaps] = useState(0);
   const [chartFailed, setChartFailed] = useState({});
+  const [botsHover, setBotsHover] = useState(false);
   const reduceMotionRef = React.useRef(false);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (!botsEmbla) return undefined;
@@ -452,7 +454,14 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
         </div>
 
         <Reveal delay={0.08} y={36}>
-          <div className="-mx-4 mt-9">
+          <div
+            className="-mx-4 mt-9"
+            onMouseEnter={() => { setBotsHover(true); botsAutoplay.stop(); }}
+            onMouseLeave={() => {
+              setBotsHover(false);
+              if (!reduceMotionRef.current) botsAutoplay.play();
+            }}
+          >
             <div className="overflow-hidden py-2" ref={botsEmblaRef}>
               <div className="flex">
                 {bots.map((bot) => {
@@ -471,10 +480,6 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                     >
                       <article
                         className="bot-card group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.015]"
-                        onMouseEnter={() => botsAutoplay.stop()}
-                        onMouseLeave={() => {
-                          if (reduceMotionRef.current === false) botsAutoplay.play();
-                        }}
                       >
                         {/* Media: real chart image, equity fallback, or neutral placeholder */}
                         <div className="relative shrink-0 overflow-hidden bg-[#0A0D13]">
@@ -591,6 +596,16 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                     />
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* Autoplay progress: restarts each slide, pauses on hover */}
+            {botsSnaps > 1 && !reduceMotion && (
+              <div className="mx-auto mt-1.5 h-[3px] w-16 overflow-hidden rounded-full bg-white/10">
+                <div
+                  key={`progress-${botsSel}-${botsHover}`}
+                  className={`motion-progress h-full w-full origin-left rounded-full bg-akg-gold/70 ${botsHover ? '[animation-play-state:paused]' : ''}`}
+                />
               </div>
             )}
           </div>
@@ -912,6 +927,13 @@ const GAINS = [
 function Achievements({ previews, briefings, onNavigate }) {
   const [tab, setTab] = useState(GAINS[0].id);
   const active = GAINS.find((g) => g.id === tab);
+  const reduce = useReducedMotion();
+  const swap = {
+    initial: reduce ? { opacity: 0 } : { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    exit: reduce ? { opacity: 0 } : { opacity: 0, y: -6 },
+    transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] },
+  };
 
   return (
     <div>
@@ -931,21 +953,40 @@ function Achievements({ previews, briefings, onNavigate }) {
         ))}
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[0.45fr_0.55fr] sm:mt-10">
+      <AnimatePresence mode="wait" initial={false}>
+      <motion.div key={tab} className="mt-8 grid gap-8 lg:grid-cols-[0.45fr_0.55fr] sm:mt-10" {...swap}>
         <div>
           <h3 className="font-display text-2xl font-extrabold leading-tight text-white sm:text-[1.7rem]">
             {active.title}
           </h3>
-          <ul className="mt-6 space-y-4">
+          <motion.ul
+            className="mt-6 space-y-4"
+            initial="hidden"
+            animate="show"
+            exit="exit"
+            variants={{
+              hidden: {},
+              show: { transition: { staggerChildren: 0.045 } },
+              exit: {},
+            }}
+          >
             {active.checks.map((c) => (
-              <li key={c} className="flex items-start gap-3">
+              <motion.li
+                key={c}
+                variants={{
+                  hidden: reduce ? { opacity: 0 } : { opacity: 0, x: -8 },
+                  show: { opacity: 1, x: 0, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } },
+                  exit: { opacity: 0 },
+                }}
+                className="flex items-start gap-3"
+              >
                 <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-akg-green/10 ring-1 ring-akg-green/30">
                   <Check className="h-3.5 w-3.5 text-akg-green" strokeWidth={3} />
                 </span>
                 <span className="text-sm leading-relaxed text-akg-silver">{c}</span>
-              </li>
+              </motion.li>
             ))}
-          </ul>
+          </motion.ul>
         </div>
 
         <div className="rounded-2xl border border-[#F3C653]/20 bg-[#0A0D13] p-4 sm:p-5">
@@ -1040,7 +1081,8 @@ function Achievements({ previews, briefings, onNavigate }) {
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
+      </AnimatePresence>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <Button variant="default" onClick={() => onNavigate('pricing')}>
@@ -1150,10 +1192,20 @@ function Toolkit() {
 
       <p className="mt-5 text-center text-sm text-akg-muted">{active.prefix}</p>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <motion.div
+        key={tab}
+        className="mt-6 grid gap-4 md:grid-cols-3"
+        initial="hidden"
+        animate="show"
+        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.055 } } }}
+      >
         {active.cards.map(({ icon: Icon, title, body }) => (
-          <div
+          <motion.div
             key={title}
+            variants={{
+              hidden: { opacity: 0, y: 10 },
+              show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] } },
+            }}
             className="flex flex-col rounded-2xl border border-white/10 bg-[#0A0D13] p-5 text-center transition-colors hover:border-[#F3C653]/25"
           >
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-akg-gold/10 ring-1 ring-akg-gold/25">
@@ -1161,9 +1213,9 @@ function Toolkit() {
             </div>
             <h3 className="mt-3.5 font-display text-[15px] font-bold text-white">{title}</h3>
             <p className="mt-2 text-xs leading-relaxed text-akg-muted">{body}</p>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }

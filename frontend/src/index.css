@@ -220,6 +220,21 @@ body {
   }
 }
 
+/* Autoplay progress bar under the bot carousel dots */
+@keyframes bot-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.motion-progress {
+  animation: bot-progress 3.8s linear forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .motion-progress {
+    animation: none;
+    transform: scaleX(1);
+  }
+}
+
 /* Reduced motion: collapse all continuous animation to stillness */
 @media (prefers-reduced-motion: reduce) {
   .ticker-track,
