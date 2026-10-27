@@ -4,16 +4,17 @@ import { cn } from '../../../lib/utils';
 import { useDensity } from './Density';
 
 /**
- * The admin data table: sticky sortable header, J/K row cursor with Enter to
- * open, optional row selection with a bulk bar, optional single-row
- * expansion, UI-density compaction, and pagination. Sort/filter/search stay
- * owned by the section (usually backed by the URL); this component only
- * renders and navigates.
+ * The admin data table: sticky sortable header, a highlightable row cursor
+ * (driven by the section's J/K handler), optional row selection with a bulk
+ * bar, optional single-row expansion, UI-density compaction, and pagination.
+ * Sort/filter/search stay owned by the section (usually backed by the URL);
+ * this component only renders and scrolls.
  *
  * columns: [{ key, label, sortKey?, align?, head?, cellClass?, className?, cell(row)? }]
  *   className applies to the th (e.g. widths), cellClass to each td.
  * sort: [colKey, 'asc'|'desc'] | null; onSort(colKey) toggles in the section.
  * selected/onSelected: controlled Set of rowKey values (both required for selection).
+ * cursor/onCursor: highlight + scroll target row index, owned by the section.
  */
 export default function DataTable({
   name = 'list',
@@ -22,9 +23,10 @@ export default function DataTable({
   rowKey = (r) => r.id,
   sort, onSort,
   selectable = false, selected, onSelected,
-  onRowClick, onCursorChange,
+  onRowClick,
+  cursor = 0, onCursor,
   rowClass,
-  expanded, onToggleExpand, renderExpanded,
+  expanded, renderExpanded,
   empty,
   page, onPage, // controlled pageIndex (1-based); internal state otherwise
   pageSize = 50,
@@ -34,17 +36,22 @@ export default function DataTable({
 }) {
   const [density] = useDensity();
   const compact = density === 'compact';
-  const [cursor, setCursor] = useState(0);
   const [pageSelf, setPageSelf] = useState(1);
   const selectAllRef = useRef(null);
+  const bodyRef = useRef(null);
 
   const pageIndex = Math.max(1, page ?? pageSelf);
   const setPageIndex = (p) => (onPage ? onPage(p) : setPageSelf(p));
 
-  const pages = Math.max(1, Math.ceil(rows.length / pageSize));
-  const slice = pages > 1
+  // serverMode: rows are the current slice already; `total` drives page count.
+  const serverMode = total !== undefined && onPage;
+  const pages = serverMode
+    ? Math.max(1, Math.ceil((total || rows.length) / pageSize))
+    : Math.max(1, Math.ceil(rows.length / pageSize));
+  const slice = !serverMode && pages > 1
     ? rows.slice((pageIndex - 1) * pageSize, pageIndex * pageSize)
     : rows;
+  const showing = serverMode ? `showing ${slice.length} of ${total}` : null;
 
   const selection = selectable ? selected : null;
   const selectedRows = useMemo(
@@ -68,28 +75,20 @@ export default function DataTable({
     onSelected(next);
   };
 
-  const onKeyDown = (e) => {
-    if (e.target.closest('input,textarea,select,a,button')) return;
-    const k = e.key.toLowerCase();
-    if (k === 'j' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      setCursor((c) => Math.min(slice.length - 1, c + 1));
-    } else if (k === 'k' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      setCursor((c) => Math.max(0, c - 1));
-    } else if (e.key === 'Enter' && onRowClick && !e.target.closest('input,textarea,select,a,button')) {
-      e.preventDefault();
-      const r = slice[cursor];
-      if (r) onRowClick(r);
-    } else if (e.key === ' ' && selectable) {
-      e.preventDefault();
-      const r = slice[cursor];
-      if (r) toggleSelect(r);
-    }
-  };
+  // Keep the highlighted row visible and report cursor changes upward.
+  const lastCursor = useRef(-1);
+  useEffect(() => {
+    if (cursor === lastCursor.current) return;
+    lastCursor.current = cursor;
+    const tr = bodyRef.current?.querySelector(`tr[data-ri="${cursor}"]`);
+    tr?.scrollIntoView({ block: 'nearest' });
+    onCursor?.(cursor);
+  }, [cursor]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { setCursor(0); if (onCursorChange) onCursorChange(0); /* eslint-disable-line react-hooks/exhaustive-deps */ }, [pageIndex, rows]);
-  useEffect(() => { if (selectAllRef.current) selectAllRef.current.indeterminate = !allOnPage && slice.some((r) => selection?.has(rowKey(r))); });
+  // Clamp when the slice shrinks (page turn, filter change).
+  useEffect(() => {
+    if (cursor > slice.length - 1) onCursor?.(Math.max(0, slice.length - 1));
+  }, [slice, cursor]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cellPad = compact ? 'px-3 py-2' : 'px-3 py-2.5';
   const cursorBar = 'shadow-[inset_3px_0_0_0_rgba(243,198,83,0.5)]';
@@ -100,8 +99,7 @@ export default function DataTable({
         role="grid"
         aria-label={name}
         tabIndex={0}
-        onKeyDown={onKeyDown}
-        className="max-[1100px]:overflow-x-auto focus-visible:[outline:none]"
+        className="max-[1100px]:overflow-x-auto"
       >
         <table className="w-full min-w-[860px] xl:min-w-full">
           <thead>
@@ -151,7 +149,7 @@ export default function DataTable({
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody ref={bodyRef}>
             {slice.map((r, i) => {
               const k = rowKey(r);
               const isCursor = i === cursor;
@@ -159,6 +157,7 @@ export default function DataTable({
               return (
                 <React.Fragment key={k}>
                   <tr
+                    data-ri={i}
                     className={cn(
                       'border-b border-white/[0.04] transition-colors hover:bg-white/[0.03]',
                       isCursor && 'bg-[#F3C653]/[0.05]',
@@ -225,9 +224,9 @@ export default function DataTable({
       {(pages > 1 || total !== undefined) && (
         <div className="flex items-center justify-between border-t border-white/[0.07] px-4 py-2">
           <span className="font-data text-[10px] text-akg-muted">
-            {total !== undefined ? `showing ${slice.length} of ${total}` : `page ${pageIndex} / ${pages}`}
+            {showing || `page ${pageIndex} / ${pages}`}
           </span>
-          {pages > 1 && (
+          {(pages > 1 || serverMode) && (
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setPageIndex(Math.max(1, pageIndex - 1))}
@@ -237,6 +236,11 @@ export default function DataTable({
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
               </button>
+              {serverMode && (
+                <span className="px-1 font-data text-[10px] text-akg-muted">
+                  {pageIndex} / {pages}
+                </span>
+              )}
               <button
                 onClick={() => setPageIndex(Math.min(pages, pageIndex + 1))}
                 disabled={pageIndex >= pages}
