@@ -175,11 +175,11 @@ export default function Overview({ onNavigate }) {
             {[
               { icon: Activity, label: 'signals', val: stats?.signals.active, go: 'signals' },
               { icon: UsersIcon, label: 'members', val: stats ? `${stats.users.active}/${stats.users.total}` : undefined, go: 'users' },
-              { icon: Radio, label: 'accounts', val: stats ? `${stats.connectors.trading}↑` : undefined, go: 'connectors' },
+              { icon: Radio, label: 'accounts', val: stats ? `${stats.connectors.trading}↑` : undefined, go: 'users', extra: { tab: 'managed' } },
             ].map((c) => {
               const Icon = c.icon;
               return (
-                <button key={c.label} onClick={() => onNavigate(c.go)} className="flex flex-col items-center gap-1 px-2 py-3 transition-colors hover:bg-white/[0.02]">
+                <button key={c.label} onClick={() => onNavigate(c.go, c.extra)} className="flex flex-col items-center gap-1 px-2 py-3 transition-colors hover:bg-white/[0.02]">
                   <Icon className="h-3.5 w-3.5 text-akg-gold" />
                   <span className="font-data text-sm font-bold text-white">{c.val ?? '—'}</span>
                   <span className="font-data text-[9px] uppercase tracking-wider text-akg-muted">{c.label}</span>
@@ -219,7 +219,7 @@ export default function Overview({ onNavigate }) {
               </header>
               <div className="divide-y divide-white/[0.04]">
                 {pendingBridges.slice(0, 4).map((c) => (
-                  <button key={c.id} onClick={() => onNavigate('connectors')} className="flex w-full items-center justify-between gap-2 px-3.5 py-2 text-left hover:bg-white/[0.02]">
+                  <button key={c.id} onClick={() => onNavigate('users', { tab: 'managed', id: c.id })} className="flex w-full items-center justify-between gap-2 px-3.5 py-2 text-left hover:bg-white/[0.02]">
                     <span className="truncate text-[11px] font-semibold text-white">{c.user_email}</span>
                     <span className="shrink-0 font-data text-[9px] text-akg-muted">{c.platform} · #{c.account_number}</span>
                   </button>

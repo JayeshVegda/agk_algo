@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Bot as BotIcon, Activity, Plus, Pencil, Receipt, Download, Gift, Copy, Check, Key, Users as UsersIcon } from 'lucide-react';
+import { Bot as BotIcon, Activity, Plus, Pencil, Receipt, Download, Gift, Copy, Check, Key, Users as UsersIcon, Radio } from 'lucide-react';
 import { pb } from '../../../lib/pocketbase';
 import { useAdmin } from '../AdminContext';
 import { SectionHeader, EmptyState, StatusPill, labelCls, inputCls } from '../components/ui';
@@ -11,6 +11,7 @@ import { ActionSheet } from '../components/ActionSheet';
 import { useUrlQuery, replaceParams } from '../lib/urlState';
 import { cycleDaysLeft, fmtDateTime, fmtDate } from '../lib/format';
 import { cn } from '../../../lib/utils';
+import ManagedAccounts, { MANAGED_TAB } from './ManagedAccounts';
 
 const PLAN_LABELS = {
   PERFECT_SIGNAL_BOX: 'Perfect Box',
@@ -23,13 +24,14 @@ const TAB_DEFS = [
   { id: 'members', label: 'All Members', icon: UsersIcon },
   { id: 'signal', label: 'Signal Base', icon: Activity },
   { id: 'bot', label: 'Bot Base', icon: BotIcon },
+  MANAGED_TAB,
 ];
 const BOT_RE = /^BOT:\s*(.+?)\s*\(([^#)]+)#([^)]+)\)/i;
 
 const keyOf = (email) => String(email || '').trim().toLowerCase();
 
 export default function Users() {
-  const { grantDays, saveUserAccess } = useAdmin();
+  const { grantDays, saveUserAccess, connectors } = useAdmin();
   const query = useUrlQuery();
 
   const tab = TAB_DEFS.some((t) => t.id === query.tab) ? query.tab : 'members';
@@ -198,6 +200,19 @@ export default function Users() {
   useEffect(() => { setCursor((c) => Math.min(c, Math.max(0, visible.length - 1))); }, [visible.length]);
 
   const SUBS = useMemo(() => {
+    if (tab === 'managed') {
+      const st = (s) => connectors.filter((c) => c.status === s).length;
+      const pending = connectors.filter((c) => c.status === 'pending_review' || c.status === 'pending').length;
+      return [
+        { id: 'all', label: 'All', count: connectors.length },
+        { id: 'pending', label: 'New', count: pending },
+        { id: 'in_progress', label: 'Reviewing', count: st('in_progress') },
+        { id: 'trading', label: 'Bots Live', count: st('trading') },
+        { id: 'settlement', label: 'Settlement', count: st('settlement') },
+        { id: 'paused', label: 'Paused', count: st('paused') },
+        { id: 'rejected', label: 'Rejected', count: st('rejected') },
+      ].filter((o) => o.id === 'all' || o.count > 0 || ['trading', 'pending'].includes(o.id));
+    }
     if (tab === 'members') {
       return [
         { id: 'all', label: 'All', count: users.length },
@@ -224,10 +239,11 @@ export default function Users() {
       { id: 'licensed', label: 'Licensed', count: buyers.filter((u) => botsOf.get(keyOf(u.email)).licenses.length).length },
       { id: 'pending', label: 'Awaiting desk', count: buyers.filter((u) => botsOf.get(keyOf(u.email)).pending > 0).length },
     ];
-  }, [tab, users, sigOf, botsOf, stateOf]);
+  }, [tab, users, sigOf, botsOf, stateOf, connectors]);
 
   /* ------------------------- keyboard: J/K + Enter ------------------------ */
   const onKeyDown = useCallback((e) => {
+    if (tab === 'managed') return; // ManagedAccounts owns the keyboard there
     const t = e.target;
     if (t?.closest?.('input,textarea,select') || t?.isContentEditable) return;
     if (document.querySelector('[role="dialog"],[role="alertdialog"]')) return;
@@ -241,7 +257,7 @@ export default function Users() {
       e.preventDefault();
       replaceParams({ id: query.id === row.id ? '' : row.id });
     }
-  }, [visible, cursor, query.id]);
+  }, [visible, cursor, query.id, tab]);
 
   useEffect(() => {
     window.addEventListener('keydown', onKeyDown);
@@ -346,19 +362,27 @@ export default function Users() {
     else replaceParams({ sort: col, dir: col === 'spend' || col === 'joined' ? 'desc' : 'asc', page: '' });
   };
 
+  const pendingManaged = connectors.filter((c) => c.status === 'pending_review' || c.status === 'pending').length;
+  const tradingManaged = connectors.filter((c) => c.status === 'trading').length;
+
   return (
     <div className="space-y-4 pb-10">
       <SectionHeader
         title="Traders & Access"
-        sub={loading && !users.length ? 'Loading members…' : `${users.length} traders · ${users.filter((u) => stateOf(u).active).length} active · ${users.filter((u) => stateOf(u).expiring).length} expiring ≤3d`}
-        actions={
+        sub={
+          loading && !users.length && tab !== 'managed' ? 'Loading members…'
+            : tab === 'managed'
+              ? `${connectors.length} accounts · ${pendingManaged} awaiting review · ${tradingManaged} trading live · 70/30 profit split`
+              : `${users.length} traders · ${users.filter((u) => stateOf(u).active).length} active · ${users.filter((u) => stateOf(u).expiring).length} expiring ≤3d`
+        }
+        actions={tab !== 'managed' && (
           <button
             onClick={() => exportCsv({ tab, rows: sorted, sigOf, botsOf })}
             className="flex h-9 items-center gap-2 rounded-full border border-white/15 px-4 text-xs font-bold text-akg-silver transition-colors hover:border-[#F3C653]/40 hover:text-akg-gold"
           >
             <Download className="h-3.5 w-3.5" /> Export CSV
           </button>
-        }
+        )}
       />
 
       <Toolbar
@@ -387,6 +411,10 @@ export default function Users() {
         )}
       />
 
+      {tab === 'managed' ? (
+        <ManagedAccounts sub={sub} search={search} />
+      ) : (
+        <>
       <DataTable
         name="traders"
         columns={columns}
@@ -461,6 +489,8 @@ export default function Users() {
         >
           <TraderDossier user={dossierUser} payments={payments} bots={bots} botsOf={botsOf} sigOf={sigOf} />
         </Drawer>
+      )}
+        </>
       )}
 
       {/* Edit access */}

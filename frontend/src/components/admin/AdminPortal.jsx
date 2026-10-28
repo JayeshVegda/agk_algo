@@ -18,7 +18,6 @@ import Bots from './sections/Bots';
 import Briefings from './sections/Briefings';
 import Resources from './sections/Resources';
 import Users from './sections/Users';
-import Connectors from './sections/Connectors';
 import Settings from './sections/Settings';
 import { cn } from '../../lib/utils';
 
@@ -129,7 +128,7 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
   const admin = useAdmin();
   const { stats } = useStats();
   const query = useUrlQuery();
-  const [section, setSectionState] = useState(() => (SECTION_IDS.has(query.s) ? query.s : 'overview'));
+  const [section, setSectionState] = useState(() => (SECTION_IDS.has(query.s) ? query.s : query.s === 'connectors' ? 'users' : 'overview'));
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
@@ -141,7 +140,7 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
   const active = SECTIONS.find((s) => s.id === section) || SECTIONS[0];
 
   const go = (id, extra = {}) => {
-    setParams({ s: id, t: extra.t, id: extra.id, f: extra.f, q: extra.q, sort: extra.sort, page: extra.page }, { push: true });
+    setParams({ s: id, t: extra.t, tab: extra.tab, id: extra.id, f: extra.f, q: extra.q, sort: extra.sort, page: extra.page }, { push: true });
     setSectionState(id);
     setDrawerOpen(false);
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -154,6 +153,11 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
       setDrawerOpen(false);
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
+    // Old ?s=connectors links (bookmarks, notifications) fold into Traders → Managed.
+    if (query.s === 'connectors') {
+      setSectionState('users');
+      replaceParams({ s: 'users', tab: 'managed' });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query.s]);
 
@@ -165,7 +169,6 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
     briefings: Briefings,
     resources: Resources,
     users: Users,
-    connectors: Connectors,
     settings: Settings,
   }[section];
 

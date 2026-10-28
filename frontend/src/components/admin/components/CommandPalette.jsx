@@ -53,7 +53,10 @@ export default function CommandPalette({ go, open, setOpen }) {
     const needle = q.trim().toLowerCase();
     const match = (text) => !needle || String(text).toLowerCase().includes(needle);
     const out = [];
-    SECTIONS.forEach((s) => { if (match(s.label) || match(s.id)) out.push({ kind: 'section', id: `s-${s.id}`, label: s.label, icon: s.icon, hint: 'go', run: () => go(s.id) }); });
+    SECTIONS.forEach((s) => {
+      if (match(s.label) || match(s.id)) out.push({ kind: 'section', id: `s-${s.id}`, label: s.label, icon: s.icon, hint: 'go', run: () => go(s.id) });
+      if (s.id === 'users' && match('managed accounts')) out.push({ kind: 'section', id: 's-managed', label: 'Managed accounts', icon: s.icon, hint: 'go', run: () => go('users', { tab: 'managed' }) });
+    });
     roster.filter((u) => (u.role || 'user') !== 'admin').forEach((u) => {
       if (match(u.name) || match(u.email)) {
         out.push({ kind: 'trader', id: `u-${u.id}`, label: u.name || u.email, hint: u.email || '', sub: u.plan || 'no plan', run: () => go('users', { id: u.id }) });

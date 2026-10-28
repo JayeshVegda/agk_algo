@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, CreditCard, Zap, Cpu, Bell, Package, Users as UsersIcon, Radio, Settings as Cog,
+  LayoutDashboard, CreditCard, Zap, Cpu, Bell, Package, Users as UsersIcon, Settings as Cog,
 } from 'lucide-react';
 
 export const SECTIONS = [
@@ -10,7 +10,6 @@ export const SECTIONS = [
   { id: 'bots', label: 'Expert Advisors', short: 'Bots', icon: Cpu, group: 'Desk' },
   { id: 'resources', label: 'Traders Kit', short: 'Kit', icon: Package, group: 'Desk' },
   { id: 'users', label: 'Traders', short: 'Traders', icon: UsersIcon, group: 'Desk' },
-  { id: 'connectors', label: 'Managed Accounts', short: 'Accounts', icon: Radio, group: 'Desk', badge: 'pendingConnectors' },
   { id: 'settings', label: 'Settings', short: 'Settings', icon: Cog, group: 'Desk' },
 ];
 
