@@ -8,7 +8,7 @@ import { NotificationBell } from '../NotificationBell';
 import { AdminDataProvider, useAdmin } from './AdminContext';
 import { useStats } from './lib/pagedList';
 import { useUrlQuery, setParams, replaceParams } from './lib/urlState';
-import { MOBILE_TABS, SECTIONS, SECTION_IDS } from './adminNav';
+import { MOBILE_TABS, SECTIONS, SECTION_IDS, GROUPS } from './adminNav';
 import { DensityProvider, DensityToggle, useDensity } from './components/Density';
 import CommandPalette from './components/CommandPalette';
 import Overview from './sections/Overview';
@@ -137,6 +137,16 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
     pendingConnectors: stats?.connectors.pending ?? 0,
   }), [stats]);
 
+  // Collapsible nav groups; collapse state persists across sessions.
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('akg.admin.navGroups') || '[]'); } catch { return []; }
+  });
+  const toggleGroup = (gid) => setCollapsed((c) => {
+    const next = c.includes(gid) ? c.filter((x) => x !== gid) : [...c, gid];
+    try { localStorage.setItem('akg.admin.navGroups', JSON.stringify(next)); } catch { /* private mode */ }
+    return next;
+  });
+
   const active = SECTIONS.find((s) => s.id === section) || SECTIONS[0];
 
   const go = (id, extra = {}) => {
@@ -179,36 +189,53 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
         <div className="flex items-center gap-2.5 border-b border-white/[0.07] px-5 py-4">
           <img src="/assets/logos/akg-algo-metallic-nav.png" alt="AKG ALGO" className="h-8 w-auto" />
         </div>
-        <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
-          {['Main', 'Desk'].map((group) => (
-            <div key={group}>
-              <div className="px-3 pb-1.5 font-data text-[9px] uppercase tracking-[0.2em] text-akg-muted/60">{group}</div>
-              <div className="space-y-0.5">
-                {SECTIONS.filter((s) => s.group === group).map((s) => {
-                  const Icon = s.icon;
-                  const badge = s.badge ? badges[s.badge] : 0;
-                  return (
-                    <button
-                      key={s.id}
-                      onClick={() => go(s.id)}
-                      className={cn(
-                        'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold transition-all',
-                        section === s.id
-                          ? 'bg-[#F3C653]/12 text-akg-gold ring-1 ring-[#F3C653]/25'
-                          : 'text-akg-muted hover:bg-white/[0.04] hover:text-white'
-                      )}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      <span className="flex-1 truncate">{s.label}</span>
-                      {badge > 0 && (
-                        <span className="rounded-full bg-amber-400/20 px-1.5 py-0.5 font-data text-[10px] font-bold text-amber-300">{badge}</span>
-                      )}
-                    </button>
-                  );
-                })}
+        <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4">
+          {GROUPS.map((g) => {
+            const items = SECTIONS.filter((s) => s.group === g.id);
+            const groupBadge = items.reduce((n, s) => n + (s.badge ? badges[s.badge] || 0 : 0), 0);
+            const isCollapsed = collapsed.includes(g.id);
+            return (
+              <div key={g.id}>
+                <button
+                  onClick={() => toggleGroup(g.id)}
+                  aria-expanded={!isCollapsed}
+                  className="flex w-full items-center gap-1.5 px-3 pb-1.5 font-data text-[9px] uppercase tracking-[0.2em] text-akg-muted/60 transition-colors hover:text-akg-muted"
+                >
+                  <ChevronRight className={cn('h-3 w-3 transition-transform', !isCollapsed && 'rotate-90')} />
+                  <span className="flex-1 text-left">{g.label}</span>
+                  {groupBadge > 0 && (
+                    <span className="rounded-full bg-amber-400/20 px-1.5 py-px font-data text-[9px] font-bold text-amber-300">{groupBadge}</span>
+                  )}
+                </button>
+                {!isCollapsed && (
+                  <div className="space-y-0.5">
+                    {items.map((s) => {
+                      const Icon = s.icon;
+                      const badge = s.badge ? badges[s.badge] : 0;
+                      return (
+                        <button
+                          key={s.id}
+                          onClick={() => go(s.id)}
+                          className={cn(
+                            'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] font-semibold transition-all',
+                            section === s.id
+                              ? 'bg-[#F3C653]/12 text-akg-gold ring-1 ring-[#F3C653]/25'
+                              : 'text-akg-muted hover:bg-white/[0.04] hover:text-white'
+                          )}
+                        >
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span className="flex-1 truncate">{s.label}</span>
+                          {badge > 0 && (
+                            <span className="rounded-full bg-amber-400/20 px-1.5 py-0.5 font-data text-[10px] font-bold text-amber-300">{badge}</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
         <div className="border-t border-white/[0.07] p-3">
           <button
