@@ -673,7 +673,8 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
           </div>
         </div>
 
-        {/* checkout modal is rendered below and shared */}
+        {/* checkout modal + MT-account prompt are rendered below and shared */}
+        <PromptModal />
         <CheckoutModal />
       </div>
     );
@@ -799,46 +800,8 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
         </div>
       )}
 
-      {/* Account-number prompt before the cart */}
-      {promptBot && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 backdrop-blur-sm sm:items-center sm:p-4">
-          <div className="absolute inset-0" onClick={() => setPromptBot(null)} />
-          <div className="relative w-full rounded-t-3xl border border-white/10 bg-akg-surface p-6 shadow-2xl sm:max-w-md sm:rounded-2xl">
-            <div className="mx-auto mt-[-10px] mb-3 h-1 w-10 rounded-full bg-white/15 sm:hidden" />
-            <h3 className="font-display text-base font-bold text-white">Bind your license</h3>
-            <p className="mt-1 text-xs leading-relaxed text-akg-muted">
-              Enter your MetaTrader {promptBot.platform} account number. The license key is permanently bound to it.
-            </p>
-            <input
-              autoFocus
-              value={promptAccount}
-              onChange={(e) => setPromptAccount(e.target.value)}
-              placeholder="e.g. 884920"
-              className="mt-4 h-11 w-full rounded-xl border border-white/10 bg-[#0A0D13] px-3.5 font-data text-sm text-white placeholder:text-akg-muted/50 focus:border-[#F3C653]/50 focus:outline-none"
-            />
-            <button
-              onClick={() => {
-                if (!promptAccount.trim()) return;
-                sessionStorage.setItem('akg_order', JSON.stringify({
-                  kind: 'bot',
-                  id: promptBot.id,
-                  name: promptBot.name,
-                  price: promptBot.price,
-                  platform: promptBot.platform,
-                  account: promptAccount.trim(),
-                }));
-                const nav = onNavigate;
-                setPromptBot(null);
-                if (nav) nav('checkout');
-              }}
-              disabled={!promptAccount.trim()}
-              className="mt-4 h-11 w-full rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] text-sm font-bold text-[#1C1403] disabled:opacity-40"
-            >
-              Continue to Checkout
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Account-number prompt before the cart — shared with the product page */}
+      <PromptModal />
 
       {/* =========================================================================
           BOT LICENSE VIEW MODAL (existing purchases; new buys go to /checkout)
@@ -846,6 +809,49 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
       <CheckoutModal />
     </div>
   );
+
+  function PromptModal() {
+    if (!promptBot) return null;
+    return (
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 backdrop-blur-sm sm:items-center sm:p-4">
+        <div className="absolute inset-0" onClick={() => setPromptBot(null)} />
+        <div className="relative w-full rounded-t-3xl border border-white/10 bg-akg-surface p-6 shadow-2xl sm:max-w-md sm:rounded-2xl">
+          <div className="mx-auto mt-[-10px] mb-3 h-1 w-10 rounded-full bg-white/15 sm:hidden" />
+          <h3 className="font-display text-base font-bold text-white">Bind your license</h3>
+          <p className="mt-1 text-xs leading-relaxed text-akg-muted">
+            Enter your MetaTrader {promptBot.platform} account number. The license key is permanently bound to it.
+          </p>
+          <input
+            autoFocus
+            value={promptAccount}
+            onChange={(e) => setPromptAccount(e.target.value)}
+            placeholder="e.g. 884920"
+            className="mt-4 h-11 w-full rounded-xl border border-white/10 bg-[#0A0D13] px-3.5 font-data text-sm text-white placeholder:text-akg-muted/50 focus:border-[#F3C653]/50 focus:outline-none"
+          />
+          <button
+            onClick={() => {
+              if (!promptAccount.trim()) return;
+              sessionStorage.setItem('akg_order', JSON.stringify({
+                kind: 'bot',
+                id: promptBot.id,
+                name: promptBot.name,
+                price: promptBot.price,
+                platform: promptBot.platform,
+                account: promptAccount.trim(),
+              }));
+              const nav = onNavigate;
+              setPromptBot(null);
+              if (nav) nav('checkout');
+            }}
+            disabled={!promptAccount.trim()}
+            className="mt-4 h-11 w-full rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] text-sm font-bold text-[#1C1403] disabled:opacity-40"
+          >
+            Continue to Checkout
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   function CheckoutModal() {
     if (!checkoutBot) return null;
