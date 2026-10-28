@@ -91,7 +91,7 @@ function BotHeroMedia({ bot }) {
   );
 }
 
-export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, onOpenAuth, notify }) {
+export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, onOpenAuth, onNavigateAdmin, notify }) {
   const [bots, setBots] = useState([]);
   const [botsLoading, setBotsLoading] = useState(true);
   const [platformFilter, setPlatformFilter] = useState('all');
@@ -385,6 +385,15 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
           <ChevronLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
           All Expert Advisors
         </button>
+
+        {user?.role === 'admin' && (
+          <button
+            onClick={() => onNavigateAdmin?.(`/admin?s=bots&edit=${bot?.id || ''}`)}
+            className="mt-3 flex h-8 w-fit items-center gap-1.5 rounded-full border border-[#F3C653]/40 px-3 font-data text-[10px] font-bold text-akg-gold hover:bg-[#F3C653]/10"
+          >
+            <FlaskConical className="h-3 w-3" /> Admin: edit this Expert Advisor
+          </button>
+        )}
 
         {/* Hero: facts left, provenance media right */}
         <div className="mt-5 grid items-stretch gap-6 lg:grid-cols-[1.05fr_0.95fr]">

@@ -4,6 +4,7 @@ import { pb } from '../../../lib/pocketbase';
 import { useAdmin } from '../AdminContext';
 import { SectionHeader, FilterChips, SearchInput, EmptyState, labelCls, inputCls, textareaCls } from '../components/ui';
 import { ActionSheet, ConfirmSheet } from '../components/ActionSheet';
+import { useUrlQuery, replaceParams } from '../lib/urlState';
 import { cn } from '../../../lib/utils';
 
 /** Downscale an uploaded image to a compact web-ready data URL (max ~640px). */
@@ -44,6 +45,20 @@ export default function Bots() {
   const [editing, setEditing] = useState(null); // null closed, {} new, {...bot} edit
   const [dossier, setDossier] = useState(null);
   const [deleting, setDeleting] = useState(null);
+
+  // ?edit=<bot id> deep-link (admin bar on the public /bots/<slug> page).
+  const query = useUrlQuery();
+  const deepEdit = query.edit || '';
+  useEffect(() => {
+    if (deepEdit && !editing && bots.length) {
+      const b = bots.find((x) => x.id === deepEdit);
+      if (b) setEditing({ ...b });
+    }
+  }, [deepEdit, bots, editing]);
+  const closeEditor = () => {
+    setEditing(null);
+    if (deepEdit) replaceParams({ edit: '' });
+  };
 
   const counts = useMemo(() => ({
     all: bots.length,
@@ -213,10 +228,11 @@ export default function Bots() {
 
       <BotEditor
         bot={editing}
-        onClose={() => setEditing(null)}
+        onClose={closeEditor}
         onSave={async (payload) => {
           const b = editing;
           setEditing(null);
+          if (deepEdit) replaceParams({ edit: '' });
           if (b) await saveBot(payload, b.id);
         }}
       />

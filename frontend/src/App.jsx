@@ -106,9 +106,12 @@ export default function App() {
 
   const navigateTo = (path) => {
     window.history.pushState({}, '', path);
-    setCurrentPath(path);
-    if (!path.startsWith('/admin')) {
-      const t = pathToTab(path);
+    // Query strings (e.g. /admin?s=bots&edit=x) belong to the target page;
+    // currentPath tracks the pathname so the switch below stays exact.
+    const [pathname] = path.split('?');
+    setCurrentPath(pathname);
+    if (!pathname.startsWith('/admin')) {
+      const t = pathToTab(pathname);
       setActiveTab(t === '/admin' ? 'home' : t);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -217,6 +220,7 @@ export default function App() {
               onNavigate={(tab) => switchTab(tab)}
               onOpenPricing={() => switchTab('pricing')}
               onOpenAuth={() => setAuthOpen(true)}
+              onNavigateAdmin={(path) => navigateTo(path || '/admin')}
               notify={notify}
             />
           )}
