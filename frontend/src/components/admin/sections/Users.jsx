@@ -1,32 +1,46 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Users as UsersIcon, Bot as BotIcon, Activity, Plus, Pencil, Receipt, ChevronRight, ShieldCheck, Download, Gift, Copy, Check, Key } from 'lucide-react';
+import { Bot as BotIcon, Activity, Plus, Pencil, Receipt, Download, Gift, Copy, Check, Key, Users as UsersIcon } from 'lucide-react';
 import { pb } from '../../../lib/pocketbase';
 import { useAdmin } from '../AdminContext';
-import { SectionHeader, FilterChips, SearchInput, EmptyState, StatusPill, labelCls, inputCls } from '../components/ui';
+import { SectionHeader, EmptyState, StatusPill, labelCls, inputCls } from '../components/ui';
+import { StatusDot } from '../components/StatusDot';
+import { Toolbar } from '../components/Toolbar';
+import DataTable from '../components/DataTable';
+import Drawer from '../components/Drawer';
 import { ActionSheet } from '../components/ActionSheet';
+import { useUrlQuery, replaceParams } from '../lib/urlState';
 import { cycleDaysLeft, fmtDateTime, fmtDate } from '../lib/format';
 import { cn } from '../../../lib/utils';
 
 const PLAN_LABELS = {
-  PERFECT_SIGNAL_BOX: 'Perfect Signal Box',
-  SR_SIGNAL_BOX: 'SR Signal Box',
+  PERFECT_SIGNAL_BOX: 'Perfect Box',
+  SR_SIGNAL_BOX: 'SR Box',
   NONE: 'No plan',
 };
 const SIG_PLANS = Object.keys(PLAN_LABELS).filter((p) => p !== 'NONE');
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 15;
+const TAB_DEFS = [
+  { id: 'members', label: 'All Members', icon: UsersIcon },
+  { id: 'signal', label: 'Signal Base', icon: Activity },
+  { id: 'bot', label: 'Bot Base', icon: BotIcon },
+];
 const BOT_RE = /^BOT:\s*(.+?)\s*\(([^#)]+)#([^)]+)\)/i;
 
 const keyOf = (email) => String(email || '').trim().toLowerCase();
 
 export default function Users() {
   const { grantDays, saveUserAccess } = useAdmin();
-  const [tab, setTab] = useState('members'); // members | signal | bot
-  const [sub, setSub] = useState('all');
-  const [search, setSearch] = useState('');
-  const [botFilter, setBotFilter] = useState('');
-  const [pg, setPg] = useState(1);
-  const [dossier, setDossier] = useState(null);
-  const [editing, setEditing] = useState(null);
+  const query = useUrlQuery();
+
+  const tab = TAB_DEFS.some((t) => t.id === query.tab) ? query.tab : 'members';
+  const sub = query.sub || 'all';
+  const search = query.q || '';
+  const botFilter = query.f || '';
+  const urlPage = Math.max(1, Number(query.page) || 1);
+  const sortCol = query.sort || (tab === 'bot' ? 'name' : 'days');
+  const sortDir = query.dir === 'desc' || query.dir === 'asc' ? query.dir : (sortCol === 'days' || sortCol === 'name' ? 'asc' : 'desc');
+
+  const [cursor, setCursor] = useState(0);
 
   // Traders data is small (tens, not thousands): load whole tables once and
   // derive every base server-independently. Admin rules already gate this read.
@@ -34,6 +48,7 @@ export default function Users() {
   const [payments, setPayments] = useState([]);
   const [bots, setBots] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,16 +76,6 @@ export default function Users() {
 
   /* ---------------------------- derived indexes --------------------------- */
   const confirmed = useMemo(() => payments.filter((p) => p.status === 'confirmed'), [payments]);
-
-  const paymentsByEmail = useMemo(() => {
-    const idx = new Map();
-    for (const p of confirmed) {
-      const k = keyOf(p.user_email);
-      if (!idx.has(k)) idx.set(k, []);
-      idx.get(k).push(p);
-    }
-    return idx;
-  }, [confirmed]);
 
   const sigOf = useMemo(() => {
     const idx = new Map(); // email -> { SR_SIGNAL_BOX: n, PERFECT_SIGNAL_BOX: n, last: ts, spend }
@@ -124,6 +129,13 @@ export default function Users() {
     return { days, active, expiring, lapsed, free: (!u.plan || u.plan === 'NONE') && !sigOf.has(keyOf(u.email)) && !botsOf.has(keyOf(u.email)) };
   }, [sigOf, botsOf]);
 
+  const statusWord = useCallback((u) => {
+    const s = stateOf(u);
+    if (s.active) return s.expiring ? 'expiring' : 'active';
+    if (s.lapsed) return 'lapsed';
+    return 'free';
+  }, [stateOf]);
+
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
     const hit = (u) => !q || (u.email || '').toLowerCase().includes(q) || (u.name || '').toLowerCase().includes(q);
@@ -164,10 +176,26 @@ export default function Users() {
     }).filter(hit);
   }, [users, tab, sub, search, sigOf, botsOf, stateOf, botFilter]);
 
-  const paged = useMemo(() => rows.slice((pg - 1) * PAGE_SIZE, pg * PAGE_SIZE), [rows, pg]);
-  useEffect(() => setPg(1), [tab, sub, search, botFilter]);
+  // Sorting happens in the section (URL-backed); the table renders the slice.
+  const sorted = useMemo(() => {
+    const val = {
+      name: (u) => (u.name || u.email || '').toLowerCase(),
+      days: (u) => { const d = cycleDaysLeft(u); return d === null ? 99999 : d; },
+      spend: (u) => (sigOf.get(keyOf(u.email))?.spend || 0) + (botsOf.get(keyOf(u.email))?.spend || 0),
+      joined: (u) => new Date(String(u.created).replace(' ', 'T')).getTime() || 0,
+      systems: (u) => botsOf.get(keyOf(u.email))?.licenses.length || 0,
+    }[sortCol] || ((u) => 0);
+    const arr = [...rows].sort((a, b) => {
+      const x = val(a); const y = val(b);
+      return x < y ? -1 : x > y ? 1 : 0;
+    });
+    return sortDir === 'desc' ? arr.reverse() : arr;
+  }, [rows, sortCol, sortDir, sigOf, botsOf]);
 
-  const openDossier = (u) => setDossier(u);
+  const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const safePage = Math.min(urlPage, pageCount);
+  const visible = useMemo(() => sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE), [sorted, safePage]);
+  useEffect(() => { setCursor((c) => Math.min(c, Math.max(0, visible.length - 1))); }, [visible.length]);
 
   const SUBS = useMemo(() => {
     if (tab === 'members') {
@@ -198,142 +226,242 @@ export default function Users() {
     ];
   }, [tab, users, sigOf, botsOf, stateOf]);
 
-  if (loading && !users.length) {
-    return (
-      <div className="space-y-5">
-        <SectionHeader title="Traders & Access" sub="Loading members…" />
-        <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]" />
-          ))}
-        </div>
-      </div>
+  /* ------------------------- keyboard: J/K + Enter ------------------------ */
+  const onKeyDown = useCallback((e) => {
+    const t = e.target;
+    if (t?.closest?.('input,textarea,select') || t?.isContentEditable) return;
+    if (document.querySelector('[role="dialog"],[role="alertdialog"]')) return;
+    const k = e.key.toLowerCase();
+    if (k !== 'j' && k !== 'k' && e.key !== 'Enter') return;
+    const row = visible[cursor];
+    if (!row) return;
+    if (k === 'j') { e.preventDefault(); setCursor((c) => Math.min(visible.length - 1, c + 1)); }
+    else if (k === 'k') { e.preventDefault(); setCursor((c) => Math.max(0, c - 1)); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      replaceParams({ id: query.id === row.id ? '' : row.id });
+    }
+  }, [visible, cursor, query.id]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onKeyDown]);
+
+  /* ------------------------------- dossier -------------------------------- */
+  const dossierUser = query.id ? users.find((u) => u.id === query.id) || null : null;
+
+  /* ------------------------------- columns ------------------------------- */
+  const columns = useMemo(() => {
+    const cols = [
+      {
+        key: 'trader',
+        label: 'Trader',
+        sortKey: 'name',
+        head: 'w-[230px]',
+        cell: (u) => (
+          <div className="min-w-0">
+            <div className="truncate text-xs font-semibold text-white">{u.name || (u.email || '').split('@')[0]}</div>
+            <div className="truncate font-data text-[10px] text-akg-muted">{u.email}</div>
+          </div>
+        ),
+      },
+    ];
+    if (tab === 'members' || tab === 'signal') {
+      cols.push({
+        key: 'plan',
+        label: 'Plan',
+        cell: (u) => {
+          const sig = sigOf.get(keyOf(u.email));
+          const buys = sig ? `SR ×${sig.SR_SIGNAL_BOX} · VIP ×${sig.PERFECT_SIGNAL_BOX}` : sigOf.has(keyOf(u.email)) ? '' : 'no purchases';
+          return (
+            <div className="min-w-0">
+              <div className="whitespace-nowrap text-[11px] font-semibold text-akg-silver">{PLAN_LABELS[u.plan] || u.plan || 'None'}</div>
+              {tab === 'signal' && buys && <div className="font-data text-[10px] text-akg-muted">{buys}</div>}
+            </div>
+          );
+        },
+      });
+    }
+    if (tab === 'bot') {
+      cols.push({
+        key: 'systems',
+        label: 'Systems',
+        sortKey: 'systems',
+        cell: (u) => {
+          const r = botsOf.get(keyOf(u.email));
+          if (!r) return <span className="text-[11px] text-akg-muted">—</span>;
+          return (
+            <div className="flex min-w-0 flex-wrap items-center gap-1">
+              {r.licenses.slice(0, 2).map((l) => (
+                <span key={l.id} className="rounded bg-white/[0.06] px-1.5 py-px font-data text-[9px] text-akg-silver">{l.name}</span>
+              ))}
+              {r.licenses.length > 2 && <span className="font-data text-[9px] text-akg-muted">+{r.licenses.length - 2}</span>}
+              {!r.licenses.length && <span className="text-[10px] text-amber-300">awaiting desk</span>}
+            </div>
+          );
+        },
+      });
+    }
+    if (tab !== 'bot') {
+      cols.push({
+        key: 'days',
+        label: 'Days left',
+        sortKey: 'days',
+        head: 'w-[110px]',
+        cell: (u) => <ExpiryBadge days={cycleDaysLeft(u)} />,
+      });
+    }
+    cols.push(
+      {
+        key: 'spend',
+        label: 'Spend',
+        sortKey: 'spend',
+        align: 'right',
+        head: 'w-[90px]',
+        cell: (u) => {
+          const total = (sigOf.get(keyOf(u.email))?.spend || 0) + (botsOf.get(keyOf(u.email))?.spend || 0);
+          return <span className="whitespace-nowrap font-data text-xs font-bold tabular-nums text-white">{total ? `$${total}` : '—'}</span>;
+        },
+      },
+      {
+        key: 'joined',
+        label: 'Joined',
+        sortKey: 'joined',
+        head: 'w-[110px]',
+        cell: (u) => <span className="whitespace-nowrap font-data text-[10px] text-akg-muted">{fmtDate(u.created)}</span>,
+      },
+      {
+        key: 'status',
+        label: '',
+        align: 'right',
+        cell: (u) => <StatusDot status={statusWord(u)} pulse={false} />,
+      },
     );
-  }
+    return cols;
+  }, [tab, sigOf, botsOf, statusWord]);
+
+  const sortToggle = (col) => {
+    if (sortCol === col) replaceParams({ dir: sortDir === 'desc' ? 'asc' : 'desc' });
+    else replaceParams({ sort: col, dir: col === 'spend' || col === 'joined' ? 'desc' : 'asc', page: '' });
+  };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 pb-10">
       <SectionHeader
         title="Traders & Access"
+        sub={loading && !users.length ? 'Loading members…' : `${users.length} traders · ${users.filter((u) => stateOf(u).active).length} active · ${users.filter((u) => stateOf(u).expiring).length} expiring ≤3d`}
         actions={
           <button
-            onClick={() => exportCsv({ tab, rows, sigOf, botsOf, stateOf })}
-            className="flex h-10 items-center gap-2 rounded-full border border-white/15 px-4 text-xs font-bold text-akg-silver transition-colors hover:border-[#F3C653]/40 hover:text-akg-gold"
+            onClick={() => exportCsv({ tab, rows: sorted, sigOf, botsOf })}
+            className="flex h-9 items-center gap-2 rounded-full border border-white/15 px-4 text-xs font-bold text-akg-silver transition-colors hover:border-[#F3C653]/40 hover:text-akg-gold"
           >
             <Download className="h-3.5 w-3.5" /> Export CSV
           </button>
         }
       />
 
-      {/* Base switcher */}
-      <div className="flex w-fit max-w-full flex-wrap gap-1.5 rounded-full border border-white/10 bg-white/[0.03] p-1">
-        {[
-          ['members', 'All Members', UsersIcon],
-          ['signal', 'Signal Base', Activity],
-          ['bot', 'Bot Base', BotIcon],
-        ].map(([id, label, Icon]) => (
-          <button
-            key={id}
-            onClick={() => { setTab(id); setSub('all'); setBotFilter(''); }}
-            className={cn(
-              'flex h-9 items-center gap-1.5 rounded-full px-4 text-xs font-bold transition-all',
-              tab === id
-                ? 'bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] text-[#1C1403] shadow-md shadow-[#F3C653]/20'
-                : 'text-akg-muted hover:text-akg-silver'
-            )}
+      <Toolbar
+        tabs={TAB_DEFS.map((t) => ({ id: t.id, label: t.label }))}
+        activeTab={tab}
+        onTab={(id) => replaceParams({ tab: id === 'members' ? '' : id, sub: '', f: '', page: '', id: '', sort: '', dir: '' })}
+        chips={SUBS}
+        chipValue={sub}
+        onChip={(v) => { replaceParams({ sub: v === 'all' ? '' : v, page: '', id: '' }); setCursor(0); }}
+        search={search}
+        onSearch={(v) => replaceParams({ q: v, page: '', id: '' })}
+        searchPlaceholder="Email or name…"
+        actions={tab === 'bot' && (
+          <select
+            id="akg-admin-bot-filter"
+            name="botFilter"
+            value={botFilter}
+            onChange={(e) => { replaceParams({ f: e.target.value, page: '', id: '' }); setCursor(0); }}
+            className="h-9 rounded-full border border-white/10 bg-[#0A0D13] px-3 text-xs font-semibold text-akg-silver focus:border-[#F3C653]/50 focus:outline-none"
           >
-            <Icon className="h-3.5 w-3.5" /> {label}
-          </button>
-        ))}
-      </div>
+            <option value="">All systems</option>
+            {botNames.map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+        )}
+      />
 
-      <p className="-mt-2 text-xs text-akg-muted">
-        {tab === 'members' && 'Search members, extend cycles, and manage plans. Tap a trader for their full dossier.'}
-        {tab === 'signal' && 'Everyone who paid a signal package (or has one granted). Extend cycles from the card or the dossier.'}
-        {tab === 'bot' && 'Everyone who bought an EA license, with accounts, keys, and desk-verification status. Filter by system.'}
-      </p>
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <FilterChips value={sub} onChange={setSub} options={SUBS} />
-          {tab === 'bot' && (
-            <select
-              id="akg-admin-bot-filter"
-              name="botFilter"
-              value={botFilter}
-              onChange={(e) => setBotFilter(e.target.value)}
-              className="h-8 rounded-full border border-white/10 bg-[#0A0D13] px-3 text-xs font-semibold text-akg-silver focus:border-[#F3C653]/50 focus:outline-none"
-            >
-              <option value="">All systems</option>
-              {botNames.map((name) => (
-                <option key={name} value={name}>{name}</option>
-              ))}
-            </select>
-          )}
-        </div>
-        <SearchInput value={search} onChange={setSearch} placeholder="Email or name..." />
-      </div>
-
-      {rows.length === 0 && !loading ? (
-        <EmptyState icon={tab === 'bot' ? BotIcon : tab === 'signal' ? Activity : UsersIcon} title="No traders match" hint="Adjust the filters or search." />
-      ) : (
-        <>
-          <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
-            {paged.map((u) => {
-              const email = keyOf(u.email);
-              const sig = sigOf.get(email);
-              const botRec = botsOf.get(email);
-              return (
-                <MemberCard
-                  key={u.id}
-                  u={u}
-                  tab={tab}
-                  sig={sig}
-                  botRec={botRec}
-                  onOpen={() => openDossier(u)}
-                />
-              );
-            })}
+      <DataTable
+        name="traders"
+        columns={columns}
+        rows={visible}
+        sort={[sortCol, sortDir]}
+        onSort={sortToggle}
+        cursor={cursor}
+        onCursor={setCursor}
+        onRowClick={(u) => replaceParams({ id: query.id === u.id ? '' : u.id })}
+        page={safePage}
+        onPage={(np) => { replaceParams({ page: np > 1 ? np : '' }); setCursor(0); }}
+        pageSize={PAGE_SIZE}
+        total={sorted.length}
+        empty={(
+          <EmptyState
+            icon={tab === 'bot' ? BotIcon : tab === 'signal' ? Activity : UsersIcon}
+            title="No traders match"
+            hint="Adjust the filters or search."
+          />
+        )}
+        mobileCard={(u) => (
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="truncate text-xs font-semibold text-white">{u.name || (u.email || '').split('@')[0]}</div>
+              <div className="mt-0.5 flex items-center gap-2 font-data text-[10px] text-akg-muted">
+                <span className="text-akg-silver">{PLAN_LABELS[u.plan] || u.plan || 'No plan'}</span>
+                {tab === 'bot' && botsOf.get(keyOf(u.email))
+                  ? <span>· {botsOf.get(keyOf(u.email)).licenses.length} lic</span>
+                  : sigOf.get(keyOf(u.email)) ? <span>· ${sigOf.get(keyOf(u.email)).spend}</span> : null}
+              </div>
+              <div className="truncate font-data text-[10px] text-akg-muted">{u.email}</div>
+            </div>
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              {tab !== 'bot' && <ExpiryBadge days={cycleDaysLeft(u)} />}
+              <StatusDot status={statusWord(u)} pulse={false} />
+            </div>
           </div>
-          <Pager pg={pg} setPg={setPg} total={rows.length} />
-        </>
-      )}
+        )}
+        className={cn(loading && users.length && 'opacity-70')}
+      />
 
-      {/* Dossier */}
-      <ActionSheet
-        open={!!dossier}
-        onClose={() => setDossier(null)}
-        size="lg"
-        title={dossier?.name || dossier?.email?.split('@')[0]}
-        subtitle={dossier?.email}
-        footer={
-          dossier ? (
-            <div className="flex gap-2.5">
+      {/* Dossier drawer (?id= deep-link) */}
+      {dossierUser && (
+        <Drawer
+          open
+          onClose={() => replaceParams({ id: '' })}
+          title={dossierUser.name || (dossierUser.email || '').split('@')[0]}
+          subtitle={dossierUser.email}
+          footer={
+            <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => dossierGrant(grantDays, dossier, () => load())}
-                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] text-sm font-bold text-[#1C1403] active:scale-[0.98]"
+                onClick={async () => { await grantDays(dossierUser, 30); load(); }}
+                className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-[linear-gradient(120deg,#E8BC4F,#F3C653,#DFAE3E)] text-sm font-bold text-[#1C1403] active:scale-[0.98]"
               >
                 <Plus className="h-4 w-4" /> Grant 30 Days
               </button>
               <button
-                onClick={() => dossierGrant(grantDays, dossier, () => load(), 3)}
-                className="flex h-11 items-center gap-1.5 rounded-full border border-akg-green/40 px-5 text-sm font-bold text-akg-green hover:bg-akg-green/10"
+                onClick={async () => { await grantDays(dossierUser, 3); load(); }}
+                className="flex h-10 items-center gap-1.5 rounded-full border border-akg-green/40 px-4 text-xs font-bold text-akg-green hover:bg-akg-green/10"
                 title="Free 3-day win-back grant"
               >
-                <Gift className="h-3.5 w-3.5" /> Win-back +3d
+                <Gift className="h-3.5 w-3.5" /> +3d
               </button>
               <button
-                onClick={() => setEditing(dossier)}
-                className="flex h-11 items-center gap-1.5 rounded-full border border-white/15 px-5 text-sm font-semibold text-akg-silver hover:bg-white/5"
+                onClick={() => setEditing(dossierUser)}
+                className="flex h-10 items-center gap-1.5 rounded-full border border-white/15 px-4 text-xs font-semibold text-akg-silver hover:bg-white/5"
               >
                 <Pencil className="h-3.5 w-3.5" /> Edit Access
               </button>
             </div>
-          ) : null
-        }
-      >
-        {dossier && <DossierBody dossier={dossier} onClose={() => setDossier(null)} setEditing={setEditing} usersStore={{ payments, bots, botsOf, sigOf }} />}
-      </ActionSheet>
+          }
+        >
+          <TraderDossier user={dossierUser} payments={payments} bots={bots} botsOf={botsOf} sigOf={sigOf} />
+        </Drawer>
+      )}
 
       {/* Edit access */}
       <EditAccessSheet
@@ -349,116 +477,30 @@ export default function Users() {
   );
 }
 
-async function dossierGrant(grantDays, u, reload, days = 30) {
-  await grantDays(u, days);
-  reload?.();
-}
-
-/* ------------------------------- member card ------------------------------ */
-function MemberCard({ u, tab, sig, botRec, onOpen }) {
-  const days = cycleDaysLeft(u);
-  return (
-    <button
-      onClick={onOpen}
-      className="group rounded-2xl border border-white/10 bg-akg-surface p-4 text-left transition-all hover:border-[#F3C653]/40"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="truncate text-sm font-bold text-white">{u.name || u.email.split('@')[0]}</div>
-          <div className="truncate font-data text-[11px] text-akg-muted">{u.email}</div>
-        </div>
-        <ChevronRight className="h-4 w-4 shrink-0 text-akg-muted transition-transform group-hover:translate-x-0.5" />
-      </div>
-
-      {tab === 'signal' && (
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-akg-silver">{PLAN_LABELS[u.plan] || 'Granted manually'}</span>
-            <ExpiryBadge days={days} />
-          </div>
-          <div className="flex items-center justify-between font-data text-[10px] text-akg-muted">
-            <span>
-              {sig ? `SR ×${sig.SR_SIGNAL_BOX} · VIP ×${sig.PERFECT_SIGNAL_BOX}` : 'no purchases on file'}
-            </span>
-            {sig ? <span className="text-white">${sig.spend} total</span> : null}
-          </div>
-        </div>
-      )}
-
-      {tab === 'bot' && (
-        <div className="mt-3 space-y-2">
-          {botRec?.licenses.length ? (
-            <div className="flex flex-wrap gap-1.5">
-              {botRec.licenses.slice(0, 2).map((l) => (
-                <span key={l.id} className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 font-data text-[10px] text-akg-silver">
-                  {l.name} · {l.platform} #{l.acct}
-                </span>
-              ))}
-              {botRec.licenses.length > 2 && (
-                <span className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 font-data text-[10px] text-akg-muted">+{botRec.licenses.length - 2} more</span>
-              )}
-            </div>
-          ) : (
-            <span className="text-[11px] text-amber-300">awaiting desk verification</span>
-          )}
-          <div className="flex items-center justify-between font-data text-[10px] text-akg-muted">
-            <span>{botRec.licenses.length} license{botRec.licenses.length === 1 ? '' : 's'}{botRec.pending ? ` · ${botRec.pending} pending` : ''}</span>
-            {botRec.spend ? <span className="text-white">${botRec.spend} total</span> : null}
-          </div>
-        </div>
-      )}
-
-      {tab === 'members' && (
-        <div className="mt-3 flex items-center justify-between">
-          <span className="text-[11px] font-semibold text-akg-silver">{PLAN_LABELS[u.plan] || u.plan || 'No plan'}</span>
-          <ExpiryBadge days={days} />
-        </div>
-      )}
-    </button>
-  );
-}
-
-function Pager({ pg, setPg, total }) {
-  if (total <= PAGE_SIZE) return null;
-  const pages = Math.ceil(total / PAGE_SIZE);
-  return (
-    <div className="flex items-center justify-center gap-3 pt-1 text-xs text-akg-muted">
-      <button
-        disabled={pg <= 1}
-        onClick={() => setPg(pg - 1)}
-        className="rounded-full border border-white/10 px-3 py-1.5 font-semibold text-akg-silver disabled:opacity-30"
-      >Prev</button>
-      <span className="font-data">{pg}/{pages} · {total} traders</span>
-      <button
-        disabled={pg >= pages}
-        onClick={() => setPg(pg + 1)}
-        className="rounded-full border border-white/10 px-3 py-1.5 font-semibold text-akg-silver disabled:opacity-30"
-      >Next</button>
-    </div>
-  );
-}
-
 /* -------------------------------- dossier -------------------------------- */
-function DossierBody({ dossier, setEditing, usersStore }) {
-  const { payments, bots, botsOf, sigOf } = usersStore;
-  const email = keyOf(dossier.email);
+function TraderDossier({ user, payments, bots, botsOf, sigOf }) {
+  const email = keyOf(user.email);
   const history = payments.filter((p) => keyOf(p.user_email) === email);
   const botRec = botsOf.get(email);
+  const sig = sigOf.get(email);
   const botMap = useMemo(() => Object.fromEntries(bots.map((b) => [b.name, b])), [bots]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="flex items-center justify-between rounded-xl border border-white/[0.07] bg-[#0A0D13] px-4 py-3">
-        <span className="text-xs text-akg-muted">Current plan</span>
+        <span className="text-xs text-akg-muted">Current access</span>
         <div className="flex items-center gap-2.5">
-          <span className="text-sm font-bold text-white">{PLAN_LABELS[dossier.plan] || dossier.plan || 'None'}</span>
-          <ExpiryBadge days={cycleDaysLeft(dossier)} />
+          <span className="text-sm font-bold text-white">
+            {PLAN_LABELS[user.plan] || user.plan || 'None'}
+            {sig ? <span className="ml-2 font-data text-[10px] font-normal text-akg-muted">${sig.spend} lifetime</span> : null}
+          </span>
+          <ExpiryBadge days={cycleDaysLeft(user)} />
         </div>
       </div>
 
       {botRec?.licenses.length > 0 && (
         <div>
-          <h3 className="mb-2.5 flex items-center gap-2 font-data text-[10px] uppercase tracking-wider text-akg-muted">
+          <h3 className="mb-2 flex items-center gap-2 font-data text-[10px] uppercase tracking-wider text-akg-muted">
             <Key className="h-3.5 w-3.5" /> EA licenses ({botRec.licenses.length})
           </h3>
           <div className="space-y-2">
@@ -476,7 +518,7 @@ function DossierBody({ dossier, setEditing, usersStore }) {
       )}
 
       <div>
-        <h3 className="mb-2.5 flex items-center gap-2 font-data text-[10px] uppercase tracking-wider text-akg-muted">
+        <h3 className="mb-2 flex items-center gap-2 font-data text-[10px] uppercase tracking-wider text-akg-muted">
           <Receipt className="h-3.5 w-3.5" /> Payment history ({history.length})
         </h3>
         {history.length === 0 ? (
@@ -484,9 +526,9 @@ function DossierBody({ dossier, setEditing, usersStore }) {
             No payments from this trader yet.
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="divide-y divide-white/[0.05] overflow-hidden rounded-xl border border-white/[0.07] bg-[#0A0D13]">
             {history.map((p) => (
-              <div key={p.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/[0.07] bg-[#0A0D13] px-3.5 py-2.5">
+              <div key={p.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
                 <div className="min-w-0">
                   <div className="truncate text-xs font-semibold text-white">
                     {String(p.plan || '').startsWith('BOT:')
@@ -494,12 +536,12 @@ function DossierBody({ dossier, setEditing, usersStore }) {
                       : PLAN_LABELS[p.plan] || p.plan}
                   </div>
                   <div className="font-data text-[10px] text-akg-muted">
-                    {fmtDateTime(p.created)} · {p.network}
+                    {fmtDateTime(p.created)} · {p.method === 'upi' ? 'UPI' : p.network}
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <span className="font-data text-xs font-bold text-white">${p.amount}</span>
-                  <StatusPill status={p.status} />
+                  <StatusDot status={p.status} pulse={false} />
                 </div>
               </div>
             ))}
@@ -603,27 +645,24 @@ function EditAccessSheet({ user, onClose, onSave }) {
     >
       <div className="space-y-4">
         <div>
-          <label className={labelCls}>Subscription plan</label>
-          <select value={plan} onChange={(e) => setPlan(e.target.value)} className={inputCls}>
+          <label className={labelCls} htmlFor="akg-admin-edit-plan">Subscription plan</label>
+          <select id="akg-admin-edit-plan" value={plan} onChange={(e) => setPlan(e.target.value)} className={inputCls}>
             <option value="NONE">No plan (free)</option>
             <option value="SR_SIGNAL_BOX">SR Signal Box ($10 / 30d)</option>
             <option value="PERFECT_SIGNAL_BOX">Perfect Signal Box ($20 / 30d)</option>
           </select>
         </div>
         <div>
-          <label className={labelCls}>Account role</label>
-          <select value={role} onChange={(e) => setRole(e.target.value)} className={inputCls}>
+          <label className={labelCls} htmlFor="akg-admin-edit-role">Account role</label>
+          <select id="akg-admin-edit-role" value={role} onChange={(e) => setRole(e.target.value)} className={inputCls}>
             <option value="user">User</option>
             <option value="admin">Administrator</option>
           </select>
-          <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-akg-muted">
-            <ShieldCheck className="h-3.5 w-3.5 text-akg-gold" />
-            Admins can approve payments and manage everything.
-          </p>
         </div>
         <div>
-          <label className={labelCls}>Cycle expiration</label>
+          <label className={labelCls} htmlFor="akg-admin-edit-expiry">Cycle expiration</label>
           <input
+            id="akg-admin-edit-expiry"
             type="datetime-local"
             value={expiryLocal}
             onChange={(e) => setExpiryLocal(e.target.value)}
@@ -640,7 +679,7 @@ function EditAccessSheet({ user, onClose, onSave }) {
 
 /* ------------------------------ CSV exports ------------------------------- */
 function exportCsv(ctx) {
-  const { rows, sigOf, botsOf, stateOf } = ctx;
+  const { rows, sigOf, botsOf } = ctx;
   let cols, out;
   if (ctx.tab === 'signal') {
     cols = ['email', 'name', 'plan', 'cycle_expires_at', 'sr_buys', 'vip_buys', 'spend'];
