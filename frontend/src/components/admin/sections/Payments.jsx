@@ -330,6 +330,49 @@ export default function Payments() {
         pageSize={15}
         total={page.total}
         bulk={bulk}
+        mobileCard={(p) => (
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className={cn('font-data text-[10px]', p.status === 'pending' ? 'font-bold text-amber-300' : 'text-akg-muted')}>
+                  {p.status === 'pending' ? timeWaiting(p.created) : fmtRelative(p.created)}
+                </span>
+                <span className="truncate text-xs font-semibold text-white">{p.user_email || '—'}</span>
+                {p.status === 'pending' && purchaseLabel(priorMap[p.user_email] || 0) && (
+                  <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-px font-data text-[9px] text-akg-muted">{purchaseLabel(priorMap[p.user_email] || 0)}</span>
+                )}
+              </div>
+              <div className="mt-1 flex items-center gap-2 font-data text-[10px] text-akg-muted">
+                <span className="text-akg-silver">{planShort(p.plan)}</span>
+                <span>·</span>
+                <span>{p.method === 'upi' ? 'UPI' : p.network?.replace('USDT-', '') || 'USDT'}</span>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <span className="font-data text-xs font-bold tabular-nums text-white">${p.amount}</span>
+              {p.status === 'pending' ? (
+                <span className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => setConfirming(p)}
+                    aria-label="Approve (A)"
+                    className="flex h-7 items-center rounded-full bg-[linear-gradient(120deg,#E8BC4F,#F3C653,#DFAE3E)] px-2.5 font-data text-[10px] font-bold text-[#1C1403]"
+                  >
+                    ✓
+                  </button>
+                  <button
+                    onClick={() => openReject(p)}
+                    aria-label="Reject with reason (R)"
+                    className="flex h-7 w-7 items-center justify-center rounded-full border border-rose-500/30 text-xs font-bold text-rose-300"
+                  >
+                    ✕
+                  </button>
+                </span>
+              ) : (
+                <StatusDot status={p.status} pulse={false} />
+              )}
+            </div>
+          </div>
+        )}
         empty={(
           <EmptyState
             icon={filter === 'pending' ? CreditCard : Inbox}

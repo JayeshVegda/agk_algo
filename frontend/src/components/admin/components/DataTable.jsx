@@ -15,6 +15,9 @@ import { useDensity } from './Density';
  * sort: [colKey, 'asc'|'desc'] | null; onSort(colKey) toggles in the section.
  * selected/onSelected: controlled Set of rowKey values (both required for selection).
  * cursor/onCursor: highlight + scroll target row index, owned by the section.
+ * mobileCard(row): when given, phones render rows as tap cards instead of the
+ *   table (CSS-switched, no resize listener) — cards follow the same cursor,
+ *   expansion is left to the section via onRowClick.
  */
 export default function DataTable({
   name = 'list',
@@ -32,13 +35,14 @@ export default function DataTable({
   pageSize = 50,
   total, // "showing X of N" footer when rows are a pre-paged slice
   bulk, // render-prop (selectedRows, clearSelection) => node
+  mobileCard,
   className,
 }) {
   const [density] = useDensity();
   const compact = density === 'compact';
   const [pageSelf, setPageSelf] = useState(1);
   const selectAllRef = useRef(null);
-  const bodyRef = useRef(null);
+  const listRef = useRef(null);
 
   const pageIndex = Math.max(1, page ?? pageSelf);
   const setPageIndex = (p) => (onPage ? onPage(p) : setPageSelf(p));
@@ -76,11 +80,12 @@ export default function DataTable({
   };
 
   // Keep the highlighted row visible and report cursor changes upward.
+  // Works over both the table rows and the mobile cards ([data-ri]).
   const lastCursor = useRef(-1);
   useEffect(() => {
     if (cursor === lastCursor.current) return;
     lastCursor.current = cursor;
-    const tr = bodyRef.current?.querySelector(`tr[data-ri="${cursor}"]`);
+    const tr = listRef.current?.querySelector(`[data-ri="${cursor}"]`);
     tr?.scrollIntoView({ block: 'nearest' });
     onCursor?.(cursor);
   }, [cursor]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -96,12 +101,13 @@ export default function DataTable({
   return (
     <div className={cn('overflow-hidden rounded-2xl border border-white/10 bg-akg-surface', className)}>
       <div
+        ref={listRef}
         role="grid"
         aria-label={name}
         tabIndex={0}
         className="max-[1100px]:overflow-x-auto"
       >
-        <table className="w-full min-w-[860px] xl:min-w-full">
+        <table className={cn('w-full min-w-[860px] xl:min-w-full', mobileCard && 'hidden md:table')}>
           <thead>
             <tr className="border-b border-white/[0.07]">
               {selectable && (
@@ -149,7 +155,7 @@ export default function DataTable({
               ))}
             </tr>
           </thead>
-          <tbody ref={bodyRef}>
+          <tbody>
             {slice.map((r, i) => {
               const k = rowKey(r);
               const isCursor = i === cursor;
@@ -205,8 +211,33 @@ export default function DataTable({
             })}
           </tbody>
         </table>
-        {slice.length === 0 && empty}
+        {slice.length === 0 && !mobileCard && empty}
       </div>
+
+      {mobileCard && (
+        <div className="md:hidden">
+          {slice.map((r, i) => (
+            <div key={rowKey(r)}>
+              <div
+                data-ri={i}
+                onClick={onRowClick ? () => onRowClick(r) : undefined}
+                className={cn(
+                  'border-b border-white/[0.05] px-3.5 py-3 transition-colors last:border-b-0 active:bg-white/[0.04]',
+                  i === cursor && 'bg-[#F3C653]/[0.05] shadow-[inset_3px_0_0_0_rgba(243,198,83,0.5)]',
+                  rowClass?.(r) || '',
+                  onRowClick && 'cursor-pointer',
+                )}
+              >
+                {mobileCard(r)}
+              </div>
+              {expanded === rowKey(r) && renderExpanded && (
+                <div className="border-b border-white/[0.05] bg-black/25 px-3.5 py-3">{renderExpanded(r)}</div>
+              )}
+            </div>
+          ))}
+          {slice.length === 0 && empty}
+        </div>
+      )}
 
       {bulk && selectedRows.length > 0 && (
         <div className="sticky bottom-2 z-20 mx-2 mb-2 flex flex-wrap items-center gap-2 rounded-xl border border-[#F3C653]/25 bg-[#151209] px-3 py-2 shadow-lg">

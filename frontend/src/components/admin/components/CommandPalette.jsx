@@ -2,20 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CornerDownLeft, Search } from 'lucide-react';
 import { pb } from '../../../lib/pocketbase';
 import { SECTIONS } from '../adminNav';
+import { loadRoster } from '../lib/tradersCache';
 import { cn } from '../../../lib/utils';
 
 const CACHE_TTL = 45_000;
-let rosterCache = { at: 0, data: [] };
 let depositsCache = { at: 0, data: [] };
-
-async function loadRoster() {
-  if (Date.now() - rosterCache.at < CACHE_TTL) return rosterCache.data;
-  try {
-    const res = await pb.send('/api/akg/traders', { method: 'GET' });
-    rosterCache = { at: Date.now(), data: res.items || res };
-  } catch { rosterCache = { at: Date.now(), data: rosterCache.data }; }
-  return rosterCache.data;
-}
 
 async function loadDeposits() {
   if (Date.now() - depositsCache.at < CACHE_TTL) return depositsCache.data;
