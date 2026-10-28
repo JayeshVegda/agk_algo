@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { pb } from '../lib/pocketbase';
+import { pb, pbUrl } from '../lib/pocketbase';
 import { pairsOf, pctStat, statNumOrNull } from '../lib/bots';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
@@ -479,7 +479,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                 {bots.map((bot) => {
                   const cat = botCategory(bot);
                   const CatIcon = cat.icon;
-                  const img = (bot.image_url || '').trim();
+                  const img = pbUrl((bot.image_url || '').trim());
                   const g0 = (bot.gallery && bot.gallery[0]) || '';
                   let chartSrc = img
                     || (/^(https?:|data:)/.test(g0) ? g0 : (g0 && g0.length > 6 ? pb.files.getURL(bot, g0) : ''));

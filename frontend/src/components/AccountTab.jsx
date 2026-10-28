@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { pb } from '../lib/pocketbase';
+import { pbUrl } from '../lib/pocketbase';
 import {
   Zap, Cpu, KeyRound, Copy, Check, Download, ExternalLink, HardDrive,
   Clock, CreditCard, FileText, AlertCircle, CheckCircle2, Timer, Receipt,
@@ -248,7 +249,7 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
                       </a>
                     )}
                     <a
-                      href="/downloads/AKG_ALGO_SETUP_GUIDE.txt"
+                      href={pbUrl('/downloads/AKG_ALGO_SETUP_GUIDE.txt')}
                       download
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white font-semibold hover:bg-white/10 transition-colors text-xs"
                     >

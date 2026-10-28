@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { pb } from '../lib/pocketbase';
+import { pb, pbUrl } from '../lib/pocketbase';
 import {
   Cpu, Download, CheckCircle2,
   KeyRound, Copy, Check, ArrowRight, X,
@@ -33,7 +33,7 @@ function BotHeroMedia({ bot }) {
   const [imgFailed, setImgFailed] = useState(false);
   const cat = botCategory(bot);
   const CatIcon = cat.icon;
-  const img = (bot.image_url || '').trim();
+  const img = pbUrl((bot.image_url || '').trim());
   const showImg = img && !imgFailed;
   const stats = [
     { k: 'Win rate', v: bot.win_rate, c: 'text-white', fmt: pctStat },

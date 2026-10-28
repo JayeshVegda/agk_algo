@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { pb } from '../lib/pocketbase';
+import { pb, pbUrl } from '../lib/pocketbase';
 import {
   Download, Copy, Check, FileText,
   Send, Share2, MessageSquare, Server, Globe, ArrowRight,
@@ -54,7 +54,7 @@ export function ResourcesTab({ notify, onNavigate }) {
   }, []);
 
   const handleCopy = (item) => {
-    const absolute = item.url?.startsWith('/') ? `${window.location.origin}${item.url}` : item.url;
+    const absolute = pbUrl(item.url || '');
     navigator.clipboard.writeText(absolute);
     setCopiedId(item.id);
     if (notify) {
@@ -64,15 +64,17 @@ export function ResourcesTab({ notify, onNavigate }) {
   };
 
   const openItem = (item) => {
-    if (item.url?.startsWith('/')) {
+    const u = item.url || '';
+    // App routes navigate inside the SPA; backend files open at the PocketBase origin.
+    if (u.startsWith('/') && !u.startsWith('/downloads') && !u.startsWith('/api')) {
       if (onNavigate) {
-        onNavigate(item.url.replace(/^\//, '') === 'bots' ? 'bots' : 'resources');
+        onNavigate(u.replace(/^\//, '') === 'bots' ? 'bots' : 'resources');
       } else {
-        window.location.href = item.url;
+        window.location.href = u;
       }
       return;
     }
-    window.open(item.url, '_blank', 'noopener,noreferrer');
+    window.open(pbUrl(u), '_blank', 'noopener,noreferrer');
   };
 
   const isDownload = (item) => item.category === 'software' && /\.(txt|zip|ex4|ex5|set)$/i.test(item.url || '');
@@ -139,7 +141,7 @@ export function ResourcesTab({ notify, onNavigate }) {
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <a
-                      href={featured.url}
+                      href={pbUrl(featured.url)}
                       download
                       className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] px-5 py-2.5 text-sm font-bold text-[#1C1403] shadow-md shadow-[#F3C653]/20 transition hover:brightness-[1.07]"
                     >

@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { pbUrl } from './pocketbase';
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -17,6 +18,6 @@ export function downloadLinksFor(bot) {
   return platforms.map((p) => ({
     platform: p.toUpperCase(),
     ext: p === 'mt4' ? 'EX4' : 'EX5',
-    path: `/api/akg/download/${slug}_${p}.${p === 'mt4' ? 'ex4' : 'ex5'}`,
+    path: pbUrl(`/api/akg/download/${slug}_${p}.${p === 'mt4' ? 'ex4' : 'ex5'}`),
   }));
 }
