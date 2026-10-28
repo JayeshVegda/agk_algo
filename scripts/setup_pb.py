@@ -4,10 +4,15 @@ import urllib.request
 import json
 import sys
 
-BASE_URL = "http://127.0.0.1:8095"
+import os
+import urllib.request
+import json
+import sys
+
+BASE_URL = os.environ.get("AKG_URL", "http://127.0.0.1:8095")
 
 def post(url, data, token=None):
-    headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"}
     if token:
         headers["Authorization"] = token
     req = urllib.request.Request(f"{BASE_URL}{url}", data=json.dumps(data).encode(), headers=headers)
@@ -19,7 +24,7 @@ def post(url, data, token=None):
         raise e
 
 def patch(url, data, token=None):
-    headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"}
     if token:
         headers["Authorization"] = token
     req = urllib.request.Request(f"{BASE_URL}{url}", data=json.dumps(data).encode(), headers=headers, method="PATCH")
@@ -31,7 +36,7 @@ def patch(url, data, token=None):
         raise e
 
 def get(url, token=None):
-    headers = {}
+    headers = {"User-Agent": "Mozilla/5.0"}
     if token:
         headers["Authorization"] = token
     req = urllib.request.Request(f"{BASE_URL}{url}", headers=headers)
@@ -84,6 +89,9 @@ def main():
 
     # Helper to create collection if not exists
     all_colls = [c["name"] for c in get("/api/collections", token)["items"]]
+    # Resolve real collection ids for relation fields (Cloud PB rejects names in collectionId)
+    coll_items = get("/api/collections", token)["items"]
+    coll_ids = {c["name"]: c["id"] for c in coll_items}
 
     # --- SIGNALS ---
     if "signals" not in all_colls:
@@ -159,7 +167,7 @@ def main():
             "updateRule": "@request.auth.id != '' && @request.auth.role = 'admin'",
             "deleteRule": "@request.auth.id != '' && @request.auth.role = 'admin'",
             "fields": [
-                {"name": "bot", "type": "relation", "collectionId": "bots", "maxSelect": 1, "cascadeDelete": True, "required": True},
+                {"name": "bot", "type": "relation", "collectionId": coll_ids["bots"], "maxSelect": 1, "cascadeDelete": True, "required": True},
                 {"name": "version", "type": "text", "required": True},
                 {"name": "released", "type": "date", "required": False},
                 {"name": "summary", "type": "text", "required": True}

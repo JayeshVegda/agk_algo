@@ -1,0 +1,17 @@
+{
+  "projectId": "1qj1mf40yqoftd2",
+  "kind": "pocketbases",
+  "defaultEnvironment": "production",
+  "environments": {
+    "production": {
+      "id": "ul4tkua1o1ykiug",
+      "name": "akg-review",
+      "revision": 7
+    }
+  },
+  "build": {
+    "pbPublic": "pb_public",
+    "pbHooks": "pb_hooks",
+    "pbMigrations": "scratch_empty_migrations"
+  }
+}

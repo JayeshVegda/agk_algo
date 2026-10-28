@@ -13,6 +13,7 @@ def req(method, path, body=None):
         data=json.dumps(body).encode() if body else None, method=method)
     r.add_header("Content-Type", "application/json")
     if TOKEN: r.add_header("Authorization", TOKEN)
+    r.add_header("User-Agent", "Mozilla/5.0")
     try:
         with urllib.request.urlopen(r) as resp: return resp.status, json.loads(resp.read().decode() or "{}")
     except urllib.error.HTTPError as e:
