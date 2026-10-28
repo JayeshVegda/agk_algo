@@ -69,13 +69,7 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
   const handleSubmitTxid = async (e) => {
     e.preventDefault();
     if (!user) {
-      if (notify) {
-        notify({
-          type: 'info',
-          title: 'Sign In Required',
-          message: 'Please sign in or create an account to start your subscription.'
-        });
-      }
+      // Guard against toast+sheet in the same tick (see BotsTab.openCheckout).
       onOpenAuth();
       return;
     }

@@ -215,14 +215,16 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
 
   const openCheckout = (bot) => {
     if (!user) {
-      if (notify) {
+      // No toast here: firing one in the same tick as the auth sheet steals
+      // focus and Radix closes the sheet instantly, making the button feel dead.
+      if (onOpenAuth) onOpenAuth();
+      else if (notify) {
         notify({
           type: 'info',
           title: 'Sign In Required',
           message: 'Please sign in or register to purchase and bind trading bots.'
         });
       }
-      if (onOpenAuth) onOpenAuth();
       return;
     }
 
