@@ -441,6 +441,9 @@ function BotEditor({ bot, onClose, onSave }) {
           <div>
             <label className={labelCls}>Google Drive package URL</label>
             <input value={form.download_url} onChange={set('download_url')} className={inputCls} placeholder="https://drive.google.com/..." />
+            <p className="mt-1.5 text-[11px] text-akg-muted">
+              Buyers get this link in their approval notification and My Account once you confirm their payment; the API hides it from non-buyers.
+            </p>
           </div>
         </div>
       </div>

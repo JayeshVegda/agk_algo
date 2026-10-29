@@ -331,6 +331,7 @@ def main():
                 "price": 349,
                 "version": "v2.0",
                 "recommended_deposit": "$1,000+",
+                "download_url": "https://drive.google.com/drive/folders/akg-momentum-hunter-demo",
             },
             {
                 "name": "AKG Scalper Pro",

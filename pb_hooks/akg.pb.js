@@ -240,6 +240,39 @@ onRecordCreateRequest((e) => {
         const acc = (m[3].trim().replace(/\D/g, "") || "000000").slice(-3);
         const rand = $security.randomString(8).toUpperCase();
         e.record.set("license_key", "AKG-" + platform + "-" + acc + "-" + rand.slice(0, 4) + "-" + rand.slice(4, 8));
+
+        // Offline settlement filed directly as confirmed: deliver the license
+        // and Drive package to the buyer exactly like an approval would.
+        try {
+          let drive = "";
+          try {
+            const bot = $app.findFirstRecordByFilter("bots", "name = {:n}", { n: m[1].trim() });
+            drive = String(bot.get("download_url") || "");
+          } catch {
+            // exact match missed (case drift): scan and compare in JS
+            try {
+              for (const b of $app.findRecordsByFilter("bots", "", "", 500, 0)) {
+                if (String(b.get("name") || "").trim().toLowerCase() === m[1].trim().toLowerCase()) {
+                  drive = String(b.get("download_url") || "");
+                  break;
+                }
+              }
+            } catch {}
+          }
+          const u = $app.findFirstRecordByFilter("users", "email = {:e}", { e: e.record.get("user_email") });
+          const col = $app.findCollectionByNameOrId("notifications");
+          const n = new Record(col);
+          n.set("user", u.id);
+          n.set("title", "License Issued — " + m[1].trim());
+          n.set("body", "Your bot license is ready: " + e.record.get("license_key") + "." + (drive
+            ? " Google Drive package: " + drive + " — it also stays available in My Account."
+            : " The Google Drive package will be added shortly and appears in My Account automatically."));
+          n.set("type", "license_issued");
+          n.set("read", false);
+          $app.save(n);
+        } catch (err) {
+          console.log("akg: license notification failed:", err);
+        }
       }
     }
   }
@@ -347,10 +380,30 @@ onRecordUpdateRequest((e) => {
     const key = "AKG-" + platform + "-" + acc + "-" + rand.slice(0, 4) + "-" + rand.slice(4, 8);
 
     e.record.set("license_key", key);
+
+    // The Drive package link is the deliverable: point the buyer straight at
+    // it in the approval notification (bot may not have one uploaded yet).
+    let drive = "";
+    try {
+      const bot = $app.findFirstRecordByFilter("bots", "name = {:n}", { n: m[1].trim() });
+      drive = String(bot.get("download_url") || "");
+    } catch (err) {
+      // exact match missed (case drift): scan and compare in JS
+      try {
+        for (const b of $app.findRecordsByFilter("bots", "", "", 500, 0)) {
+          if (String(b.get("name") || "").trim().toLowerCase() === m[1].trim().toLowerCase()) {
+            drive = String(b.get("download_url") || "");
+            break;
+          }
+        }
+      } catch (err2) {}
+    }
     notifyUser(
       e.record.get("user_email") || "",
       "License Issued — " + m[1].trim(),
-      "Your bot license is ready: " + key + ". Download it anytime from My Account.",
+      "Your bot license is ready: " + key + "." + (drive
+        ? " Google Drive package: " + drive + " — it also stays available in My Account."
+        : " The Google Drive package will be added shortly and appears in My Account automatically."),
       "license_issued"
     );
     e.next();
@@ -661,6 +714,68 @@ onRecordUpdateRequest((e) => {
   }
   e.next();
 }, "notifications");
+
+// ---------------------------------------------------------------------------
+// bots: the Google Drive package link is the paid deliverable, so it is
+// stripped from every bots read unless the caller is a manager or holds a
+// confirmed BOT: payment for that exact bot. The public UI already hides the
+// button pre-purchase, but the API rule is what actually gates it.
+// ---------------------------------------------------------------------------
+
+onRecordsListRequest((e) => {
+  const auth = e.auth;
+  const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
+  if (isManager) { e.next(); return; }
+
+  let owned = null; // lazy set of lowercased owned bot names
+  if (auth) {
+    try {
+      const recs = $app.findRecordsByFilter(
+        "payments", "user_email = {:e} && status = 'confirmed'", "", 1000, 0,
+        { e: String(auth.get("email") || "").trim().toLowerCase() },
+      );
+      owned = new Set();
+      for (const p of recs) {
+        const m = String(p.get("plan") || "").match(/BOT:\s*(.+?)\s*\(/i);
+        if (m) owned.add(m[1].trim().toLowerCase());
+      }
+    } catch (err) {
+      owned = new Set(); // fail closed: no payments visible -> no links
+    }
+  }
+
+  for (const r of e.records || []) {
+    if (!owned || !owned.has(String(r.get("name") || "").trim().toLowerCase())) {
+      r.set("download_url", "");
+    }
+  }
+  e.next();
+}, "bots");
+
+onRecordViewRequest((e) => {
+  const auth = e.auth;
+  const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
+  if (isManager) { e.next(); return; }
+
+  let ok = false;
+  if (auth) {
+    try {
+      const recs = $app.findRecordsByFilter(
+        "payments", "user_email = {:e} && status = 'confirmed'", "", 1000, 0,
+        { e: String(auth.get("email") || "").trim().toLowerCase() },
+      );
+      const name = String(e.record.get("name") || "").trim().toLowerCase();
+      ok = recs.some((p) => {
+        const m = String(p.get("plan") || "").match(/BOT:\s*(.+?)\s*\(/i);
+        return m && m[1].trim().toLowerCase() === name;
+      });
+    } catch (err) {
+      ok = false;
+    }
+  }
+  if (!ok) e.record.set("download_url", "");
+  e.next();
+}, "bots");
 
 // ---------------------------------------------------------------------------
 // Traders roster for the admin console. PocketBase hides user emails from
