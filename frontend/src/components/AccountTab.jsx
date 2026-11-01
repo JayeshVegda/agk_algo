@@ -180,7 +180,7 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
           <div className="p-5 rounded-xl border border-white/10 bg-white/5 text-center space-y-2">
             <p className="text-sm text-[#E7E9EF]">No bot licenses yet.</p>
             <p className="text-[11px] text-[#A6ADB9]">
-              Purchase an MT4/MT5 Expert Advisor and your bound account number, license key and downloads appear here permanently.
+              Purchase an MT4/MT5 Expert Advisor and your license key, downloads, and package links appear here permanently.
             </p>
             <Button size="sm" variant="outline" className="text-xs" onClick={() => onNavigate && onNavigate('bots')}>
               Browse Trading Bots
@@ -189,10 +189,9 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
         ) : (
           <div className="space-y-3">
             {botPurchases.map((bp) => {
-              const match = bp.plan.match(/BOT:\s*([^(]+)\s*\(([^#]+)#([^)]+)\)/i);
+              const match = bp.plan.match(/BOT:\s*([^(]+)(?:\(([^#)]+)(?:#[^)]+)?\))?/i);
               const botName = match ? match[1].trim() : bp.plan.replace('BOT:', '').trim();
-              const platform = match ? match[2].trim() : 'MT5';
-              const acc = match ? match[3].trim() : 'N/A';
+              const platform = match && match[2] ? match[2].trim() : 'EA';
               const matchedBot = bots.find((b) => b.name.toLowerCase().trim() === botName.toLowerCase().trim());
               const isCopied = copiedId === bp.id;
               return (
@@ -201,7 +200,11 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
                     <div className="flex items-center gap-2">
                       <Badge variant="gold" className="font-mono text-[10px]">{platform}</Badge>
                       <span className="font-bold text-sm text-white">{botName}</span>
-                      <span className="text-[10px] text-[#A6ADB9] font-mono">Acct #{acc}</span>
+                      {bp.bound_account ? (
+                        <span className="text-[10px] text-akg-green font-mono">Bound</span>
+                      ) : (
+                        <span className="text-[10px] text-akg-muted font-mono">Unbound (binds on first launch)</span>
+                      )}
                     </div>
                     <span className="text-[10px] text-[#A6ADB9] font-mono">Purchased {fmtDateTime(bp.created)}</span>
                   </div>

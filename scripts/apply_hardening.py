@@ -28,18 +28,16 @@ SUPERUSER_PASSWORD = os.environ.get("AKG_SUPERUSER_PASSWORD", "")  # required: n
 
 ADMIN_ONLY = "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.collectionName = '_superusers')"
 
-# Active member = plan + unexpired cycle. SR members only see SR-tier signals.
-SIGNALS_READ = (
-    '@request.auth.id != "" && ('
-    '@request.auth.role = "admin" || ('
-    '@request.auth.cycle_expires_at > @now && '
-    '@request.auth.plan != "" && @request.auth.plan != "NONE" && '
-    '(@request.auth.plan = "PERFECT_SIGNAL_BOX" || plan_tier = "SR_SIGNAL_BOX")))'
-)
-
-PREVIEW_SQL = (
-    "SELECT signals.id, signals.symbol, signals.direction, signals.plan_tier, "
-    "signals.status, signals.pnl, signals.created, signals.updated FROM signals"
+# Signal Room rules:
+# messages: readable by any authenticated user; CUD admin only
+# message_content: readable by admin OR audience='all' OR active member (SR or VIP)
+MESSAGES_READ = '@request.auth.id != ""'
+SUB_ACTIVE = '@request.auth.plan != "" && @request.auth.plan != "NONE" && @request.auth.cycle_expires_at > @now'
+CONTENT_READ = (
+    '@request.auth.id != "" && (' +
+    ADMIN_ONLY +
+    ' || message.audience = "all"' +
+    ' || (' + SUB_ACTIVE + ' && (message.audience = "sr" || (message.audience = "vip" && @request.auth.plan = "PERFECT_SIGNAL_BOX"))))'
 )
 
 
@@ -157,9 +155,15 @@ def main():
     print("OK")
 
     print("2. Locking collection API rules...")
-    update_collection(token, "signals",
-                      listRule=SIGNALS_READ, viewRule=SIGNALS_READ,
+    update_collection(token, "messages",
+                      listRule=MESSAGES_READ, viewRule=MESSAGES_READ,
                       createRule=ADMIN_ONLY, updateRule=ADMIN_ONLY, deleteRule=ADMIN_ONLY)
+    update_collection(token, "message_content",
+                      listRule=CONTENT_READ, viewRule=CONTENT_READ,
+                      createRule=ADMIN_ONLY, updateRule=ADMIN_ONLY, deleteRule=ADMIN_ONLY)
+    update_collection(token, "reactions",
+                      listRule='@request.auth.id != ""', viewRule='@request.auth.id != ""',
+                      createRule='@request.auth.id != ""', updateRule="", deleteRule="user = @request.auth.id")
     update_collection(token, "payments",
                       listRule='@request.auth.id != "" && (@request.auth.role = "admin" || user_email = @request.auth.email)',
                       viewRule='@request.auth.id != "" && (@request.auth.role = "admin" || user_email = @request.auth.email)',
@@ -177,10 +181,7 @@ def main():
     print("3. Adding payments.license_key field...")
     ensure_license_key_field(token)
 
-    print("4. Creating public masked signal_previews view...")
-    ensure_signal_previews(token)
-
-    print("5. Cleaning fabricated demo data...")
+    print("4. Cleaning fabricated demo data...")
     cleanup_demo_data(token)
 
     print("\nBACKEND HARDENING COMPLETE")

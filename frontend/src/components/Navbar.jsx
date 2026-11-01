@@ -3,7 +3,7 @@ import { pb } from '../lib/pocketbase';
 import { 
   Zap, Cpu, Network, BarChart3, Bell, 
   CreditCard, ChevronDown, User, LogOut, Shield, 
-  Compass, Search, Menu, ArrowRight, CheckCircle2, TrendingUp,
+  Compass, Search, Menu, ArrowRight, CheckCircle2,
   Sparkles, Layers, Download, Link2, KeyRound
 } from 'lucide-react';
 import { 
@@ -73,12 +73,6 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
   ];
 
   const marketIntelligence = [
-    {
-      id: 'track',
-      title: 'Desk Track Record',
-      description: 'Monthly performance computed from real closed signals. Wins and losses alike.',
-      icon: TrendingUp,
-    },
     {
       id: 'charts',
       title: 'Live Charts Terminal',

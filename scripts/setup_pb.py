@@ -93,31 +93,73 @@ def main():
     coll_items = get("/api/collections", token)["items"]
     coll_ids = {c["name"]: c["id"] for c in coll_items}
 
-    # --- SIGNALS ---
-    if "signals" not in all_colls:
-        print("Creating 'signals' collection...")
-        post("/api/collections", {
-            "name": "signals",
+    # --- SIGNAL ROOM (messages, message_content, reactions) ---
+    if "messages" not in all_colls:
+        print("Creating 'messages' collection...")
+        m_res = post("/api/collections", {
+            "name": "messages",
             "type": "base",
-            "listRule": "",
-            "viewRule": "",
+            "listRule": "@request.auth.id != ''",
+            "viewRule": "@request.auth.id != ''",
             "createRule": "@request.auth.id != '' && @request.auth.role = 'admin'",
             "updateRule": "@request.auth.id != '' && @request.auth.role = 'admin'",
             "deleteRule": "@request.auth.id != '' && @request.auth.role = 'admin'",
             "fields": [
-                {"name": "symbol", "type": "text", "required": True},
-                {"name": "direction", "type": "select", "values": ["BUY", "SELL"], "maxSelect": 1, "required": True},
-                {"name": "entry", "type": "text", "required": True},
-                {"name": "stop_loss", "type": "text", "required": True},
-                {"name": "take_profit_1", "type": "text", "required": True},
-                {"name": "take_profit_2", "type": "text", "required": False},
-                {"name": "plan_tier", "type": "select", "values": ["SR_SIGNAL_BOX", "PERFECT_SIGNAL_BOX"], "maxSelect": 1, "required": True},
-                {"name": "status", "type": "select", "values": ["active", "closed", "cancelled"], "maxSelect": 1, "required": True},
-                {"name": "pnl", "type": "text", "required": False},
-                {"name": "notes", "type": "text", "required": False}
+                {"name": "author", "type": "relation", "collectionId": coll_ids.get("users", ""), "maxSelect": 1, "required": False},
+                {"name": "audience", "type": "select", "values": ["all", "sr", "vip"], "maxSelect": 1, "required": True},
+                {"name": "pinned", "type": "bool", "required": False},
+                {"name": "has_image", "type": "bool", "required": False}
             ]
         }, token)
-        print("✓ 'signals' created.")
+        coll_ids["messages"] = m_res.get("id", "")
+        # Add reply_to self-relation
+        post(f"/api/collections/{m_res.get('id', '')}", {
+            "fields": [
+                {"name": "author", "type": "relation", "collectionId": coll_ids.get("users", ""), "maxSelect": 1, "required": False},
+                {"name": "audience", "type": "select", "values": ["all", "sr", "vip"], "maxSelect": 1, "required": True},
+                {"name": "pinned", "type": "bool", "required": False},
+                {"name": "has_image", "type": "bool", "required": False},
+                {"name": "reply_to", "type": "relation", "collectionId": m_res.get("id", ""), "maxSelect": 1, "required": False}
+            ]
+        }, token)
+        print("✓ 'messages' created.")
+
+    if "message_content" not in all_colls:
+        print("Creating 'message_content' collection...")
+        post("/api/collections", {
+            "name": "message_content",
+            "type": "base",
+            "listRule": "@request.auth.id != ''",
+            "viewRule": "@request.auth.id != ''",
+            "createRule": "@request.auth.id != '' && @request.auth.role = 'admin'",
+            "updateRule": "@request.auth.id != '' && @request.auth.role = 'admin'",
+            "deleteRule": "@request.auth.id != '' && @request.auth.role = 'admin'",
+            "fields": [
+                {"name": "message", "type": "relation", "collectionId": coll_ids.get("messages", ""), "maxSelect": 1, "cascadeDelete": True, "required": True},
+                {"name": "body", "type": "text", "required": False},
+                {"name": "attachments", "type": "file", "maxSelect": 4, "required": False}
+            ]
+        }, token)
+        print("✓ 'message_content' created.")
+
+    if "reactions" not in all_colls:
+        print("Creating 'reactions' collection...")
+        post("/api/collections", {
+            "name": "reactions",
+            "type": "base",
+            "listRule": "@request.auth.id != ''",
+            "viewRule": "@request.auth.id != ''",
+            "createRule": "@request.auth.id != ''",
+            "updateRule": "",
+            "deleteRule": "user = @request.auth.id",
+            "fields": [
+                {"name": "message", "type": "relation", "collectionId": coll_ids.get("messages", ""), "maxSelect": 1, "cascadeDelete": True, "required": True},
+                {"name": "user", "type": "relation", "collectionId": coll_ids.get("users", ""), "maxSelect": 1, "cascadeDelete": True, "required": True},
+                {"name": "emoji", "type": "select", "values": ["🔥", "👍", "🎯", "💰", "🙏"], "maxSelect": 1, "required": True}
+            ],
+            "indexes": ["CREATE UNIQUE INDEX idx_reactions_unique ON reactions (message, user, emoji)"]
+        }, token)
+        print("✓ 'reactions' created.")
 
     # --- BOTS ---
     if "bots" not in all_colls:
@@ -270,47 +312,19 @@ def main():
         }, token)
         print("✓ User user@akgalgo.local created.")
 
-    # Seed sample signals
-    existing_signals = get("/api/collections/signals/records", token)["totalItems"]
-    if existing_signals == 0:
-        sample_signals = [
-            {
-                "symbol": "XAUUSD",
-                "direction": "BUY",
-                "entry": "2,748.50",
-                "stop_loss": "2,735.00",
-                "take_profit_1": "2,765.00",
-                "take_profit_2": "2,780.00",
-                "plan_tier": "PERFECT_SIGNAL_BOX",
-                "status": "active",
-                "notes": "H4 Liquidity sweep confirmed above Asian range high."
-            },
-            {
-                "symbol": "EURUSD",
-                "direction": "BUY",
-                "entry": "1.08420",
-                "stop_loss": "1.08150",
-                "take_profit_1": "1.08800",
-                "take_profit_2": "1.09200",
-                "plan_tier": "SR_SIGNAL_BOX",
-                "status": "active",
-                "notes": "London session break & retest of key daily support level."
-            },
-            {
-                "symbol": "BTCUSD",
-                "direction": "BUY",
-                "entry": "68,420",
-                "stop_loss": "67,200",
-                "take_profit_1": "70,000",
-                "take_profit_2": "71,500",
-                "plan_tier": "PERFECT_SIGNAL_BOX",
-                "status": "active",
-                "notes": "Weekly trendline continuation with high volume expansion."
-            }
+    # Seed sample messages in Signal Room
+    existing_messages = get("/api/collections/messages/records", token)["totalItems"]
+    if existing_messages == 0:
+        sample_messages = [
+            ("all", "Welcome to the AKG institutional trading desk. Real-time setup broadcasts, execution updates, and market context land here live."),
+            ("sr", "XAUUSD intraday watch: H4 liquidity sweep confirmed. Watching 2,748.50 zone for continuation."),
+            ("vip", "PERFECT BOX VIP: Institutional order block mitigation underway. Check target zones in London open.")
         ]
-        for s in sample_signals:
-            post("/api/collections/signals/records", s, token)
-        print(f"✓ Seeded {len(sample_signals)} signals.")
+        for audience, body in sample_messages:
+            m = post("/api/collections/messages/records", {"audience": audience, "has_image": False}, token)
+            if m.get("id"):
+                post("/api/collections/message_content/records", {"message": m["id"], "body": body}, token)
+        print(f"✓ Seeded {len(sample_messages)} broadcast messages.")
 
     # Seed sample bots
     existing_bots = get("/api/collections/bots/records", token)["totalItems"]

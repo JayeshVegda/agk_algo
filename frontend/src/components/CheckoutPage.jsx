@@ -16,7 +16,7 @@ import { cn } from '../lib/utils';
  *
  * The pending order is staged in sessionStorage by the calling page:
  *   akg_order = { kind: 'plan', id, name, price }
- *             | { kind: 'bot',  id, name, price, platform, account }
+ *             | { kind: 'bot',  id, name, price, platform }
  */
 export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
   const settings = useSiteSettings();
@@ -94,7 +94,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
     try {
       await pb.collection('payments').create({
         user_email: user.email,
-        plan: isBot ? `BOT: ${order.name} (${order.platform} #${String(order.account).replace(/\D/g, '')})` : order.id,
+        plan: isBot ? `BOT: ${order.name} (${order.platform || 'EA'})` : order.id,
         amount: order.price,
         network: method === 'upi' ? 'INR-UPI' : network,
         method,
@@ -159,7 +159,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
             <h2 className="mt-2.5 font-display text-lg font-bold text-white">{order.name}</h2>
             <p className="mt-1 font-data text-[11px] text-akg-muted">
               {isBot
-                ? `${order.platform} · bound to account #${order.account} · perpetual license`
+                ? `${order.platform} · perpetual license · activates automatically on first run`
                 : '30-day member cycle · full signal coordinates'}
             </p>
           </div>

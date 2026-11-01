@@ -1,20 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { pb, pbUrl } from '../lib/pocketbase';
 import {
-  Cpu, Download, CheckCircle2,
-  KeyRound, Copy, Check, ArrowRight, X,
-  ExternalLink, BarChart3,
-  Shield, HardDrive, CreditCard,
-  Clock, AlertCircle, ChevronLeft, FlaskConical, Lock, Timer,
-  Coins, Bitcoin, ArrowLeftRight, LineChart
+  Cpu, Download, CheckCircle2, KeyRound, Copy, Check,
+  ExternalLink, HardDrive, Clock, AlertCircle, ChevronLeft,
+  FlaskConical, Coins, Bitcoin, ArrowLeftRight, LineChart,
+  FileText, RefreshCw, X
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { downloadLinksFor } from '../lib/utils';
 import { pairsOf, featuresOf, timeframesOf, pctStat, statNumOrNull } from '../lib/bots';
-import { useWallets } from '../lib/wallets';
-import EquityCurve from './EquityCurve';
 
 const slugify = (name) =>
   String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -27,93 +22,14 @@ const botCategory = (bot) => {
   return { label: 'Forex', icon: LineChart };
 };
 
-/* Product-page hero media: the bot's image over the equity fallback,
-   with category chip and its own stat pills straight from the record. */
-function BotHeroMedia({ bot }) {
-  const [imgFailed, setImgFailed] = useState(false);
-  const cat = botCategory(bot);
-  const CatIcon = cat.icon;
-  const img = pbUrl((bot.image_url || '').trim());
-  const showImg = img && !imgFailed;
-  const stats = [
-    { k: 'Win rate', v: bot.win_rate, c: 'text-white', fmt: pctStat },
-    { k: 'Profit factor', v: bot.profit_factor, c: 'text-akg-gold', fmt: null },
-    { k: 'Max drawdown', v: bot.drawdown, c: 'text-rose-400', fmt: pctStat },
-  ].filter((s) => statNumOrNull(s.v) !== null || (typeof s.v === 'string' && s.v));
-
-  return (
-    <div className="relative min-h-[280px] overflow-hidden rounded-3xl border border-white/10 bg-[#0A0D13] sm:min-h-[360px]">
-      {showImg ? (
-        <img
-          src={img}
-          alt={`${bot.name} showcase`}
-          onError={() => setImgFailed(true)}
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-      ) : stats.length > 0 ? (
-        <div className="absolute inset-0 px-5 pt-6 pb-24">
-          <EquityCurve
-            seed={bot.name}
-            profitFactor={bot.profit_factor}
-            drawdown={bot.drawdown}
-            winRate={bot.win_rate}
-            points={110}
-            className="h-full w-full"
-          />
-        </div>
-      ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-center">
-          <CatIcon className="h-6 w-6 text-akg-muted" />
-          <span className="px-6 font-data text-[10px] uppercase tracking-wide text-akg-muted">
-            {bot.pairs} · {bot.platform}
-          </span>
-        </div>
-      )}
-
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#07090D] via-black/10 to-black/30" />
-
-      <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 font-data text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur">
-        <CatIcon className="h-3 w-3" />
-        {cat.label}
-      </span>
-
-      {stats.length > 0 && (
-        <div className="absolute inset-x-4 bottom-4 flex flex-wrap gap-2">
-          {stats.map((s) => (
-            <div key={s.k} className="rounded-xl bg-black/55 px-3.5 py-2 backdrop-blur">
-              <div className={`font-data text-sm font-bold ${s.c}`}>{s.fmt ? s.fmt(s.v) : `${s.v}`}</div>
-              <div className="mt-0.5 text-[9px] uppercase tracking-wide text-white/55">{s.k}</div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, onOpenAuth, onNavigateAdmin, notify }) {
   const [bots, setBots] = useState([]);
   const [botsLoading, setBotsLoading] = useState(true);
   const [platformFilter, setPlatformFilter] = useState('all');
-  const [checkoutBot, setCheckoutBot] = useState(null);
-  const [promptBot, setPromptBot] = useState(null); // asking for MT account number before checkout
-  const [promptAccount, setPromptAccount] = useState('');
-
-  // Checkout state
-  const [checkoutAccount, setCheckoutAccount] = useState('');
-  const [checkoutNetwork, setCheckoutNetwork] = useState('USDT-TRC20');
-  const [checkoutTxid, setCheckoutTxid] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [purchaseResult, setPurchaseResult] = useState(null);
-  const [copiedKey, setCopiedKey] = useState(false);
-  const [copiedAddress, setCopiedAddress] = useState(false);
-
-  // User confirmed purchases
   const [myPurchases, setMyPurchases] = useState([]);
   const [allBotChanges, setAllBotChanges] = useState([]);
-
-  // Live wallets from site_settings (rotatable without redeploy); see lib/wallets.
-  const WALLETS = useWallets();
+  const [licenseModalBot, setLicenseModalBot] = useState(null);
+  const [copiedKey, setCopiedKey] = useState(false);
 
   const loadBots = async () => {
     try {
@@ -134,19 +50,6 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
         sort: '-created'
       });
       setMyPurchases(records);
-      pendingRef.current = records.some((p) => p.status === 'pending');
-      const confirmed = records.filter((p) => p.status === 'confirmed').map((p) => p.plan || '');
-      if (knownConfirmedRef.current) {
-        const fresh = confirmed.filter((plan) => !knownConfirmedRef.current.includes(plan));
-        if (fresh.length && notify) {
-          notify({
-            type: 'success',
-            title: 'Payment Approved',
-            message: 'Your license key and Google Drive package link are unlocked below.'
-          });
-        }
-      }
-      knownConfirmedRef.current = confirmed;
     } catch (err) {
       console.error('Failed to load user bot purchases:', err);
     }
@@ -156,8 +59,14 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
     loadBots();
   }, []);
 
-  // Release notes feed the product page timeline (direct collection read,
-  // public list rule). Rewind on slug change so cross-navigation never shows stale notes.
+  useEffect(() => {
+    if (user?.email) {
+      loadUserPurchases();
+      const unsub = pb.collection('payments').subscribe('*', () => loadUserPurchases()).catch(() => {});
+      return () => { unsub?.then?.((u) => u && u()); };
+    }
+  }, [user?.email]);
+
   useEffect(() => {
     let stale = false;
     pb.collection('bot_changes').getFullList({ sort: '-released' })
@@ -166,203 +75,89 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
     return () => { stale = true; };
   }, [botSlug]);
 
-  // Escape closes the checkout modal.
-  useEffect(() => {
-    if (!checkoutBot) return undefined;
-    const onKey = (e) => {
-      if (e.key === 'Escape') setCheckoutBot(null);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [checkoutBot]);
-
-  const pendingRef = React.useRef(false);
-  const knownConfirmedRef = React.useRef(null);
-
-  useEffect(() => {
-    if (user?.email) {
-      loadUserPurchases();
-      const unsub = pb.collection('payments').subscribe('*', () => loadUserPurchases()).catch(() => {});
-      // Belt and braces: realtime can silently drop (PB restart, network
-      // flap). While any payment is pending, poll slowly so the license
-      // key + Drive link unlock appears without a manual reload.
-      const timer = setInterval(() => {
-        if (document.visibilityState === 'visible' && pendingRef.current) {
-          loadUserPurchases();
-        }
-      }, 10000);
-      return () => { unsub?.then?.((u) => u && u()); clearInterval(timer); };
-    }
-  }, [user?.email]);
-
-  const handleCopy = (text, type = 'key') => {
+  const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
-    if (type === 'key') setCopiedKey(true);
-    if (type === 'address') setCopiedAddress(true);
-
+    setCopiedKey(true);
     if (notify) {
-      notify({
-        type: 'copy',
-        title: 'Copied to Clipboard',
-        message: text
-      });
+      notify({ type: 'copy', title: 'Copied to Clipboard', message: text });
     }
-    setTimeout(() => {
-      setCopiedKey(false);
-      setCopiedAddress(false);
-    }, 2000);
+    setTimeout(() => setCopiedKey(false), 2000);
   };
 
-  const openCheckout = (bot) => {
+  const isBotOwned = (botName) => {
+    return myPurchases.some((p) => p.status === 'confirmed' && p.plan?.includes(botName));
+  };
+
+  const isBotPending = (botName) => {
+    return myPurchases.some((p) => p.status === 'pending' && p.plan?.includes(botName));
+  };
+
+  const getOwnedPurchase = (botName) => {
+    return myPurchases.find((p) => p.status === 'confirmed' && p.plan?.includes(botName));
+  };
+
+  // Direct checkout flow — NO account prompt modal
+  const startPurchase = (bot) => {
     if (!user) {
-      // No toast here: firing one in the same tick as the auth sheet steals
-      // focus and Radix closes the sheet instantly, making the button feel dead.
       if (onOpenAuth) onOpenAuth();
-      else if (notify) {
-        notify({
-          type: 'info',
-          title: 'Sign In Required',
-          message: 'Please sign in or register to purchase and bind trading bots.'
-        });
-      }
       return;
     }
 
-    // A payment for this bot is already awaiting desk verification.
+    // Already owned: view license modal
+    const existing = getOwnedPurchase(bot.name);
+    if (existing) {
+      setLicenseModalBot({ bot, payment: existing });
+      return;
+    }
+
     if (isBotPending(bot.name)) {
       if (notify) {
         notify({
           type: 'info',
           title: 'Verification in Progress',
-          message: `Your payment for ${bot.name} is being verified. Your license key and Google Drive package link unlock automatically once approved.`
+          message: `Your payment for ${bot.name} is being verified by the desk.`
         });
       }
       return;
     }
 
-    // Check if user already owns this bot
-    const existing = getOwnedPurchase(bot.name);
-    if (existing) {      const match = existing.plan.match(/BOT:\s*([^(]+)\s*\(([^#]+)#([^)]+)\)/i);
-      const acc = match ? match[3].trim() : 'N/A';
-      setCheckoutBot(bot);
-      setPurchaseResult({
-        status: 'confirmed',
-        bot,
-        account: acc,
-        key: existing.license_key || '',
-        txid: existing.txid,
-        isExisting: true
-      });
-      return;
-    }
-
-    // New purchase: collect the MetaTrader account number, then hand off to
-    // the dedicated checkout page (crypto or GPay/UPI).
-    setPromptBot(bot);
-    setPromptAccount('');
+    // Flow: Bot page -> Purchase -> Checkout (pay + TXID)
+    sessionStorage.setItem('akg_order', JSON.stringify({
+      kind: 'bot',
+      id: bot.id,
+      name: bot.name,
+      price: bot.price,
+      platform: bot.platform,
+    }));
+    if (onNavigate) onNavigate('checkout');
   };
 
-  // Submit purchase: logs the payment as pending; the license key is issued
-  // server-side once the desk approves the payment.
-  const handlePurchase = async () => {
-    if (!user) {
-      if (onOpenAuth) onOpenAuth();
-      return;
-    }
+  // Only Live bots show publicly
+  const liveBots = useMemo(() => bots.filter((b) => b.is_live !== false), [bots]);
 
-    if (!checkoutAccount.trim()) {
-      if (notify) notify({ type: 'error', title: 'Account Number Missing', message: 'Please enter your MetaTrader account number to bind this license.' });
-      return;
-    }
+  const filteredBots = useMemo(() => {
+    return liveBots.filter((bot) => {
+      if (platformFilter === 'all') return true;
+      return (bot.platform || '').includes(platformFilter);
+    });
+  }, [liveBots, platformFilter]);
 
-    if (!checkoutTxid.trim()) {
-      if (notify) notify({ type: 'error', title: 'TXID Missing', message: 'Please enter your USDT transfer hash.' });
-      return;
-    }
-
-    if (!/^[a-zA-Z0-9]{20,128}$/.test(checkoutTxid.trim())) {
-      if (notify) notify({ type: 'error', title: 'Invalid TXID', message: 'A transaction hash is 64 hexadecimal characters (letters and digits only). Paste the full hash from your wallet.' });
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const cleanAcc = checkoutAccount.trim().replace(/\D/g, '');
-      const planString = `BOT: ${checkoutBot.name} (${checkoutBot.platform} #${cleanAcc})`;
-
-      await pb.collection('payments').create({
-        user_email: user.email,
-        plan: planString,
-        amount: checkoutBot.price,
-        network: checkoutNetwork,
-        txid: checkoutTxid.trim(),
-        status: 'pending'
-      });
-
-      setPurchaseResult({
-        status: 'pending',
-        bot: checkoutBot,
-        account: cleanAcc,
-        key: '',
-        txid: checkoutTxid.trim()
-      });
-
-      await loadUserPurchases();
-
-      if (notify) {
-        notify({
-          type: 'success',
-          title: 'Payment Logged for Verification',
-          message: `TXID submitted. Desk will verify the blockchain transfer of $${checkoutBot.price} USDT and issue your license key and Drive package link.`
-        });
-      }
-    } catch (err) {
-      if (notify) notify({ type: 'error', title: 'Checkout Error', message: err.message });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const isBotOwned = (botName) => {
-    return myPurchases.some(p => p.status === 'confirmed' && p.plan?.includes(botName));
-  };
-
-  const isBotPending = (botName) => {
-    return myPurchases.some(p => p.status === 'pending' && p.plan?.includes(botName));
-  };
-
-  const getOwnedPurchase = (botName) => {
-    return myPurchases.find(p => p.status === 'confirmed' && p.plan?.includes(botName));
-  };
-
-  const botFeatures = (bot) => featuresOf(bot);
-
-  const filteredBots = bots.filter((b) => {
-    if (platformFilter === 'all') return true;
-    return b.platform?.toUpperCase().includes(platformFilter.toUpperCase());
-  });
-
-  // ==========================================================================
-  // PRODUCT PAGE: /bots/<slug>
-  // ==========================================================================
-  const selectedBot = botSlug ? bots.find((b) => slugify(b.name) === botSlug) : null;
+  const selectedBot = botSlug ? liveBots.find((b) => slugify(b.name) === botSlug) : null;
 
   if (botSlug && botsLoading) {
     return (
-      <div className="max-w-6xl mx-auto animate-pulse space-y-6 py-8">
-        <div className="h-4 w-32 rounded bg-white/10" />
-        <div className="h-10 w-2/3 rounded bg-white/10" />
-        <div className="h-44 rounded-2xl bg-akg-surface" />
+      <div className="flex justify-center items-center py-24 font-data text-xs text-akg-muted">
+        Loading Expert Advisor specifications…
       </div>
     );
   }
 
-  if (botSlug && !selectedBot && bots.length > 0) {
+  if (botSlug && !selectedBot && liveBots.length > 0) {
     return (
       <div className="max-w-3xl mx-auto text-center py-24 space-y-4">
         <AlertCircle className="h-10 w-10 mx-auto text-akg-gold" />
         <h1 className="font-display text-2xl font-extrabold text-white">Expert Advisor not found</h1>
-        <p className="text-sm text-akg-muted">The link may be outdated. Browse the current catalog instead.</p>
+        <p className="text-sm text-akg-muted">The system may be unpublished or the link is outdated.</p>
         <Button variant="outline" onClick={() => onNavigate && onNavigate('bots')}>
           Back to Expert Advisors
         </Button>
@@ -370,318 +165,396 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
     );
   }
 
+  // ==========================================================================
+  // SINGLE BOT PRODUCT PAGE
+  // ==========================================================================
   if (selectedBot) {
     const bot = selectedBot;
     const owned = isBotOwned(bot.name);
     const pending = isBotPending(bot.name);
-    const features = botFeatures(bot);
+    const ownedPayment = getOwnedPurchase(bot.name);
     const pairs = pairsOf(bot);
+    const features = featuresOf(bot);
+    const timeframes = timeframesOf(bot);
     const selectedChanges = allBotChanges.filter((ch) => ch.bot === bot.id);
+    const cat = botCategory(bot);
+    const CatIcon = cat.icon;
+
+    // Stat tiles: only render if filled
+    const statItems = [
+      { label: 'Win rate', value: statNumOrNull(bot.win_rate) !== null ? pctStat(bot.win_rate) : null, tone: 'text-white' },
+      { label: 'Profit factor', value: statNumOrNull(bot.profit_factor) !== null ? `${bot.profit_factor}` : null, tone: 'text-akg-gold' },
+      { label: 'Max drawdown', value: statNumOrNull(bot.drawdown) !== null ? pctStat(bot.drawdown) : null, tone: 'text-rose-400' },
+      { label: 'Min capital', value: bot.recommended_deposit || null, tone: 'text-white' },
+    ].filter((s) => Boolean(s.value));
+
+    const hasBacktestImg = Boolean(bot.image_url && bot.image_url.trim());
 
     return (
-      <div className="max-w-6xl mx-auto font-sans text-akg-silver w-full">
-        <button
-          onClick={() => onNavigate && onNavigate('bots')}
-          className="group inline-flex items-center gap-1.5 mt-2 text-xs font-semibold text-akg-muted hover:text-akg-gold transition-colors cursor-pointer"
-        >
-          <ChevronLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
-          All Expert Advisors
-        </button>
-
-        {user?.role === 'admin' && (
+      <div className="max-w-5xl mx-auto font-sans text-akg-silver w-full space-y-8 pb-12">
+        {/* Navigation & Admin Deep-link */}
+        <div className="flex items-center justify-between gap-4">
           <button
-            onClick={() => onNavigateAdmin?.(`/admin?s=bots&edit=${bot?.id || ''}`)}
-            className="mt-3 flex h-8 w-fit items-center gap-1.5 rounded-full border border-[#F3C653]/40 px-3 font-data text-[10px] font-bold text-akg-gold hover:bg-[#F3C653]/10"
+            onClick={() => onNavigate && onNavigate('bots')}
+            className="group inline-flex items-center gap-1.5 text-xs font-semibold text-akg-muted hover:text-akg-gold transition-colors cursor-pointer"
           >
-            <FlaskConical className="h-3 w-3" /> Admin: edit this Expert Advisor
+            <ChevronLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
+            All Expert Advisors
           </button>
-        )}
 
-        {/* Hero: facts left, provenance media right */}
-        <div className="mt-5 grid items-stretch gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="flex flex-col justify-center">
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => onNavigateAdmin?.(`/admin?s=bots&edit=${bot?.id || ''}`)}
+              className="flex h-7 items-center gap-1.5 rounded-full border border-[#F3C653]/40 px-3 font-data text-[10px] font-bold text-akg-gold hover:bg-[#F3C653]/10"
+            >
+              <FlaskConical className="h-3 w-3" /> Admin: Edit Bot
+            </button>
+          )}
+        </div>
+
+        {/* Hero Section */}
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] items-stretch">
+          <div className="flex flex-col justify-center space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary" className="font-mono">{bot.platform}</Badge>
-              <Badge variant="gold" className="font-mono">{bot.version || ''}</Badge>
+              <Badge variant="gold" className="font-mono">{bot.version || 'v1.0'}</Badge>
               {owned && <Badge variant="positive">Licensed</Badge>}
               {pending && <Badge variant="gold">Verification in progress</Badge>}
             </div>
-            <h1 className="mt-3 font-display text-3xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-[2.75rem]">
+
+            <h1 className="font-display text-3xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-4xl">
               {bot.name}
             </h1>
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              {pairs.map((p) => (
-                <span key={p} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 font-data text-[10px] font-semibold uppercase tracking-[0.12em] text-akg-gold">
-                  {p}
-                </span>
-              ))}
-            </div>
+            {pairs.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {pairs.map((p) => (
+                  <span
+                    key={p}
+                    className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 font-data text-[10px] font-semibold uppercase tracking-wider text-akg-gold"
+                  >
+                    {p}
+                  </span>
+                ))}
+              </div>
+            )}
 
-            <div className="mt-6 flex flex-wrap items-center gap-5">
+            <div className="pt-3 flex flex-wrap items-center gap-5">
               <div>
-                <div className="font-display text-4xl font-extrabold text-white tabular-nums">
+                <div className="font-display text-3xl font-extrabold text-white tabular-nums">
                   ${bot.price}
                   <span className="ml-1.5 text-sm font-bold text-akg-gold">USDT</span>
                 </div>
-                <div className="mt-0.5 text-[11px] text-akg-muted">One-time perpetual license</div>
+                <div className="text-[11px] text-akg-muted">One-time perpetual license</div>
               </div>
+
               <Button
                 size="lg"
                 variant={owned ? 'positive' : 'default'}
-                className="gap-2"
-                onClick={() => openCheckout(bot)}
+                className="gap-2 px-6"
+                onClick={() => startPurchase(bot)}
               >
                 {owned ? (
-                  <><KeyRound className="h-4 w-4" /><span>View License Key</span></>
+                  <>
+                    <KeyRound className="h-4 w-4" />
+                    <span>View License</span>
+                  </>
                 ) : pending ? (
-                  <><Clock className="h-4 w-4" /><span>Verification in Progress</span></>
+                  <>
+                    <Clock className="h-4 w-4" />
+                    <span>Verification in Progress</span>
+                  </>
                 ) : (
-                  <><KeyRound className="h-4 w-4" /><span>Purchase License</span></>
+                  <>
+                    <KeyRound className="h-4 w-4" />
+                    <span>Purchase License</span>
+                  </>
                 )}
               </Button>
             </div>
           </div>
 
-          <BotHeroMedia bot={bot} />
-        </div>
-
-        {/* Performance panel */}
-        <div className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-akg-surface">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.07] px-5 py-3.5">
-            <div className="flex items-center gap-2.5">
-              <BarChart3 className="h-4 w-4 text-akg-gold" />
-              <span className="font-data text-[11px] uppercase tracking-[0.16em] text-akg-silver">
-                Performance profile
-              </span>
-            </div>
-            <span className="font-data text-[10px] text-akg-muted">
-              Illustrative profile from strategy statistics
-            </span>
-          </div>
-
-          <div className="relative px-5 py-6">
-            <EquityCurve
-              seed={bot.name}
-              profitFactor={bot.profit_factor}
-              drawdown={bot.drawdown}
-              winRate={bot.win_rate}
-              points={110}
-              className="h-40 w-full sm:h-48"
-            />
-            {/* stat overlay */}
-            <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/[0.07] bg-white/[0.04] sm:grid-cols-4">
-              {[
-                { k: 'Win rate', v: bot.win_rate, tone: 'text-white', fmt: pctStat },
-                { k: 'Profit factor', v: bot.profit_factor, tone: 'text-akg-gold', fmt: null },
-                { k: 'Max drawdown', v: bot.drawdown, tone: 'rose-400', fmt: pctStat },
-                { k: 'Min capital', v: bot.recommended_deposit, tone: 'text-white', fmt: null },
-              ].filter((s) => (typeof s.v === 'number' ? statNumOrNull(s.v) !== null : !!s.v)).map((s) => (
-                <div key={s.k} className="bg-akg-surface px-4 py-3">
-                  <div className={`font-data text-base font-semibold ${s.tone}`}>{s.fmt ? s.fmt(s.v) : `${s.v}`}</div>
-                  <div className="mt-0.5 text-[10px] uppercase tracking-wide text-akg-muted">{s.k}</div>
+          {/* Right Hero Media: Backtest Image (if uploaded) or Category Card */}
+          <div className="relative min-h-[220px] overflow-hidden rounded-3xl border border-white/10 bg-[#0A0D13] flex items-center justify-center">
+            {hasBacktestImg ? (
+              <div className="relative h-full w-full">
+                <img
+                  src={pbUrl(bot.image_url.trim())}
+                  alt={`${bot.name} Backtest`}
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                <span className="absolute bottom-3 left-3 rounded-md border border-white/10 bg-black/70 px-2.5 py-1 font-data text-[9.5px] uppercase tracking-wider text-akg-gold backdrop-blur">
+                  Backtest, not live results
+                </span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-2 p-8 text-center">
+                <div className="h-12 w-12 rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center">
+                  <CatIcon className="h-6 w-6 text-akg-gold" />
                 </div>
-              ))}
-            </div>
+                <div className="font-data text-xs uppercase tracking-wider text-white">
+                  {cat.label} Strategy
+                </div>
+                <div className="font-data text-[10px] text-akg-muted">
+                  {pairs.join(', ') || 'All Pairs'} · {bot.platform}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Body grid */}
-        <div className="mt-8 grid gap-8 lg:grid-cols-[1.6fr_1fr] pb-8">
-          <div className="space-y-8">
-            <section>
-              <h2 className="font-display text-lg font-bold text-white">The strategy</h2>
-              <p className="mt-3 font-body text-[15px] leading-[1.75] text-akg-silver">{bot.description}</p>
-              {bot.strategy_type && (
-                <p className="mt-3 font-data text-xs text-akg-silver">
-                  Core logic: <span className="text-akg-gold">{bot.strategy_type}</span>
-                </p>
-              )}
-            </section>
+        {/* Stat Tiles: ONLY rendered if at least one stat has data */}
+        {statItems.length > 0 && (
+          <div className={`grid gap-3 grid-cols-2 sm:grid-cols-${Math.min(statItems.length, 4)}`}>
+            {statItems.map((s) => (
+              <div key={s.label} className="rounded-2xl border border-white/10 bg-akg-surface p-4 text-center">
+                <div className={`font-data text-xl font-bold ${s.tone}`}>{s.value}</div>
+                <div className="mt-1 font-data text-[10px] uppercase tracking-wider text-akg-muted">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        )}
 
-            {features.length > 0 && (
-              <section>
-                <h2 className="font-display text-lg font-bold text-white">What it does</h2>
-                <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
-                  {features.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5 rounded-xl border border-white/[0.07] bg-akg-surface px-3.5 py-3 text-xs text-akg-silver">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-akg-green" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+        {/* Strategy Text & Details */}
+        <section className="space-y-4 rounded-2xl border border-white/10 bg-akg-surface p-6">
+          <h2 className="font-display text-lg font-bold text-white">Strategy Architecture</h2>
+          {bot.description && (
+            <p className="font-body text-sm leading-relaxed text-akg-silver whitespace-pre-line">
+              {bot.description}
+            </p>
+          )}
 
-            <section>
-              <h2 className="font-display text-lg font-bold text-white">Running requirements</h2>
-              <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
-                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-                  <div className="font-data text-[10px] uppercase tracking-wide text-akg-muted">Timeframe</div>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    {(timeframesOf(bot).length ? timeframesOf(bot) : ['—']).map((tf) => (
-                      <span key={tf} className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 font-data text-[11px] text-akg-gold">{tf}</span>
+          {bot.strategy_type && (
+            <div className="pt-1 font-data text-xs text-akg-silver">
+              Core logic: <span className="text-akg-gold font-semibold">{bot.strategy_type}</span>
+            </div>
+          )}
+
+          {/* Running specifications (only if fields have data) */}
+          {(timeframes.length > 0 || bot.min_lot != null || bot.leverage || bot.trading_style) && (
+            <div className="grid gap-2.5 pt-3 sm:grid-cols-2 md:grid-cols-4">
+              {timeframes.length > 0 && (
+                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
+                  <div className="font-data text-[9.5px] uppercase text-akg-muted">Timeframes</div>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {timeframes.map((tf) => (
+                      <span key={tf} className="font-data text-xs text-akg-gold">{tf}</span>
                     ))}
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-                  <div className="font-data text-[10px] uppercase tracking-wide text-akg-muted">Min capital</div>
-                  <div className="mt-1 font-data text-[13px] text-akg-silver">{bot.recommended_deposit || '—'}</div>
-                </div>
-                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-                  <div className="font-data text-[10px] uppercase tracking-wide text-akg-muted">Min lot</div>
-                  <div className="mt-1 font-data text-[13px] text-akg-silver">{bot.min_lot != null ? bot.min_lot : '—'}</div>
-                </div>
-                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-                  <div className="font-data text-[10px] uppercase tracking-wide text-akg-muted">Leverage guide</div>
-                  <div className="mt-1 font-data text-[13px] text-akg-silver">{bot.leverage || '—'}</div>
-                </div>
-              </div>
-              {bot.broker_note && (
-                <p className="mt-3 text-xs leading-relaxed text-akg-muted">{bot.broker_note}</p>
               )}
-            </section>
+              {bot.trading_style && (
+                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
+                  <div className="font-data text-[9.5px] uppercase text-akg-muted">Style</div>
+                  <div className="mt-1 font-data text-xs text-white">{bot.trading_style}</div>
+                </div>
+              )}
+              {bot.min_lot != null && bot.min_lot !== '' && (
+                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
+                  <div className="font-data text-[9.5px] uppercase text-akg-muted">Min Lot</div>
+                  <div className="mt-1 font-data text-xs text-white">{bot.min_lot}</div>
+                </div>
+              )}
+              {bot.leverage && (
+                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
+                  <div className="font-data text-[9.5px] uppercase text-akg-muted">Leverage</div>
+                  <div className="mt-1 font-data text-xs text-white">{bot.leverage}</div>
+                </div>
+              )}
+            </div>
+          )}
 
-            <section>
-              <h2 className="font-display text-lg font-bold text-white">Before you go live</h2>
-              <div className="mt-4 space-y-2.5">
-                {[
-                  { icon: FlaskConical, text: 'Run it on a demo account first. Validate the behavior on your broker\'s feed before funding a live account.' },
-                  { icon: Shield, text: 'Every position carries a hard stop-loss. The strategy set rejects martingale and grid averaging.' },
-                  { icon: Lock, text: 'Your license key is bound to the MetaTrader account number you choose at checkout.' },
-                ].map((row) => {
-                  const Icon = row.icon;
-                  return (
-                    <div key={row.text} className="flex items-start gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-                      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-akg-gold" strokeWidth={1.75} />
-                      <span className="text-xs leading-relaxed text-akg-muted">{row.text}</span>
-                    </div>
-                  );
-                })}
+          {bot.broker_note && (
+            <p className="text-xs text-akg-muted leading-relaxed pt-2">
+              <span className="font-semibold text-akg-silver">Broker Note:</span> {bot.broker_note}
+            </p>
+          )}
+
+          {features.length > 0 && (
+            <div className="pt-3">
+              <h3 className="font-data text-xs uppercase tracking-wider text-akg-muted mb-3">Key Features</h3>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {features.map((f) => (
+                  <div key={f} className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-xs text-akg-silver">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-akg-green" />
+                    <span>{f}</span>
+                  </div>
+                ))}
               </div>
-            </section>
+            </div>
+          )}
+        </section>
 
-            {selectedChanges.length > 0 && (
-              <section>
-                <h2 className="font-display text-lg font-bold text-white">Release history</h2>
-                <ol className="mt-4 space-y-3 border-l border-white/10 pl-4">
-                  {selectedChanges.map((ch) => (
-                    <li key={ch.id} className="relative">
-                      <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-akg-gold" />
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-data text-xs font-bold text-akg-gold">{ch.version}</span>
-                        {ch.released && (
-                          <span className="font-data text-[10px] text-akg-muted">
-                            {new Date(ch.released).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-xs leading-relaxed text-akg-muted">{ch.summary}</p>
-                    </li>
-                  ))}
-                </ol>
-              </section>
-            )}
+        {/* What You Get */}
+        <section className="space-y-4">
+          <h2 className="font-display text-lg font-bold text-white">What You Get</h2>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-akg-surface p-5 space-y-2">
+              <div className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-akg-gold">
+                <Download className="h-4 w-4" />
+              </div>
+              <h3 className="font-bold text-sm text-white">EA Binary File</h3>
+              <p className="text-xs text-akg-muted leading-relaxed">
+                Compiled .{bot.platform.toLowerCase().includes('mt4') ? 'ex4' : 'ex5'} executable file, ready to attach to your charts.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-akg-surface p-5 space-y-2">
+              <div className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-akg-green">
+                <FileText className="h-4 w-4" />
+              </div>
+              <h3 className="font-bold text-sm text-white">Setup Guide</h3>
+              <p className="text-xs text-akg-muted leading-relaxed">
+                Step-by-step setup documentation with WebRequest URL allowlisting instructions.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-akg-surface p-5 space-y-2">
+              <div className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-sky-400">
+                <RefreshCw className="h-4 w-4" />
+              </div>
+              <h3 className="font-bold text-sm text-white">Version Updates</h3>
+              <p className="text-xs text-akg-muted leading-relaxed">
+                Perpetual license covers all future version releases and optimizations for this system.
+              </p>
+            </div>
           </div>
 
-          {/* Side rail */}
-          <div className="space-y-5">
-            <div className="rounded-2xl border border-[#F3C653]/25 bg-gradient-to-b from-[#171208] to-akg-surface p-6 shadow-gold ring-1 ring-[#F3C653]/20">
-              <div className="font-display text-2xl font-extrabold text-white tabular-nums">
-                ${bot.price}
-                <span className="ml-1.5 text-xs font-bold text-akg-gold">USDT</span>
+          {/* Drive package link if owned */}
+          {owned && bot.download_url && (
+            <div className="rounded-2xl border border-sky-400/30 bg-sky-400/[0.06] p-5 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <HardDrive className="h-5 w-5 text-sky-400 shrink-0" />
+                <div>
+                  <div className="text-sm font-bold text-white">Google Drive Distribution Package</div>
+                  <div className="text-xs text-sky-300/80">Contains full presets, historical set files, and release archives.</div>
+                </div>
               </div>
-              <div className="mt-1 text-[11px] text-akg-muted">You pay once. The license stays yours — no renewals, no subscription.</div>
-              <Button
-                variant={owned ? 'positive' : 'default'}
-                className="mt-4 w-full justify-center gap-2"
-                onClick={() => openCheckout(bot)}
+              <a
+                href={bot.download_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-sky-400 px-4 py-2 font-data text-xs font-bold text-black hover:bg-sky-300 transition-colors"
               >
-                {owned ? (
-                  <><KeyRound className="h-4 w-4" /><span>View License Key</span></>
-                ) : pending ? (
-                  <><Clock className="h-4 w-4" /><span>Verification in Progress</span></>
-                ) : (
-                  <><KeyRound className="h-4 w-4" /><span>Purchase License</span></>
-                )}
-              </Button>
-              {!user && (
-                <div className="mt-2 text-center text-[10px] text-akg-muted">
-                  You will be asked to sign in first.
-                </div>
-              )}
+                <span>Open Drive</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
             </div>
+          )}
+        </section>
 
-            {bot.download_url && owned && (
-              <div className="rounded-2xl border border-white/10 bg-akg-surface p-5">
-                <div className="flex items-center gap-2 text-xs font-bold text-akg-silver">
-                  <HardDrive className="h-4 w-4 text-akg-gold" />
-                  Distribution package
-                </div>
-                <p className="mt-2 text-[11px] leading-relaxed text-akg-muted">
-                  The package is served from Google Drive and updated with every release.
-                </p>
-                <a
-                  href={bot.download_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-akg-gold hover:text-akg-goldLight"
-                >
-                  <span>Open Drive package</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
-            )}
-
-            {bot.download_url && pending && (
-              <div className="rounded-2xl border border-amber-400/20 bg-amber-400/[0.04] p-5">
-                <div className="flex items-center gap-2 text-xs font-bold text-amber-200">
-                  <Timer className="h-4 w-4 shrink-0" />
-                  Drive package locked
-                </div>
-                <p className="mt-2 text-[11px] leading-relaxed text-akg-muted">
-                  Your payment is being verified. The Google Drive package link unlocks in My Account as soon as the desk approves your payment.
-                </p>
-              </div>
-            )}
-
-            <div className="rounded-2xl border border-white/10 bg-akg-surface p-5">
-              <div className="text-xs font-bold text-akg-silver">At a glance</div>
-              <dl className="mt-3 space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                  <dt className="text-[11px] text-akg-muted">Platform</dt>
-                  <dd className="font-data text-[11px] text-akg-silver">MetaTrader {bot.platform}</dd>
-                </div>
-                {bot.version && (
-                  <div className="flex items-center justify-between gap-3">
-                    <dt className="text-[11px] text-akg-muted">Version</dt>
-                    <dd className="font-data text-[11px] text-akg-silver">{bot.version}</dd>
+        {/* Release History (if present) */}
+        {selectedChanges.length > 0 && (
+          <section className="space-y-3 rounded-2xl border border-white/10 bg-akg-surface p-6">
+            <h2 className="font-display text-lg font-bold text-white">Release History</h2>
+            <ol className="mt-3 space-y-3 border-l border-white/10 pl-4">
+              {selectedChanges.map((ch) => (
+                <li key={ch.id} className="relative">
+                  <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-akg-gold" />
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-data text-xs font-bold text-akg-gold">{ch.version}</span>
+                    {ch.released && (
+                      <span className="font-data text-[10px] text-akg-muted">
+                        {new Date(ch.released).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
+                      </span>
+                    )}
                   </div>
-                )}
-                <div className="flex items-start justify-between gap-3">
-                  <dt className="text-[11px] text-akg-muted">Pairs</dt>
-                  <dd className="text-right font-data text-[11px] text-akg-silver">{bot.pairs}</dd>
-                </div>
-                {bot.recommended_deposit && (
-                  <div className="flex items-center justify-between gap-3">
-                    <dt className="text-[11px] text-akg-muted">Min capital</dt>
-                    <dd className="font-data text-[11px] text-akg-silver">{bot.recommended_deposit}</dd>
-                  </div>
-                )}
-              </dl>
-            </div>
+                  <p className="mt-1 text-xs text-akg-muted">{ch.summary}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+
+        {/* One-line demo-account reminder & Risk Disclosure */}
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-4 text-xs text-akg-silver">
+            <FlaskConical className="h-4 w-4 shrink-0 text-akg-gold" />
+            <span>
+              <strong className="text-white">Demo account reminder:</strong> Always run the EA on a demo account first to validate execution and slippage on your broker's live feed before committing live capital.
+            </span>
           </div>
+
+          <p className="text-[11px] leading-relaxed text-akg-muted">
+            <strong className="text-akg-silver">Risk Disclosure:</strong> Backtested results do not represent actual trading and cannot account for impact of financial risk or market liquidity. Algorithmic trading carries risk of substantial loss.
+          </p>
         </div>
 
-        {/* checkout modal + MT-account prompt are rendered below and shared */}
-        <PromptModal />
-        <CheckoutModal />
+        {/* License Viewer Modal for Owners */}
+        {licenseModalBot && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-akg-surface p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-akg-green" />
+                  <h3 className="font-bold text-white text-base">Active License</h3>
+                </div>
+                <button
+                  onClick={() => setLicenseModalBot(null)}
+                  className="rounded-lg p-1 text-akg-muted hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div>
+                <div className="font-bold text-sm text-white">{licenseModalBot.bot.name}</div>
+                <div className="font-data text-xs text-akg-muted">Platform: {licenseModalBot.bot.platform}</div>
+              </div>
+
+              <div className="rounded-xl border border-akg-green/30 bg-akg-green/10 p-4 space-y-2 font-mono">
+                <div className="flex items-center justify-between text-[11px] font-bold text-akg-green">
+                  <span>License Key:</span>
+                  <button
+                    onClick={() => handleCopy(licenseModalBot.payment.license_key)}
+                    className="flex items-center gap-1 hover:underline"
+                  >
+                    {copiedKey ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                    <span>{copiedKey ? 'Copied' : 'Copy'}</span>
+                  </button>
+                </div>
+                <div className="rounded-lg bg-black/60 border border-white/10 p-2.5 text-xs text-white font-bold break-all select-all">
+                  {licenseModalBot.payment.license_key}
+                </div>
+                <p className="text-[10px] text-akg-silver font-sans">
+                  Paste this key into the EA inputs dialog. It binds silently to your account on first run.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                {downloadLinksFor(licenseModalBot.bot).map((l) => (
+                  <a
+                    key={l.path}
+                    href={l.path}
+                    download
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-akg-green px-3.5 py-2 font-data text-xs font-bold text-black hover:bg-emerald-400 transition-colors"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Download .{l.ext}</span>
+                  </a>
+                ))}
+                {licenseModalBot.bot.download_url && (
+                  <a
+                    href={licenseModalBot.bot.download_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-sky-400/40 bg-sky-400/10 px-3.5 py-2 font-data text-xs font-semibold text-sky-300 hover:bg-sky-400/20"
+                  >
+                    <HardDrive className="h-3.5 w-3.5" />
+                    <span>Drive Package</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
   // ==========================================================================
-  // CATALOG: /bots
+  // CATALOG GRID: /bots
   // ==========================================================================
   return (
     <div className="space-y-8 font-sans text-akg-silver w-full">
@@ -692,7 +565,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
             Expert Advisors
           </h1>
           <p className="max-w-2xl text-sm text-akg-muted">
-            Rule-based MT4 & MT5 systems with hard stop-loss risk parameters and zero martingale exposure. One-time USDT payment, perpetual license bound to your account.
+            Rule-based MT4 & MT5 systems with hard stop-loss risk parameters and zero martingale exposure. One-time USDT payment with automatic silent first-run binding.
           </p>
         </div>
 
@@ -714,7 +587,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
         </div>
       </div>
 
-      {/* Bots Grid: performance-first cards */}
+      {/* Bots Grid */}
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {filteredBots.map((bot) => {
           const owned = isBotOwned(bot.name);
@@ -726,48 +599,67 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
               className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-akg-surface transition-all hover:border-[#F3C653]/35 hover:shadow-gold cursor-pointer"
               onClick={() => onOpenBot && onOpenBot(slugify(bot.name))}
             >
-              {/* Equity sparkline replaces stock photography */}
-              <div className="relative border-b border-white/[0.06] bg-[#0A0D13] px-4 pt-4">
-                <div className="flex items-center justify-between">
+              {/* Card Header: Backtest Image if available, else clean category header */}
+              {bot.image_url ? (
+                <div className="relative h-32 w-full overflow-hidden border-b border-white/[0.06] bg-[#0A0D13]">
+                  <img
+                    src={pbUrl(bot.image_url.trim())}
+                    alt={bot.name}
+                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute top-3 left-3 flex items-center gap-2">
+                    <Badge variant="secondary" className="font-mono text-[10px]">{bot.platform}</Badge>
+                    <span className="font-data text-[10px] text-white/70">{bot.version || 'v1.0'}</span>
+                  </div>
+                  {owned ? (
+                    <Badge variant="positive" className="absolute top-3 right-3 text-[10px]">Licensed</Badge>
+                  ) : pending ? (
+                    <Badge variant="gold" className="absolute top-3 right-3 text-[10px]">Pending</Badge>
+                  ) : null}
+                  <span className="absolute bottom-2 left-3 font-data text-[9px] uppercase tracking-wider text-akg-gold">
+                    Backtest Preview
+                  </span>
+                </div>
+              ) : (
+                <div className="border-b border-white/[0.06] bg-[#0A0D13] p-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="font-mono text-[10px]">{bot.platform}</Badge>
-                    <span className="font-data text-[10px] text-akg-muted">{bot.version || ''}</span>
+                    <span className="font-data text-[10px] text-akg-muted">{bot.version || 'v1.0'}</span>
                   </div>
                   {owned ? (
                     <Badge variant="positive" className="text-[10px]">Licensed</Badge>
                   ) : pending ? (
                     <Badge variant="gold" className="text-[10px]">Pending</Badge>
-                  ) : null}
+                  ) : (
+                    <span className="font-data text-[10px] uppercase text-akg-muted">{pairsOf(bot)[0] || 'FX'}</span>
+                  )}
                 </div>
-                <EquityCurve
-                  seed={bot.name}
-                  profitFactor={bot.profit_factor}
-                  drawdown={bot.drawdown}
-                  winRate={bot.win_rate}
-                  points={70}
-                  strokeWidth={1.75}
-                  className="h-24 w-full"
-                />
-              </div>
+              )}
 
               <div className="flex flex-1 flex-col p-5">
                 <h3 className="font-display text-base font-bold text-white group-hover:text-akg-gold transition-colors">
                   {bot.name}
                 </h3>
-                <p className="mt-1 font-data text-[11px] uppercase tracking-wide text-akg-muted">
-                  {bot.strategy_type}
-                </p>
+                {bot.strategy_type && (
+                  <p className="mt-1 font-data text-[11px] uppercase tracking-wide text-akg-muted">
+                    {bot.strategy_type}
+                  </p>
+                )}
                 <p className="mt-2.5 line-clamp-2 text-xs leading-relaxed text-akg-muted">
                   {bot.description}
                 </p>
 
-                <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 font-data text-[11px]">
-                  {statNumOrNull(bot.win_rate) !== null && <span className="text-akg-green">{pctStat(bot.win_rate)} win</span>}
-                  {statNumOrNull(bot.profit_factor) !== null && <span className="text-akg-muted">PF {bot.profit_factor}</span>}
-                  {statNumOrNull(bot.drawdown) !== null && <span className="text-akg-muted">DD {pctStat(bot.drawdown)}</span>}
-                </div>
+                {/* Only display stats if filled */}
+                {(bot.win_rate != null || bot.profit_factor != null || bot.drawdown != null) && (
+                  <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 font-data text-[11px]">
+                    {statNumOrNull(bot.win_rate) !== null && <span className="text-akg-green">{pctStat(bot.win_rate)} win</span>}
+                    {statNumOrNull(bot.profit_factor) !== null && <span className="text-akg-muted">PF {bot.profit_factor}</span>}
+                    {statNumOrNull(bot.drawdown) !== null && <span className="text-akg-muted">DD {pctStat(bot.drawdown)}</span>}
+                  </div>
+                )}
 
-                <div className="mt-auto flex items-center justify-between pt-5">
+                <div className="mt-auto flex items-center justify-between pt-5 border-t border-white/[0.04]">
                   <div>
                     <div className="font-display text-lg font-extrabold text-white tabular-nums">
                       ${bot.price}
@@ -799,287 +691,6 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
           <p className="mt-1 text-xs text-akg-muted">Switch the platform filter to see the full catalog.</p>
         </div>
       )}
-
-      {/* Account-number prompt before the cart — shared with the product page */}
-      <PromptModal />
-
-      {/* =========================================================================
-          BOT LICENSE VIEW MODAL (existing purchases; new buys go to /checkout)
-      ========================================================================= */}
-      <CheckoutModal />
     </div>
   );
-
-  function PromptModal() {
-    if (!promptBot) return null;
-    return (
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 backdrop-blur-sm sm:items-center sm:p-4">
-        <div className="absolute inset-0" onClick={() => setPromptBot(null)} />
-        <div className="relative w-full rounded-t-3xl border border-white/10 bg-akg-surface p-6 shadow-2xl sm:max-w-md sm:rounded-2xl">
-          <div className="mx-auto mt-[-10px] mb-3 h-1 w-10 rounded-full bg-white/15 sm:hidden" />
-          <h3 className="font-display text-base font-bold text-white">Bind your license</h3>
-          <p className="mt-1 text-xs leading-relaxed text-akg-muted">
-            Enter your MetaTrader {promptBot.platform} account number. The license key is permanently bound to it.
-          </p>
-          <input
-            autoFocus
-            value={promptAccount}
-            onChange={(e) => setPromptAccount(e.target.value)}
-            placeholder="e.g. 884920"
-            className="mt-4 h-11 w-full rounded-xl border border-white/10 bg-[#0A0D13] px-3.5 font-data text-sm text-white placeholder:text-akg-muted/50 focus:border-[#F3C653]/50 focus:outline-none"
-          />
-          <button
-            onClick={() => {
-              if (!promptAccount.trim()) return;
-              sessionStorage.setItem('akg_order', JSON.stringify({
-                kind: 'bot',
-                id: promptBot.id,
-                name: promptBot.name,
-                price: promptBot.price,
-                platform: promptBot.platform,
-                account: promptAccount.trim(),
-              }));
-              const nav = onNavigate;
-              setPromptBot(null);
-              if (nav) nav('checkout');
-            }}
-            disabled={!promptAccount.trim()}
-            className="mt-4 h-11 w-full rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] text-sm font-bold text-[#1C1403] disabled:opacity-40"
-          >
-            Continue to Checkout
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  function CheckoutModal() {
-    if (!checkoutBot) return null;
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
-        <Card className="w-full max-w-lg shadow-2xl bg-akg-surface border border-white/10 max-h-[92vh] flex flex-col overflow-hidden my-auto">
-          <CardHeader className="p-4 sm:p-5 pb-3 border-b border-white/10 shrink-0 flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-base sm:text-lg flex items-center gap-2 text-white">
-                <CreditCard className="h-5 w-5 text-akg-gold" />
-                <span>{checkoutBot.name} · Checkout</span>
-              </CardTitle>
-              <CardDescription className="text-xs text-akg-muted mt-0.5">
-                Perpetual binary EA license for {checkoutBot.platform}.
-              </CardDescription>
-            </div>
-            <button
-              onClick={() => setCheckoutBot(null)}
-              className="text-akg-muted hover:text-white p-1 rounded-lg cursor-pointer"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </CardHeader>
-
-          <CardContent className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-4 text-xs font-sans">
-
-            {/* SUCCESS / PURCHASE RESULT VIEW */}
-            {purchaseResult ? (
-              <div className="space-y-4 py-2">
-                <div className="text-center space-y-2">
-                  <div className={`h-12 w-12 rounded-full flex items-center justify-center mx-auto border ${
-                    purchaseResult.status === 'confirmed'
-                      ? 'bg-[#00D878]/15 text-[#00D878] border-[#00D878]/30'
-                      : 'bg-[#F3C653]/15 text-[#F3C653] border-[#F3C653]/30'
-                  }`}>
-                    {purchaseResult.status === 'confirmed' ? <CheckCircle2 className="h-7 w-7" /> : <Clock className="h-7 w-7" />}
-                  </div>
-                  <h3 className="text-lg font-bold text-white">
-                    {purchaseResult.status === 'confirmed' && purchaseResult.key
-                      ? 'License Key Active & Bound'
-                      : 'Payment Submitted for Desk Verification'}
-                  </h3>
-                  <p className="text-xs text-akg-muted max-w-sm mx-auto leading-relaxed">
-                    {purchaseResult.status === 'confirmed' && purchaseResult.key
-                      ? `Bound to MetaTrader ${purchaseResult.bot.platform} Account #${purchaseResult.account}.`
-                      : `Your TXID has been logged. Once the desk approves the payment, your license key is issued automatically and appears here and in My Purchases.`}
-                  </p>
-                </div>
-
-                {/* License Key Box (only after server-side issuance) */}
-                {purchaseResult.status === 'confirmed' && purchaseResult.key && (
-                  <div className="p-4 rounded-xl border border-[#00D878]/30 bg-[#00D878]/10 space-y-2 font-mono">
-                    <div className="flex items-center justify-between text-[#00D878] text-[11px] font-bold">
-                      <span className="flex items-center gap-1.5">
-                        <KeyRound className="h-3.5 w-3.5" />
-                        <span>Hardware & Account License Key:</span>
-                      </span>
-                      <button
-                        onClick={() => handleCopy(purchaseResult.key, 'key')}
-                        className="hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        {copiedKey ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                        <span>{copiedKey ? 'Copied' : 'Copy'}</span>
-                      </button>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-black/60 border border-white/10 text-white font-bold text-xs break-all select-all">
-                      {purchaseResult.key}
-                    </div>
-                    <div className="text-[10px] text-slate-400">
-                      Paste this into your MetaTrader {purchaseResult.bot.platform} EA inputs dialog.
-                    </div>
-                  </div>
-                )}
-
-                {/* Download Options */}
-                <div className="grid grid-cols-2 gap-2 pt-2">
-                  {downloadLinksFor(purchaseResult.bot).map((l) => (
-                    <a
-                      key={l.path}
-                      href={l.path}
-                      download
-                      className="inline-flex items-center justify-center gap-2 p-2.5 rounded-xl bg-[#00D878] text-[#052012] font-bold hover:bg-[#00F09A] transition-all text-xs text-center cursor-pointer shadow-xs"
-                    >
-                      <Download className="h-4 w-4" />
-                      <span>Download .{l.ext} ({l.platform})</span>
-                    </a>
-                  ))}
-
-                  {purchaseResult.bot.download_url ? (
-                    <a
-                      href={purchaseResult.bot.download_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 p-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 transition-all text-xs text-center"
-                    >
-                      <HardDrive className="h-4 w-4" />
-                      <span>Google Drive Pack</span>
-                    </a>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      onClick={() => setCheckoutBot(null)}
-                      className="text-xs"
-                    >
-                      Done
-                    </Button>
-                  )}
-                </div>
-
-                {purchaseResult.isExisting && (
-                  <div className="pt-2 flex items-center justify-between border-t border-white/10 text-xs">
-                    <span className="text-akg-muted">Need to bind another account?</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPurchaseResult(null);
-                        setCheckoutAccount('');
-                        setCheckoutTxid('');
-                      }}
-                      className="text-akg-gold hover:underline font-bold cursor-pointer"
-                    >
-                      + Purchase License for New Account #
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* CHECKOUT FORM */
-              <div className="space-y-4">
-                {/* Price Banner */}
-                <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
-                  <div>
-                    <div className="text-[10px] text-akg-muted uppercase tracking-wider font-mono">One-Time Perpetual Price</div>
-                    <div className="text-2xl font-black text-white font-mono mt-0.5">
-                      ${checkoutBot.price}.00 <span className="text-xs text-akg-gold">USDT</span>
-                    </div>
-                  </div>
-                  <Badge variant="positive">Perpetual Binary</Badge>
-                </div>
-
-                {/* Required Account Number */}
-                <div>
-                  <label className="block text-akg-silver font-semibold mb-1">
-                    MetaTrader {checkoutBot.platform} Account Number <span className="text-rose-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. 884920 or demo account number"
-                    value={checkoutAccount}
-                    onChange={(e) => setCheckoutAccount(e.target.value)}
-                    className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-white font-mono placeholder:text-white/20 focus:border-[#F3C653] focus:outline-none text-xs"
-                  />
-                  <span className="text-[10px] text-slate-400 mt-0.5 block">
-                    The generated binary license will be bound to this account number.
-                  </span>
-                </div>
-
-                {/* Network Picker */}
-                <div>
-                  <label className="block text-akg-silver font-semibold mb-1">Select Settlement Network</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {['USDT-TRC20', 'USDT-BEP20', 'USDT-ERC20'].map((net) => (
-                      <button
-                        key={net}
-                        type="button"
-                        onClick={() => setCheckoutNetwork(net)}
-                        className={`py-2 px-2.5 rounded-xl border text-center transition-all cursor-pointer font-bold text-xs ${
-                          checkoutNetwork === net
-                            ? 'border-[#F3C653] bg-[#F3C653]/15 text-[#F3C653]'
-                            : 'border-white/10 bg-white/5 text-akg-muted hover:bg-white/10'
-                        }`}
-                      >
-                        {net.replace('USDT-', '')}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Deposit Address Box */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-akg-silver font-semibold">Deposit Wallet Address ({checkoutNetwork})</span>
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(WALLETS[checkoutNetwork], 'address')}
-                      className="text-akg-gold hover:underline flex items-center gap-1 cursor-pointer font-semibold"
-                    >
-                      {copiedAddress ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      <span>{copiedAddress ? 'Copied' : 'Copy'}</span>
-                    </button>
-                  </div>
-                  <div className="p-2.5 rounded-xl border border-white/10 bg-[#07090D] text-akg-gold break-all select-all font-mono text-xs">
-                    {WALLETS[checkoutNetwork]}
-                  </div>
-                </div>
-
-                {/* TXID Input */}
-                <div>
-                  <label className="block text-akg-silver font-semibold mb-1">
-                    Transaction Hash / TXID
-                  </label>
-                  <input
-                    type="text"
-                    value={checkoutTxid}
-                    onChange={(e) => setCheckoutTxid(e.target.value)}
-                    placeholder="Paste your blockchain transaction hash here..."
-                    className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-white placeholder:text-white/20 focus:border-[#F3C653] focus:outline-none text-xs font-mono"
-                  />
-                </div>
-
-                {/* Action Buttons */}
-                <div className="space-y-2 pt-2">
-                  <Button
-                    type="button"
-                    disabled={submitting}
-                    onClick={() => handlePurchase()}
-                    className="w-full justify-center gap-2 font-bold"
-                  >
-                    <span>{submitting ? 'Processing...' : 'Submit Payment for Desk Verification'}</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 }

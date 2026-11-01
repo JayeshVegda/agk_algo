@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Cpu, Plus, Pencil, Trash2, ExternalLink, Eye, Image as ImageIcon } from 'lucide-react';
-import { pb } from '../../../lib/pocketbase';
+import React, { useMemo, useRef, useState } from 'react';
+import { Cpu, Plus, Pencil, Trash2, ChevronDown, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { useAdmin } from '../AdminContext';
 import { SectionHeader, FilterChips, SearchInput, EmptyState, labelCls, inputCls, textareaCls } from '../components/ui';
 import { ActionSheet, ConfirmSheet } from '../components/ActionSheet';
@@ -32,10 +31,28 @@ export function downscaleImage(file, maxSide = 640) {
 const listText = (v) => (Array.isArray(v) ? v.join(', ') : String(v || ''));
 
 const EMPTY_BOT = {
-  name: '', platform: 'MT5', price: '', version: '', recommended_deposit: '',
-  win_rate: '', drawdown: '', profit_factor: '', pairs: '', strategy_type: '',
-  features: '', description: '', image_url: '', download_url: '',
-  timeframes: '', trading_style: '', min_lot: '', leverage: '', broker_note: '',
+  name: '',
+  platform: 'MT5',
+  price: '',
+  version: 'v1.0',
+  pairs: '',
+  description: '',
+  download_url: '',
+  is_live: true,
+  // Stats (optional)
+  win_rate: '',
+  drawdown: '',
+  profit_factor: '',
+  image_url: '',
+  // Advanced (optional)
+  strategy_type: '',
+  trading_style: '',
+  timeframes: '',
+  min_lot: '',
+  leverage: '',
+  recommended_deposit: '',
+  broker_note: '',
+  features: '',
 };
 
 export default function Bots() {
@@ -43,50 +60,49 @@ export default function Bots() {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState(null); // null closed, {} new, {...bot} edit
-  const [dossier, setDossier] = useState(null);
   const [deleting, setDeleting] = useState(null);
 
-  // ?edit=<bot id> deep-link (admin bar on the public /bots/<slug> page).
-  const query = useUrlQuery();
-  const deepEdit = query.edit || '';
-  useEffect(() => {
-    if (deepEdit && !editing && bots.length) {
-      const b = bots.find((x) => x.id === deepEdit);
-      if (b) setEditing({ ...b });
-    }
-  }, [deepEdit, bots, editing]);
+  // Deep-link edit: /admin?s=bots&edit=<id>
+  const deepEdit = useUrlQuery('edit');
+  React.useEffect(() => {
+    if (!deepEdit || bots.length === 0) return;
+    const found = bots.find((b) => b.id === deepEdit);
+    if (found) setEditing(found);
+  }, [deepEdit, bots]);
+
   const closeEditor = () => {
     setEditing(null);
     if (deepEdit) replaceParams({ edit: '' });
   };
 
-  const counts = useMemo(() => ({
-    all: bots.length,
-    MT4: bots.filter((b) => (b.platform || '').includes('MT4')).length,
-    MT5: bots.filter((b) => (b.platform || '').includes('MT5')).length,
-  }), [bots]);
+  const counts = useMemo(
+    () => ({
+      all: bots.length,
+      live: bots.filter((b) => b.is_live !== false).length,
+      draft: bots.filter((b) => b.is_live === false).length,
+      MT4: bots.filter((b) => (b.platform || '').includes('MT4')).length,
+      MT5: bots.filter((b) => (b.platform || '').includes('MT5')).length,
+    }),
+    [bots]
+  );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return bots
-      .filter((b) => (filter === 'all' ? true : (b.platform || '').includes(filter)))
+      .filter((b) => {
+        if (filter === 'all') return true;
+        if (filter === 'live') return b.is_live !== false;
+        if (filter === 'draft') return b.is_live === false;
+        return (b.platform || '').includes(filter);
+      })
       .filter((b) => !q || (b.name || '').toLowerCase().includes(q) || listText(b.pairs).toLowerCase().includes(q));
   }, [bots, filter, search]);
-
-  // Linked signals fetched on demand when the dossier opens (small query).
-  const [linkedSignals, setLinkedSignals] = useState([]);
-  useEffect(() => {
-    if (!dossier) { setLinkedSignals([]); return; }
-    pb.collection('signals').getList(1, 60, { filter: "status = 'active'", sort: '-created' })
-      .then((res) => setLinkedSignals(res.items.filter((sig) => (dossier.pairs || '').includes(sig.symbol)).slice(0, 6)))
-      .catch(() => setLinkedSignals([]));
-  }, [dossier]);
 
   return (
     <div className="space-y-5">
       <SectionHeader
         title="Expert Advisors"
-        sub={`${bots.length} systems in the catalog. Licenses and binaries are handled automatically at purchase.`}
+        sub={`${counts.live} live · ${counts.draft} draft. Licenses and binaries are handled automatically on first run.`}
         actions={
           <button
             onClick={() => setEditing({ ...EMPTY_BOT })}
@@ -103,6 +119,8 @@ export default function Bots() {
           onChange={setFilter}
           options={[
             { id: 'all', label: 'All', count: counts.all },
+            { id: 'live', label: 'Live', count: counts.live },
+            { id: 'draft', label: 'Draft', count: counts.draft },
             { id: 'MT4', label: 'MT4', count: counts.MT4 },
             { id: 'MT5', label: 'MT5', count: counts.MT5 },
           ]}
@@ -113,118 +131,74 @@ export default function Bots() {
       {filtered.length === 0 ? (
         <EmptyState icon={Cpu} title="No bots match" hint="Add your first Expert Advisor with the button above." />
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((b) => (
-            <article
-              key={b.id}
-              className="group flex flex-col rounded-2xl border border-white/10 bg-akg-surface p-4 transition-all hover:border-[#F3C653]/35"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-bold text-white">{b.name}</div>
-                  <div className="font-data text-[10px] text-akg-muted">{b.platform} · {b.version || 'v1'}</div>
-                </div>
-                <span className="shrink-0 font-data text-sm font-bold text-akg-gold">${b.price}</span>
-              </div>
-              <p className="mt-2 line-clamp-2 flex-1 text-[11px] leading-relaxed text-akg-muted">{b.description}</p>
-              <div className="mt-2 flex gap-3 font-data text-[10px] text-akg-muted">
-                {b.win_rate != null && b.win_rate !== '' && <span className="text-akg-green">{b.win_rate}%</span>}
-                {b.profit_factor != null && b.profit_factor !== '' && <span>PF {b.profit_factor}</span>}
-                {b.drawdown != null && b.drawdown !== '' && <span>DD {b.drawdown}%</span>}
-              </div>
-              <div className="mt-3 flex items-center justify-between border-t border-white/[0.06] pt-3">
-                <button
-                  onClick={() => setDossier(b)}
-                  className="flex items-center gap-1 text-[11px] font-bold text-akg-gold hover:text-akg-goldLight"
-                >
-                  <Eye className="h-3.5 w-3.5" /> Dossier
-                </button>
-                <div className="flex items-center gap-1.5">
-                  <button onClick={() => setEditing(b)} className="rounded-lg p-1.5 text-akg-muted hover:bg-white/5 hover:text-white" title="Edit">
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button onClick={() => setDeleting(b)} className="rounded-lg p-1.5 text-akg-muted hover:bg-rose-500/10 hover:text-rose-300" title="Delete">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-akg-surface">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left font-sans text-xs">
+              <thead className="border-b border-white/10 bg-white/[0.02] font-data text-[10px] uppercase tracking-wider text-akg-muted">
+                <tr>
+                  <th className="px-4 py-3.5">Name</th>
+                  <th className="px-4 py-3.5">Platform</th>
+                  <th className="px-4 py-3.5">Price</th>
+                  <th className="px-4 py-3.5">Status</th>
+                  <th className="px-4 py-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.05]">
+                {filtered.map((b) => (
+                  <tr key={b.id} className="transition-colors hover:bg-white/[0.02]">
+                    <td className="px-4 py-3.5">
+                      <div className="font-bold text-sm text-white">{b.name}</div>
+                      <div className="mt-0.5 font-data text-[10px] text-akg-muted">
+                        {b.version || 'v1.0'} · {listText(b.pairs) || 'All pairs'}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 font-data text-[10px] font-semibold text-akg-silver">
+                        {b.platform}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className="font-data text-sm font-bold text-akg-gold">${b.price}</span>
+                      <span className="ml-1 text-[10px] text-akg-muted">USDT</span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span
+                        className={cn(
+                          'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-data text-[10px] font-bold',
+                          b.is_live !== false
+                            ? 'border-akg-green/30 bg-akg-green/15 text-akg-green'
+                            : 'border-white/15 bg-white/5 text-akg-muted'
+                        )}
+                      >
+                        <span className={cn('h-1.5 w-1.5 rounded-full', b.is_live !== false ? 'bg-akg-green' : 'bg-akg-muted')} />
+                        {b.is_live !== false ? 'Live' : 'Draft'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setEditing(b)}
+                          className="rounded-lg p-1.5 text-akg-muted hover:bg-white/5 hover:text-white"
+                          title="Edit"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeleting(b)}
+                          className="rounded-lg p-1.5 text-akg-muted hover:bg-rose-500/10 hover:text-rose-300"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
-
-      {/* Dossier */}
-      <ActionSheet
-        open={!!dossier}
-        onClose={() => setDossier(null)}
-        size="lg"
-        title={dossier?.name}
-        subtitle={dossier ? `${dossier.platform} · ${listText(dossier.pairs)}` : ''}
-      >
-        {dossier && (
-          <div className="space-y-5">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {[
-                ['Price', `$${dossier.price}`],
-                ['Win rate', dossier.win_rate != null && dossier.win_rate !== '' ? `${dossier.win_rate}%` : ''],
-                ['Profit factor', dossier.profit_factor],
-                ['Max drawdown', dossier.drawdown != null && dossier.drawdown !== '' ? `${dossier.drawdown}%` : ''],
-              ].map(([k, v]) => (
-                <div key={k} className="rounded-xl border border-white/[0.07] bg-[#0A0D13] px-3 py-2.5">
-                  <div className="text-[9px] uppercase tracking-wide text-akg-muted">{k}</div>
-                  <div className="mt-0.5 font-data text-sm font-semibold text-white">{v || '-'}</div>
-                </div>
-              ))}
-            </div>
-
-            {dossier.strategy_type && (
-              <div>
-                <h3 className={labelCls}>Strategy</h3>
-                <p className="rounded-xl border border-white/[0.07] bg-[#0A0D13] px-3.5 py-3 text-xs leading-relaxed text-akg-silver">
-                  {dossier.strategy_type}
-                </p>
-              </div>
-            )}
-
-            {dossier.features && (
-              <div>
-                <h3 className={labelCls}>Features</h3>
-                <ul className="space-y-1.5">
-                  {String(dossier.features).split(/[\n,]/).map((f, i) => f.trim() && (
-                    <li key={i} className="rounded-lg bg-white/[0.03] px-3 py-1.5 text-xs text-akg-silver">{f.trim()}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {dossier.download_url && (
-              <a
-                href={dossier.download_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between rounded-xl border border-sky-400/20 bg-sky-400/[0.06] px-4 py-3 text-xs font-semibold text-sky-300 hover:bg-sky-400/10"
-              >
-                <span>Distribution package (Drive)</span>
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            )}
-
-            {linkedSignals.length > 0 && (
-              <div>
-                <h3 className={labelCls}>Linked live signals ({linkedSignals.length})</h3>
-                <div className="space-y-2">
-                  {linkedSignals.map((s) => (
-                    <div key={s.id} className="flex items-center justify-between rounded-xl border border-white/[0.07] bg-[#0A0D13] px-3.5 py-2.5 font-data text-[11px]">
-                      <span className="font-bold text-white">{s.symbol} {s.direction}</span>
-                      <span className="text-akg-muted">E {s.entry} · SL {s.stop_loss}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </ActionSheet>
 
       <BotEditor
         bot={editing}
@@ -240,9 +214,11 @@ export default function Bots() {
       <ConfirmSheet
         open={!!deleting}
         onClose={() => setDeleting(null)}
-        onConfirm={async () => { if (deleting) await deleteBot(deleting); }}
+        onConfirm={async () => {
+          if (deleting) await deleteBot(deleting);
+        }}
         title="Delete bot?"
-        message={deleting ? `${deleting.name} will disappear from the public catalog. Existing licenses stay valid.` : ''}
+        message={deleting ? `${deleting.name} will disappear from the catalog. Existing licenses stay valid.` : ''}
         confirmLabel="Delete"
         danger
       />
@@ -253,6 +229,8 @@ export default function Bots() {
 function BotEditor({ bot, onClose, onSave }) {
   const [form, setForm] = useState(EMPTY_BOT);
   const [busy, setBusy] = useState(false);
+  const [openStats, setOpenStats] = useState(false);
+  const [openAdvanced, setOpenAdvanced] = useState(false);
   const fileRef = useRef(null);
 
   React.useEffect(() => {
@@ -261,7 +239,8 @@ function BotEditor({ bot, onClose, onSave }) {
       setForm({
         ...EMPTY_BOT,
         ...Object.fromEntries(Object.entries(bot).map(([k, v]) => [k, v ?? ''])),
-        // json/number columns come back typed — surface them as editable strings
+        version: bot.version || 'v1.0',
+        is_live: bot.is_live !== false,
         pairs: joinList(bot.pairs),
         features: joinList(bot.features),
         timeframes: joinList(bot.timeframes),
@@ -273,6 +252,13 @@ function BotEditor({ bot, onClose, onSave }) {
         trading_style: bot.trading_style || '',
         broker_note: bot.broker_note || '',
       });
+      // Expand sections if existing bot already has data in them
+      if (bot.win_rate || bot.profit_factor || bot.drawdown || bot.image_url) {
+        setOpenStats(true);
+      }
+      if (bot.strategy_type || bot.trading_style || bot.min_lot || bot.leverage || bot.broker_note) {
+        setOpenAdvanced(true);
+      }
     }
   }, [bot]);
 
@@ -287,21 +273,26 @@ function BotEditor({ bot, onClose, onSave }) {
       onClose={onClose}
       size="lg"
       title={bot.id ? 'Edit bot' : 'Add bot'}
-      subtitle="Catalog entry shown on the public Expert Advisors page."
+      subtitle="5 core fields always visible. Stats and advanced specifications are optional."
       footer={
         <button
           onClick={async () => {
             setBusy(true);
             const numOrNull = (v) => {
-              const n = parseFloat(String(v).replace('%', ''));
+              const n = parseFloat(String(v).replace('%', '').trim());
               return Number.isFinite(n) ? n : null;
             };
-            const list = (v, upper = false) => String(v || '')
-              .split(/[\n,]/).map((t) => t.trim()).filter(Boolean)
-              .map((t) => (upper ? t.toUpperCase() : t));
+            const list = (v, upper = false) =>
+              String(v || '')
+                .split(/[\n,]/)
+                .map((t) => t.trim())
+                .filter(Boolean)
+                .map((t) => (upper ? t.toUpperCase() : t));
             const payload = {
               ...form,
               price: Number(form.price),
+              version: form.version || 'v1.0',
+              is_live: !!form.is_live,
               win_rate: numOrNull(form.win_rate),
               drawdown: numOrNull(form.drawdown),
               profit_factor: numOrNull(form.profit_factor),
@@ -325,7 +316,8 @@ function BotEditor({ bot, onClose, onSave }) {
         </button>
       }
     >
-      <div className="space-y-3.5">
+      <div className="space-y-4">
+        {/* Core Field 1: Name & Platform */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={labelCls}>Name *</label>
@@ -340,111 +332,187 @@ function BotEditor({ bot, onClose, onSave }) {
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+
+        {/* Core Field 2: Price, Version, Live/Draft Toggle */}
+        <div className="grid grid-cols-3 gap-3">
           <div>
             <label className={labelCls}>Price USDT *</label>
             <input value={form.price} onChange={set('price')} type="number" className={cn(inputCls, 'font-data')} placeholder="299" />
           </div>
           <div>
             <label className={labelCls}>Version</label>
-            <input value={form.version} onChange={set('version')} className={cn(inputCls, 'font-data')} placeholder="v3.2" />
+            <input value={form.version} onChange={set('version')} className={cn(inputCls, 'font-data')} placeholder="v1.0" />
           </div>
           <div>
-            <label className={labelCls}>Win rate</label>
-            <input value={form.win_rate} onChange={set('win_rate')} className={cn(inputCls, 'font-data')} placeholder="81.4%" />
-          </div>
-          <div>
-            <label className={labelCls}>Max drawdown</label>
-            <input value={form.drawdown} onChange={set('drawdown')} className={cn(inputCls, 'font-data')} placeholder="5.8%" />
-          </div>
-          <div>
-            <label className={labelCls}>Profit factor</label>
-            <input value={form.profit_factor} onChange={set('profit_factor')} className={cn(inputCls, 'font-data')} placeholder="2.64" />
-          </div>
-          <div className="col-span-2">
-            <label className={labelCls}>Strategy type</label>
-            <input value={form.strategy_type} onChange={set('strategy_type')} className={inputCls} placeholder="Session Liquidity Sweep" />
-          </div>
-          <div>
-            <label className={labelCls}>Trading style</label>
-            <input value={form.trading_style} onChange={set('trading_style')} className={inputCls} placeholder="Intraday swing" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div>
-            <label className={labelCls}>Timeframes</label>
-            <input value={form.timeframes} onChange={set('timeframes')} className={cn(inputCls, 'font-data')} placeholder="M15, H1" />
-          </div>
-          <div>
-            <label className={labelCls}>Min lot</label>
-            <input value={form.min_lot} onChange={set('min_lot')} type="number" step="0.01" className={cn(inputCls, 'font-data')} placeholder="0.01" />
-          </div>
-          <div>
-            <label className={labelCls}>Leverage guide</label>
-            <input value={form.leverage} onChange={set('leverage')} className={cn(inputCls, 'font-data')} placeholder="1:20+" />
-          </div>
-          <div>
-            <label className={labelCls}>Min capital</label>
-            <input value={form.recommended_deposit} onChange={set('recommended_deposit')} className={cn(inputCls, 'font-data')} placeholder="$1,000" />
-          </div>
-        </div>
-        <div>
-          <label className={labelCls}>Broker note</label>
-          <textarea value={form.broker_note} onChange={set('broker_note')} className={textareaCls} placeholder="Broker/feed guidance for this bot (no performance claims)." />
-        </div>
-        <div>
-          <label className={labelCls}>Traded pairs</label>
-          <input value={form.pairs} onChange={(e) => setForm({ ...form, pairs: e.target.value.toUpperCase() })} className={cn(inputCls, 'font-data')} placeholder="XAUUSD (Gold)" />
-        </div>
-        <div>
-          <label className={labelCls}>Description</label>
-          <textarea value={form.description} onChange={set('description')} className={textareaCls} placeholder="One-paragraph strategy description shown on the product page..." />
-        </div>
-        <div>
-          <label className={labelCls}>Features (comma or newline separated)</label>
-          <textarea value={form.features} onChange={set('features')} className={textareaCls} placeholder="Hard stop-loss, Dynamic lot sizing, ..." />
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className={labelCls}>Image URL</label>
-            <input value={form.image_url?.startsWith('data:') ? '' : form.image_url} onChange={set('image_url')} className={inputCls} placeholder="https://..." />
+            <label className={labelCls}>Status</label>
             <button
-              onClick={() => fileRef.current?.click()}
-              className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-akg-gold hover:underline"
+              type="button"
+              onClick={() => setForm((prev) => ({ ...prev, is_live: !prev.is_live }))}
+              className={cn(
+                'flex h-10 w-full items-center justify-center gap-2 rounded-xl border font-data text-xs font-bold transition-colors',
+                form.is_live
+                  ? 'border-akg-green/40 bg-akg-green/15 text-akg-green'
+                  : 'border-white/15 bg-white/5 text-akg-muted hover:border-white/25'
+              )}
             >
-              <ImageIcon className="h-3.5 w-3.5" /> or upload (auto-downscaled to webp)
+              <span className={cn('h-2 w-2 rounded-full', form.is_live ? 'bg-akg-green' : 'bg-akg-muted')} />
+              {form.is_live ? 'Live' : 'Draft'}
             </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={async (e) => {
-                const f = e.target.files?.[0];
-                if (f) {
-                  try {
-                    const dataUrl = await downscaleImage(f);
-                    setForm((prev) => ({ ...prev, image_url: dataUrl }));
-                  } catch {
-                    /* ignore unreadable file */
-                  }
-                }
-                e.target.value = '';
-              }}
-            />
-            {form.image_url && (
-              <div className="mt-2 overflow-hidden rounded-lg border border-white/10">
-                <img src={form.image_url} alt="preview" className="h-20 w-full object-cover" />
+          </div>
+        </div>
+
+        {/* Core Field 3: Traded Pairs */}
+        <div>
+          <label className={labelCls}>Traded pairs *</label>
+          <input
+            value={form.pairs}
+            onChange={(e) => setForm({ ...form, pairs: e.target.value.toUpperCase() })}
+            className={cn(inputCls, 'font-data')}
+            placeholder="XAUUSD, EURUSD, GBPUSD"
+          />
+        </div>
+
+        {/* Core Field 4: Description (1-2 lines) */}
+        <div>
+          <label className={labelCls}>Description (1-2 lines) *</label>
+          <textarea
+            rows={2}
+            value={form.description}
+            onChange={set('description')}
+            className={textareaCls}
+            placeholder="Institutional liquidity sweep EA with hard stop loss and dynamic trailing targets."
+          />
+        </div>
+
+        {/* Core Field 5: EA Package Link */}
+        <div>
+          <label className={labelCls}>EA file / Google Drive link (optional)</label>
+          <input
+            value={form.download_url}
+            onChange={set('download_url')}
+            className={inputCls}
+            placeholder="https://drive.google.com/..."
+          />
+          <p className="mt-1 text-[11px] text-akg-muted">
+            Delivered in buyer notifications & My Account once payment is confirmed.
+          </p>
+        </div>
+
+        {/* Collapsible: Stats (optional) */}
+        <div className="rounded-xl border border-white/10 bg-white/[0.015] overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setOpenStats((o) => !o)}
+            className="flex w-full items-center justify-between px-4 py-3 text-left font-data text-xs font-semibold text-akg-silver hover:bg-white/[0.03]"
+          >
+            <span>Stats (optional)</span>
+            {openStats ? <ChevronDown className="h-4 w-4 text-akg-muted" /> : <ChevronRight className="h-4 w-4 text-akg-muted" />}
+          </button>
+          {openStats && (
+            <div className="space-y-3 border-t border-white/10 p-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className={labelCls}>Win rate</label>
+                  <input value={form.win_rate} onChange={set('win_rate')} className={cn(inputCls, 'font-data')} placeholder="81.4%" />
+                </div>
+                <div>
+                  <label className={labelCls}>Profit factor</label>
+                  <input value={form.profit_factor} onChange={set('profit_factor')} className={cn(inputCls, 'font-data')} placeholder="2.64" />
+                </div>
+                <div>
+                  <label className={labelCls}>Max drawdown</label>
+                  <input value={form.drawdown} onChange={set('drawdown')} className={cn(inputCls, 'font-data')} placeholder="5.8%" />
+                </div>
               </div>
-            )}
-          </div>
-          <div>
-            <label className={labelCls}>Google Drive package URL</label>
-            <input value={form.download_url} onChange={set('download_url')} className={inputCls} placeholder="https://drive.google.com/..." />
-            <p className="mt-1.5 text-[11px] text-akg-muted">
-              Buyers get this link in their approval notification and My Account once you confirm their payment; the API hides it from non-buyers.
-            </p>
-          </div>
+              <div>
+                <label className={labelCls}>Backtest image</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    value={form.image_url?.startsWith('data:') ? '' : form.image_url}
+                    onChange={set('image_url')}
+                    className={inputCls}
+                    placeholder="https://... or upload image"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    className="flex shrink-0 items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-akg-gold hover:bg-white/5"
+                  >
+                    <ImageIcon className="h-4 w-4" /> Upload
+                  </button>
+                </div>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      try {
+                        const dataUrl = await downscaleImage(f);
+                        setForm((prev) => ({ ...prev, image_url: dataUrl }));
+                      } catch {}
+                    }
+                    e.target.value = '';
+                  }}
+                />
+                {form.image_url && (
+                  <div className="mt-2.5 overflow-hidden rounded-xl border border-white/10 max-h-36">
+                    <img src={form.image_url} alt="Backtest Preview" className="w-full object-cover" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Collapsible: Advanced (optional) */}
+        <div className="rounded-xl border border-white/10 bg-white/[0.015] overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setOpenAdvanced((o) => !o)}
+            className="flex w-full items-center justify-between px-4 py-3 text-left font-data text-xs font-semibold text-akg-silver hover:bg-white/[0.03]"
+          >
+            <span>Advanced (optional)</span>
+            {openAdvanced ? <ChevronDown className="h-4 w-4 text-akg-muted" /> : <ChevronRight className="h-4 w-4 text-akg-muted" />}
+          </button>
+          {openAdvanced && (
+            <div className="space-y-3 border-t border-white/10 p-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Strategy type</label>
+                  <input value={form.strategy_type} onChange={set('strategy_type')} className={inputCls} placeholder="Session Liquidity Sweep" />
+                </div>
+                <div>
+                  <label className={labelCls}>Trading style</label>
+                  <input value={form.trading_style} onChange={set('trading_style')} className={inputCls} placeholder="Intraday swing" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className={labelCls}>Timeframes</label>
+                  <input value={form.timeframes} onChange={set('timeframes')} className={cn(inputCls, 'font-data')} placeholder="M15, H1" />
+                </div>
+                <div>
+                  <label className={labelCls}>Min lot</label>
+                  <input value={form.min_lot} onChange={set('min_lot')} type="number" step="0.01" className={cn(inputCls, 'font-data')} placeholder="0.01" />
+                </div>
+                <div>
+                  <label className={labelCls}>Leverage guide</label>
+                  <input value={form.leverage} onChange={set('leverage')} className={cn(inputCls, 'font-data')} placeholder="1:20+" />
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>Min capital</label>
+                <input value={form.recommended_deposit} onChange={set('recommended_deposit')} className={cn(inputCls, 'font-data')} placeholder="$1,000" />
+              </div>
+              <div>
+                <label className={labelCls}>Broker note</label>
+                <textarea value={form.broker_note} onChange={set('broker_note')} className={textareaCls} placeholder="Guidance for broker spread/feed..." />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </ActionSheet>

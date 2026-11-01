@@ -7,7 +7,6 @@ import { useAdmin } from '../AdminContext';
 import { useStats } from '../lib/pagedList';
 import PaymentRow from '../components/PaymentRow';
 import PaymentDetailSheet from '../components/PaymentDetailSheet';
-import SignalComposer from '../components/SignalComposer';
 import { cycleDaysLeft, fmtRelative } from '../lib/format';
 import { cn } from '../../../lib/utils';
 
@@ -19,7 +18,6 @@ import { cn } from '../../../lib/utils';
 export default function Overview({ onNavigate }) {
   const admin = useAdmin();
   const { stats } = useStats();
-  const [composerOpen, setComposerOpen] = useState(false);
   const [detailPayment, setDetailPayment] = useState(null);
   const { connectors } = admin;
 
@@ -56,15 +54,6 @@ export default function Overview({ onNavigate }) {
     [connectors]
   );
 
-  const [activeSignals, setActiveSignals] = useState([]);
-  useEffect(() => {
-    const load = () => pb.collection('signals').getList(1, 5, { filter: "status = 'active'", sort: '-created' })
-      .then((r) => setActiveSignals(r.items)).catch(() => {});
-    load();
-    const unsub = pb.collection('signals').subscribe('*', load).catch(() => null);
-    return () => { unsub?.then?.((u) => u && u()); };
-  }, []);
-
   const attention = pendingTotal + expiring.length + pendingBridges.length;
   const rev = stats?.revenue;
 
@@ -73,12 +62,6 @@ export default function Overview({ onNavigate }) {
       {/* toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setComposerOpen(true)}
-            className="flex h-8 items-center gap-1.5 rounded-full bg-[linear-gradient(120deg,#E8BC4F,#F3C653,#DFAE3E)] px-3.5 text-xs font-bold text-[#1C1403] active:scale-95"
-          >
-            <Zap className="h-3.5 w-3.5" /> Signal
-          </button>
           <button
             onClick={() => onNavigate('briefings')}
             className="flex h-8 items-center gap-1.5 rounded-full border border-white/15 px-3.5 text-xs font-semibold text-akg-silver transition-colors hover:border-[#F3C653]/40 hover:text-akg-gold active:scale-95"
@@ -147,33 +130,13 @@ export default function Overview({ onNavigate }) {
             </>
           )}
 
-          {activeSignals.length > 0 && (
-            <div className="border-t border-white/[0.06]">
-              <header className="flex items-center justify-between px-3.5 py-2">
-                <h3 className="font-data text-[9px] font-bold uppercase tracking-[0.14em] text-akg-muted">Open exposure · {stats?.signals.active ?? activeSignals.length}</h3>
-                <button onClick={() => onNavigate('signals')} className="text-[10px] font-semibold text-akg-muted hover:text-akg-gold">desk →</button>
-              </header>
-              <div className="divide-y divide-white/[0.04]">
-                {activeSignals.slice(0, 4).map((s) => (
-                  <button key={s.id} onClick={() => onNavigate('signals')} className="flex w-full items-center justify-between gap-2 px-3.5 py-1.5 text-left hover:bg-white/[0.02]">
-                    <span className="flex items-center gap-2 font-data text-[11px]">
-                      <span className="font-bold text-white">{s.symbol}</span>
-                      <span className={cn('rounded px-1 text-[9px] font-bold', s.direction === 'BUY' ? 'bg-akg-green/15 text-akg-green' : 'bg-rose-500/15 text-rose-300')}>{s.direction}</span>
-                      <span className="hidden text-akg-muted md:inline">E {s.entry} · SL {s.stop_loss} · TP {s.take_profit_1}</span>
-                    </span>
-                    <span className="shrink-0 font-data text-[9px] text-akg-muted">{s.plan_tier === 'PERFECT_SIGNAL_BOX' ? 'VIP' : 'SR'} · {fmtRelative(s.created)}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </section>
 
         {/* RIGHT rail */}
         <div className="space-y-4">
           <section className="grid grid-cols-3 divide-x divide-white/[0.06] overflow-hidden rounded-xl border border-white/[0.07] bg-akg-surface">
             {[
-              { icon: Activity, label: 'signals', val: stats?.signals.active, go: 'signals' },
+              { icon: Activity, label: 'room', val: stats?.room?.last7d, go: 'signals' },
               { icon: UsersIcon, label: 'members', val: stats ? `${stats.users.active}/${stats.users.total}` : undefined, go: 'users' },
               { icon: Radio, label: 'accounts', val: stats ? `${stats.connectors.trading}↑` : undefined, go: 'users', extra: { tab: 'managed' } },
             ].map((c) => {
@@ -250,7 +213,6 @@ export default function Overview({ onNavigate }) {
       </div>
 
       <PaymentDetailSheet payment={detailPayment} onClose={() => setDetailPayment(null)} onReject={() => onNavigate('payments')} />
-      <SignalComposer open={composerOpen} onClose={() => setComposerOpen(false)} />
     </div>
   );
 }

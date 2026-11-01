@@ -81,7 +81,7 @@ export function useStats() {
 
   useEffect(() => {
     load();
-    const unsubs = ['payments', 'users', 'signals', 'connector_requests']
+    const unsubs = ['payments', 'users', 'connector_requests']
       .map((c) => pb.collection(c).subscribe('*', () => load()).catch(() => null));
     const t = setInterval(load, 60000);
     return () => {

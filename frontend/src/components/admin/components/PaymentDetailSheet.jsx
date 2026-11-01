@@ -12,7 +12,7 @@ import { cn } from '../../../lib/utils';
  * history and current cycle so approvals are informed decisions.
  */
 export default function PaymentDetailSheet({ payment, onClose, onReject }) {
-  const { approvePayment, deletePayment, undoPayment } = useAdmin();
+  const { approvePayment, deletePayment, undoPayment, resetLicenseBinding } = useAdmin();
   const [history, setHistory] = useState(null);
   const [user, setUser] = useState(null);
   const [confirming, setConfirming] = useState(false);
@@ -108,6 +108,25 @@ export default function PaymentDetailSheet({ payment, onClose, onReject }) {
             {row('Reference', <TxidCell network={p.network} txid={p.txid} full />)}
             {row('Submitted', fmtDateTime(p.created))}
             {p.license_key && row('License key', p.license_key)}
+            {isBot && p.license_key && row('Bound account', (
+              <div className="flex items-center justify-end gap-2">
+                <span className={p.bound_account ? 'text-akg-green font-mono' : 'text-akg-muted'}>
+                  {p.bound_account ? `#${p.bound_account}` : 'Unbound (binds on first launch)'}
+                </span>
+                {p.bound_account && (
+                  <button
+                    onClick={async () => {
+                      if (window.confirm(`Reset account binding for key ${p.license_key}? It will bind to the next account that launches it.`)) {
+                        await resetLicenseBinding(p);
+                      }
+                    }}
+                    className="rounded-md border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 font-data text-[10px] font-bold text-amber-300 hover:bg-amber-400/20"
+                  >
+                    Reset Binding
+                  </button>
+                )}
+              </div>
+            ))}
             {p.admin_notes && row('Desk note', p.admin_notes)}
           </div>
 

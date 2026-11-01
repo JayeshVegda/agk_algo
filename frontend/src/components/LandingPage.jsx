@@ -15,7 +15,6 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './
 import Reveal, { RevealGroup, RevealItem } from './motion/Reveal';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import CountUp from './motion/CountUp';
-import Ticker from './motion/Ticker';
 import EquityCurve from './EquityCurve';
 import { useSiteSettings } from '../lib/wallets';
 
@@ -72,7 +71,7 @@ const FAQS = [
   },
   {
     q: 'How does license activation work?',
-    a: 'After purchasing, open the Trading Bots tab, enter your MetaTrader live or demo account number, and copy your generated license key into the EA inputs when attaching it to your chart.',
+    a: 'After purchasing, your license key appears in My Account. Attach the EA to your chart, and on first launch it silently binds to your MetaTrader account and reports back to the desk. No manual setup.',
   },
   {
     q: 'Do the trading bots use martingale or grid techniques?',
@@ -138,7 +137,6 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [bots, setBots] = useState(FALLBACK_BOTS);
   const [botCount, setBotCount] = useState(FALLBACK_BOTS.length);
-  const [previews, setPreviews] = useState([]);
   const [briefings, setBriefings] = useState([]);
   /* Embla autoplay is a vestibular trigger (iart-ai accessible-animation:
      continuous carousels are Tier 1) — only play with motion preference. */
@@ -211,7 +209,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
     else botsEmbla.scrollNext();
   };
 
-  // Live catalog + masked signal previews (both publicly readable by API rules)
+  // Live catalog (publicly readable by API rules)
   useEffect(() => {
     let cancelled = false;
 
@@ -226,12 +224,6 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
         /* fallback data already in state */
       }
       try {
-        const prevRes = await pb.collection('signal_previews').getList(1, 8, { sort: '-created' });
-        if (!cancelled) setPreviews(prevRes.items);
-      } catch {
-        /* hero feed simply renders empty */
-      }
-      try {
         const brRes = await pb.collection('broadcasts').getList(1, 3, { sort: '-created' });
         if (!cancelled) setBriefings(brRes.items);
       } catch {
@@ -242,27 +234,16 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
     load();
 
     const unsubBots = pb.collection('bots').subscribe('*', () => load()).catch(() => {});
-    const unsubPrev = pb.collection('signal_previews').subscribe('*', () => load()).catch(() => {});
     const unsubBrief = pb.collection('broadcasts').subscribe('*', () => load()).catch(() => {});
 
     return () => {
       cancelled = true;
       unsubBots.then((unsub) => unsub && unsub()).catch(() => {});
-      unsubPrev.then((unsub) => unsub && unsub()).catch(() => {});
       unsubBrief.then((unsub) => unsub && unsub()).catch(() => {});
     };
   }, []);
 
 
-  const tickerItems = previews.slice(0, 8).map((s) => {
-    const pnl = String(s.pnl || '');
-    const down = pnl.trim().startsWith('-');
-    return {
-      label: `${s.symbol} ${s.direction}`,
-      value: pnl || s.status,
-      tone: down ? 'down' : 'up',
-    };
-  });
 
   return (
     <div className="font-sans text-akg-silver w-full -mt-6">
@@ -315,7 +296,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                 </Button>
                 <Button size="lg" variant="outline" onClick={() => onNavigate('signals')} className="w-full gap-2 sm:w-auto">
                   <Terminal className="h-4 w-4 text-akg-green" />
-                  <span>View Live Signals</span>
+                  <span>Open the Signal Room</span>
                 </Button>
               </div>
             </Reveal>
@@ -344,52 +325,40 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                 <Activity className="h-4 w-4 text-akg-green" />
               </div>
 
-              <div className="divide-y divide-white/[0.05]">
-                {previews.length === 0 && (
-                  <div className="px-5 py-8 text-center text-xs text-akg-muted">
-                    Connecting to the signal desk...
-                  </div>
-                )}
-                {previews.slice(0, 5).map((s, i) => {
-                  const down = String(s.pnl || '').trim().startsWith('-');
-                  return (
-                    <div
-                      key={s.id}
-                      className={`${i === 4 ? 'hidden sm:flex' : 'flex'} items-center justify-between gap-3 px-4 py-3 sm:px-5`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="font-data text-sm font-semibold text-white">{s.symbol}</span>
-                        <span
-                          className={`rounded px-1.5 py-0.5 font-data text-[10px] font-bold ${
-                            s.direction === 'BUY'
-                              ? 'bg-akg-green/15 text-akg-green'
-                              : 'bg-rose-500/15 text-rose-400'
-                          }`}
-                        >
-                          {s.direction}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className="font-data text-xs text-akg-muted">{s.plan_tier === 'PERFECT_SIGNAL_BOX' ? 'VIP' : 'SR'}</span>
-                        <span className={`w-20 text-right font-data text-xs font-semibold ${down ? 'text-rose-400' : 'text-akg-green'}`}>
-                          {s.pnl}
-                        </span>
-                      </div>
+<div className="divide-y divide-white/[0.05]">
+                {[
+                  { tone: 'vip' },
+                  { tone: 'sr' },
+                  { tone: 'vip' },
+                  { tone: 'sr' },
+                ].map((row, i) => (
+                  <div
+                    key={i}
+                    className={`${i >= 3 ? 'hidden sm:flex' : 'flex'} items-center justify-between gap-3 px-4 py-3.5 sm:px-5`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="rounded bg-akg-green/10 px-1.5 py-0.5 font-data text-[10px] font-bold text-akg-green">LIVE</span>
+                      <span className="relative h-2 overflow-hidden rounded bg-white/[0.06]" style={{ width: 120 - i * 18 }}>
+                        <span className="absolute inset-0 rounded bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)]" />
+                      </span>
                     </div>
-                  );
-                })}
+                    <span className={`rounded px-1.5 py-0.5 font-data text-[9px] font-bold ${row.tone === 'vip' ? 'bg-[#F3C653]/15 text-akg-gold' : 'bg-white/[0.06] text-akg-muted'}`}>
+                      {row.tone === 'vip' ? 'VIP : locked' : 'SR : locked'}
+                    </span>
+                  </div>
+                ))}
               </div>
 
               <div className="flex items-center justify-between gap-3 border-t border-white/[0.07] px-4 py-3 sm:px-5">
                 <span className="flex items-center gap-1.5 text-[11px] text-akg-muted">
                   <Lock className="h-3 w-3 shrink-0" />
-                  Entry, SL &amp; TP visible to members
+                  Live broadcast room - members only
                 </span>
                 <button
                   onClick={() => onNavigate('signals')}
                   className="group flex shrink-0 items-center gap-1 text-[11px] font-semibold text-akg-gold hover:text-akg-goldLight"
                 >
-                  View Live Signals
+                  Open the Signal Room
                   <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                 </button>
               </div>
@@ -397,13 +366,6 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
           </Reveal>
         </div>
       </section>
-
-      {/* ============================================================
-          2. TICKER TAPE — real recent signals, the single marquee
-      ============================================================ */}
-      {tickerItems.length > 0 && (
-        <Ticker items={tickerItems} className="-mt-2 mb-4" />
-      )}
 
       {/* ============================================================
           3. STATS BAND — real counts, hairline separated, no cards
@@ -439,7 +401,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
               Buy once, own it for good.
             </h2>
             <p className="mt-3 max-w-[60ch] text-sm text-akg-muted sm:text-[15px]">
-              Compare win rate, drawdown, and strategy type, then pick the bot that fits your market. Every license is locked to your MetaTrader account number.
+              Compare win rate, drawdown, and strategy type, then pick the bot that fits your market. Licenses bind to your MetaTrader account automatically on first launch.
             </p>
           </Reveal>
           <Reveal delay={0.1}>
@@ -503,17 +465,6 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                               onError={() => setChartFailed((p) => ({ ...p, [bot.id]: true }))}
                               className="h-44 w-full object-cover transition-transform duration-700 ease-akg group-hover:scale-[1.045] sm:h-48 will-change-transform"
                             />
-                          ) : hasStats(bot) ? (
-                            <div className="relative px-3 pt-3">
-                              <EquityCurve
-                                seed={bot.name}
-                                profitFactor={bot.profit_factor}
-                                drawdown={bot.drawdown}
-                                winRate={bot.win_rate}
-                                points={80}
-                                className="h-36 w-full sm:h-40"
-                              />
-                            </div>
                           ) : (
                             <div className="flex h-44 flex-col items-center justify-center gap-1.5 text-center sm:h-48">
                               <LineChart className="h-5 w-5 text-akg-muted" />
@@ -722,7 +673,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
             </div>
           </Reveal>
           <Reveal delay={0.08}>
-            <Achievements previews={previews} briefings={briefings} onNavigate={onNavigate} />
+            <Achievements briefings={briefings} onNavigate={onNavigate} />
           </Reveal>
         </div>
       </section>
@@ -886,7 +837,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                 <span>Get Access</span>
               </Button>
               <Button size="lg" variant="outline" onClick={() => onNavigate('signals')}>
-                <span>View Live Signals</span>
+                <span>Open the Signal Room</span>
               </Button>
             </div>
           </div>
@@ -906,7 +857,7 @@ const GAINS = [
     title: 'Bots that run the rules for you',
     checks: [
       'Rule-based entries with a hard stop-loss on every trade',
-      'Your license is bound to your MT4/MT5 account number',
+      'Silent binding: your EA locks itself to your account on first launch',
       'Works on any broker — no platform lock-in',
       'Free updates for the life of the release',
     ],
@@ -936,7 +887,7 @@ const GAINS = [
   },
 ];
 
-function Achievements({ previews, briefings, onNavigate }) {
+function Achievements({ briefings, onNavigate }) {
   const [tab, setTab] = useState(GAINS[0].id);
   const active = GAINS.find((g) => g.id === tab);
   const reduce = useReducedMotion();
@@ -1014,7 +965,7 @@ function Achievements({ previews, briefings, onNavigate }) {
                 <EquityCurve seed="membership" points={100} className="h-40 w-full sm:h-44" />
               </div>
               <div className="mt-4 grid grid-cols-3 gap-2 px-2 pb-1">
-                {['Hard stop-loss', 'MT4 & MT5', 'License bound'].map((t) => (
+                {['Hard stop-loss', 'MT4 & MT5', 'License key included'].map((t) => (
                   <div
                     key={t}
                     className="rounded-lg border border-dashed border-white/10 px-2 py-2 text-center font-data text-[9px] uppercase tracking-wide text-akg-muted"
@@ -1036,36 +987,27 @@ function Achievements({ previews, briefings, onNavigate }) {
                 <BellRing className="h-4 w-4 text-akg-green" />
               </div>
               <div className="divide-y divide-white/[0.05]">
-                {(previews.length ? previews.slice(0, 5) : [
-                  { symbol: '—', direction: 'BUY', pnl: '', plan_tier: '' },
-                  { symbol: '—', direction: 'SELL', pnl: '', plan_tier: '' },
-                  { symbol: '—', direction: 'BUY', pnl: '', plan_tier: '' },
-                ]).map((s, i) => {
-                  const down = String(s.pnl || '').trim().startsWith('-');
-                  const placeholder = !s.pnl && !previews.length;
-                  return (
-                    <div key={i} className={`flex items-center justify-between gap-3 py-3 ${i === 0 ? 'pt-3.5' : ''}`}>
-                      <span className="font-data text-sm font-semibold text-white">{s.symbol}</span>
-                      <span
-                        className={`rounded px-1.5 py-0.5 font-data text-[10px] font-bold ${
-                          placeholder
-                            ? 'bg-white/5 text-akg-muted'
-                            : s.direction === 'BUY'
-                              ? 'bg-akg-green/15 text-akg-green'
-                              : 'bg-rose-500/15 text-rose-400'
-                        }`}
-                      >
-                        {s.direction}
+                {[
+                  { tone: 'vip' },
+                  { tone: 'sr' },
+                  { tone: 'vip' },
+                  { tone: 'sr' },
+                ].map((row, i) => (
+                  <div key={i} className={`flex items-center justify-between gap-3 py-3 ${i === 0 ? 'pt-3.5' : ''}`}>
+                    <span className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-akg-green" />
+                      <span className="relative h-2 overflow-hidden rounded bg-white/[0.06]" style={{ width: 130 - i * 22 }}>
+                        <span className={`absolute inset-0 rounded bg-[linear-gradient(90deg,transparent,rgba(255,255,255,${0.06 + i * 0.01}),transparent)]`} />
                       </span>
-                      <span className={`font-data text-xs font-semibold ${placeholder ? 'text-akg-muted' : down ? 'text-rose-400' : 'text-akg-green'}`}>
-                        {s.pnl || 'members see full coords'}
-                      </span>
-                    </div>
-                  );
-                })}
+                    </span>
+                    <span className={`rounded px-1.5 py-0.5 font-data text-[9px] font-bold ${row.tone === 'vip' ? 'bg-[#F3C653]/15 text-akg-gold' : 'bg-white/[0.06] text-akg-muted'}`}>
+                      {row.tone === 'vip' ? 'VIP · locked' : 'SR · locked'}
+                    </span>
+                  </div>
+                ))}
               </div>
               <p className="mt-3 px-2 font-data text-[10px] text-akg-muted">
-                Entry, SL & TP visible to members only.
+                The room streams live. Members only.
               </p>
             </div>
           )}

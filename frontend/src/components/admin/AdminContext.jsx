@@ -162,39 +162,18 @@ export function AdminDataProvider({ currentUser, notify, children }) {
     }
   }, [applyLocal, toast]);
 
-  /* ------------------------------ signals ------------------------------- */
-  const saveSignal = useCallback(async (payload, editingId) => {
+  const resetLicenseBinding = useCallback(async (p) => {
     try {
-      const record = editingId
-        ? await pb.collection('signals').update(editingId, payload)
-        : await pb.collection('signals').create(payload);
-      applyLocal('signals', record, editingId ? 'update' : 'create');
-      toast(editingId ? 'Signal Updated' : 'Signal Broadcast',
-        `${record.symbol} ${record.direction} is ${editingId ? 'updated' : 'live'}.`);
+      const res = await pb.send('/api/license/reset', {
+        method: 'POST',
+        body: { id: p.id, key: p.license_key },
+      });
+      applyLocal('payments', { ...p, bound_account: '', bound_at: '' }, 'update');
+      toast('Binding Reset', res.message || 'License binding cleared. Key can bind to a new account.');
       return true;
     } catch (err) {
-      toast('Save Failed', err.message, 'error');
+      toast('Reset Failed', err.message, 'error');
       return false;
-    }
-  }, [applyLocal, toast]);
-
-  const closeSignal = useCallback(async (s, pnl) => {
-    try {
-      const updated = await pb.collection('signals').update(s.id, { status: 'closed', pnl });
-      applyLocal('signals', updated);
-      toast('Signal Closed', `${s.symbol} settled with ${pnl}.`, 'info');
-    } catch (err) {
-      toast('Close Failed', err.message, 'error');
-    }
-  }, [applyLocal, toast]);
-
-  const deleteSignal = useCallback(async (s) => {
-    try {
-      await pb.collection('signals').delete(s.id);
-      applyLocal('signals', s, 'delete');
-      toast('Signal Deleted', `${s.symbol} removed from the feed.`, 'info');
-    } catch (err) {
-      toast('Delete Failed', err.message, 'error');
     }
   }, [applyLocal, toast]);
 
@@ -337,15 +316,13 @@ export function AdminDataProvider({ currentUser, notify, children }) {
     ...data,
     loading,
     refresh: load,
-    approvePayment, rejectPayment, deletePayment, undoPayment,
-    saveSignal, closeSignal, deleteSignal,
+    approvePayment, rejectPayment, deletePayment, undoPayment, resetLicenseBinding,
     saveBroadcast, togglePinBroadcast, deleteBroadcast,
     saveBot, deleteBot,
     saveUserAccess, grantDays,
     updateConnector,
     saveResource, toggleResource, deleteResource,
-  }), [data, loading, load, approvePayment, rejectPayment, deletePayment, undoPayment, saveSignal,
-      closeSignal, deleteSignal, saveBroadcast, togglePinBroadcast, deleteBroadcast,
+  }), [data, loading, load, approvePayment, rejectPayment, deletePayment, undoPayment, resetLicenseBinding, saveBroadcast, togglePinBroadcast, deleteBroadcast,
       saveBot, deleteBot, saveUserAccess, grantDays, updateConnector, saveResource,
       toggleResource, deleteResource]);
 

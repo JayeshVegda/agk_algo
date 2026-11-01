@@ -18,7 +18,6 @@ const PricingTab = lazily(() => import('./components/PricingTab'), 'PricingTab')
 const ResourcesTab = lazily(() => import('./components/ResourcesTab'), 'ResourcesTab');
 const AccountTab = lazily(() => import('./components/AccountTab'), 'AccountTab');
 const CheckoutPage = lazily(() => import('./components/CheckoutPage'), 'CheckoutPage');
-const TrackRecordPage = lazily(() => import('./components/TrackRecordPage'), 'TrackRecordPage');
 const TermsPage = lazily(() => import('./components/LegalPages'), 'TermsPage');
 const RefundPage = lazily(() => import('./components/LegalPages'), 'RefundPage');
 const RiskPage = lazily(() => import('./components/LegalPages'), 'RiskPage');
@@ -44,7 +43,6 @@ const TAB_ROUTES = {
   '/kit': 'resources',
   '/account': 'account',
   '/checkout': 'checkout',
-  '/track-record': 'track',
   '/terms': 'terms',
   '/refund': 'refund',
   '/risk': 'risk',
@@ -268,7 +266,6 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'track' && <TrackRecordPage />}
 
           {activeTab === 'terms' && <TermsPage />}
           {activeTab === 'refund' && <RefundPage />}

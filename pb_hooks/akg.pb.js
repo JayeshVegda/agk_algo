@@ -20,6 +20,7 @@
 // ---------------------------------------------------------------------------
 
 onRecordCreateRequest((e) => {
+  if (e.record && e.record.collection().name !== "users") { e.next(); return; }
   const auth = e.auth;
   const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
   const isFirstRegistration = !isManager;
@@ -63,9 +64,10 @@ onRecordCreateRequest((e) => {
     e.record.set("cycle_expires_at", "0001-01-01 00:00:00.000Z");
   }
   e.next();
-}, "users");
+});
 
 onRecordUpdateRequest((e) => {
+  if (e.record && e.record.collection().name !== "users") { e.next(); return; }
   const auth = e.auth;
   const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
 
@@ -78,13 +80,14 @@ onRecordUpdateRequest((e) => {
     e.record.set("cycle_expires_at", orig.get("cycle_expires_at"));
   }
   e.next();
-}, "users");
+});
 
 // ---------------------------------------------------------------------------
 // payments
 // ---------------------------------------------------------------------------
 
 onRecordCreateRequest((e) => {
+  if (e.record && e.record.collection().name !== "payments") { e.next(); return; }
   const PLAN_PRICES = { SR_SIGNAL_BOX: 10, PERFECT_SIGNAL_BOX: 20 };
 
   if (!e.auth) throw new BadRequestError("Authentication required.");
@@ -181,13 +184,13 @@ onRecordCreateRequest((e) => {
   if (PLAN_PRICES.hasOwnProperty(plan)) {
     expected = PLAN_PRICES[plan];
   } else if (plan.indexOf("BOT:") === 0) {
-    const m = plan.match(/BOT:\s*(.+?)\s*\(/);
+    const m = plan.match(/BOT:\s*(.+?)\s*(?:\(|$)/);
     if (!m) throw new BadRequestError("Invalid bot purchase format.");
     let bot;
     try {
-      bot = $app.findFirstRecordByFilter("bots", "name = {:name}", { name: m[1] });
+      bot = $app.findFirstRecordByFilter("bots", "name = {:name}", { name: m[1].trim() });
     } catch {
-      throw new BadRequestError("Unknown bot: " + m[1]);
+      throw new BadRequestError("Unknown bot: " + m[1].trim());
     }
     expected = Number(bot.get("price") || 0);
   } else {
@@ -234,12 +237,11 @@ onRecordCreateRequest((e) => {
         );
       }
     } else if (plan.indexOf("BOT:") === 0) {
-      const m = plan.match(/BOT:\s*(.+?)\s*\(([^#)]+)#([^)]+)\)/);
+      const m = plan.match(/BOT:\s*(.+?)\s*(?:\(([^#)]+)(?:#[^)]+)?\)|$)/);
       if (m) {
-        const platform = m[2].trim().replace(/[^A-Z0-9]/gi, "").toUpperCase() || "EA";
-        const acc = (m[3].trim().replace(/\D/g, "") || "000000").slice(-3);
+        const platform = (m[2] ? m[2].trim().replace(/[^A-Z0-9]/gi, "").toUpperCase() : "EA") || "EA";
         const rand = $security.randomString(8).toUpperCase();
-        e.record.set("license_key", "AKG-" + platform + "-" + acc + "-" + rand.slice(0, 4) + "-" + rand.slice(4, 8));
+        e.record.set("license_key", "AKG-" + platform + "-" + rand.slice(0, 4) + "-" + rand.slice(4, 8));
 
         // Offline settlement filed directly as confirmed: deliver the license
         // and Drive package to the buyer exactly like an approval would.
@@ -278,9 +280,10 @@ onRecordCreateRequest((e) => {
   }
 
   e.next();
-}, "payments");
+});
 
 onRecordUpdateRequest((e) => {
+  if (e.record && e.record.collection().name !== "payments") { e.next(); return; }
   const DAY_MS = 30 * 24 * 60 * 60 * 1000;
   const orig = e.record.original();
   const was = orig.get("status") || "";
@@ -369,15 +372,14 @@ onRecordUpdateRequest((e) => {
     return;
   }
 
-  // Bot license payment: issue a random server-side license key bound to the account.
+  // Bot license payment: issue a random server-side license key.
   if (plan.indexOf("BOT:") === 0) {
-    const m = plan.match(/BOT:\s*(.+?)\s*\(([^#)]+)#([^)]+)\)/);
+    const m = plan.match(/BOT:\s*(.+?)\s*(?:\(([^#)]+)(?:#[^)]+)?\)|$)/);
     if (!m) throw new BadRequestError("Invalid bot purchase record; cannot issue a license key.");
 
-    const platform = m[2].trim().replace(/[^A-Z0-9]/gi, "").toUpperCase() || "EA";
-    const acc = (m[3].trim().replace(/\D/g, "") || "000000").slice(-3);
+    const platform = (m[2] ? m[2].trim().replace(/[^A-Z0-9]/gi, "").toUpperCase() : "EA") || "EA";
     const rand = $security.randomString(8).toUpperCase();
-    const key = "AKG-" + platform + "-" + acc + "-" + rand.slice(0, 4) + "-" + rand.slice(4, 8);
+    const key = "AKG-" + platform + "-" + rand.slice(0, 4) + "-" + rand.slice(4, 8);
 
     e.record.set("license_key", key);
 
@@ -411,13 +413,14 @@ onRecordUpdateRequest((e) => {
   }
 
   e.next();
-}, "payments");
+});
 
 // ---------------------------------------------------------------------------
 // connector_requests
 // ---------------------------------------------------------------------------
 
 onRecordCreateRequest((e) => {
+  if (e.record && e.record.collection().name !== "connector_requests") { e.next(); return; }
   if (!e.auth) throw new BadRequestError("Authentication required.");
   const isManager =
     e.auth.collection().name === "_superusers" || e.auth.get("role") === "admin";
@@ -428,7 +431,7 @@ onRecordCreateRequest((e) => {
     e.record.set("admin_notes", "");
   }
   e.next();
-}, "connector_requests");
+});
 
 // ---------------------------------------------------------------------------
 // Gated EA binary downloads
@@ -476,7 +479,7 @@ routerAdd("GET", "/api/akg/download/{name}", (e) => {
         "payments",
         "user_email = {:email} && status = 'confirmed' && plan ~ {:bot}",
         "-created", 1, 0,
-        { email: auth.get("email"), bot: "BOT: " + bot.get("name") + " (" }
+        { email: auth.get("email"), bot: "BOT: " + bot.get("name") }
       );
     } catch {
       purchases = [];
@@ -495,6 +498,7 @@ routerAdd("GET", "/api/akg/download/{name}", (e) => {
 // ---------------------------------------------------------------------------
 
 onRecordUpdateRequest((e) => {
+  if (e.record && e.record.collection().name !== "connector_requests") { e.next(); return; }
   const orig = e.record.original();
   const was = orig.get("status") || "";
   const now = e.record.get("status") || "";
@@ -517,7 +521,7 @@ onRecordUpdateRequest((e) => {
     console.log("akg: connector notification failed:", err);
   }
   e.next();
-}, "connector_requests");
+});
 
 // ---------------------------------------------------------------------------
 // Membership expiry reminders (daily)
@@ -691,17 +695,19 @@ routerAdd("POST", "/api/akg/managed/apply", (e) => {
 // amount in `inr_amount`, and still records the USDT-equivalent plan price in
 // `amount` so ledger math stays uniform. Same desk-verification flow.
 onRecordCreateRequest((e) => {
+  if (e.record && e.record.collection().name !== "payments") { e.next(); return; }
   if (e.record.get("method") === "upi") {
     e.record.set("network", "INR-UPI");
   }
   e.next();
-}, "payments");
+});
 
 // notifications: self-service updates may only toggle the read flag. The
 // owner could otherwise rewrite title/body or re-address the note to a
 // different user id, so those fields are restored from the stored record
 // for non-manager updates.
 onRecordUpdateRequest((e) => {
+  if (e.record && e.record.collection().name !== "notifications") { e.next(); return; }
   const auth = e.auth;
   const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
   if (!isManager) {
@@ -713,7 +719,7 @@ onRecordUpdateRequest((e) => {
     e.record.set("dedupe_key", orig.get("dedupe_key"));
   }
   e.next();
-}, "notifications");
+});
 
 // ---------------------------------------------------------------------------
 // bots: the Google Drive package link is the paid deliverable, so it is
@@ -723,6 +729,7 @@ onRecordUpdateRequest((e) => {
 // ---------------------------------------------------------------------------
 
 onRecordsListRequest((e) => {
+  if (e.record && e.record.collection().name !== "bots") { e.next(); return; }
   const auth = e.auth;
   const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
   if (isManager) { e.next(); return; }
@@ -736,7 +743,7 @@ onRecordsListRequest((e) => {
       );
       owned = new Set();
       for (const p of recs) {
-        const m = String(p.get("plan") || "").match(/BOT:\s*(.+?)\s*\(/i);
+        const m = String(p.get("plan") || "").match(/BOT:\s*(.+?)\s*(?:\(|$)/i);
         if (m) owned.add(m[1].trim().toLowerCase());
       }
     } catch (err) {
@@ -750,9 +757,10 @@ onRecordsListRequest((e) => {
     }
   }
   e.next();
-}, "bots");
+});
 
 onRecordViewRequest((e) => {
+  if (e.record && e.record.collection().name !== "bots") { e.next(); return; }
   const auth = e.auth;
   const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
   if (isManager) { e.next(); return; }
@@ -766,7 +774,7 @@ onRecordViewRequest((e) => {
       );
       const name = String(e.record.get("name") || "").trim().toLowerCase();
       ok = recs.some((p) => {
-        const m = String(p.get("plan") || "").match(/BOT:\s*(.+?)\s*\(/i);
+        const m = String(p.get("plan") || "").match(/BOT:\s*(.+?)\s*(?:\(|$)/i);
         return m && m[1].trim().toLowerCase() === name;
       });
     } catch (err) {
@@ -775,7 +783,7 @@ onRecordViewRequest((e) => {
   }
   if (!ok) e.record.set("download_url", "");
   e.next();
-}, "bots");
+});
 
 // ---------------------------------------------------------------------------
 // Traders roster for the admin console. PocketBase hides user emails from
@@ -879,9 +887,8 @@ routerAdd("GET", "/api/akg/stats", (e) => {
       total: cU("role != 'admin'"),
       active: cU("role != 'admin' && plan != 'NONE' && plan != '' && cycle_expires_at >= {:n}", { n: nowIso }),
     },
-    signals: {
-      active: list("signals", "status = 'active'").length,
-      total: list("signals").length,
+    room: {
+      last7d: list("messages", "created >= {:d7}", "-created", { d7: iso(now - 7 * DAY_MS) }).length,
     },
     connectors: {
       pending: list("connector_requests", "status = 'pending_review' || status = 'pending'").length,
@@ -894,48 +901,292 @@ routerAdd("GET", "/api/akg/stats", (e) => {
 
 
 // ---------------------------------------------------------------------------
-// Public desk track record: monthly aggregates computed from CLOSED signals.
-// Only aggregate numbers leave the server - never entries or coordinates.
+// Signal Room
+//
+// messages is the readable stub (audience/author/pinned/has_image/reply_to);
+// every real body and image lives in message_content, gated by API rules.
+// Hook duties here:
+//   - messages: force the author, validate audience, create never pins
+//     (pinning goes through the update hook so the old pin can be replaced)
+//   - messages update: single pinned banner (pinning unpins the old one)
+//   - reactions: enforce the same gate as message_content reads
+//     (create-rules cannot traverse the joined message) + fixed emoji set
 // ---------------------------------------------------------------------------
-routerAdd("GET", "/api/akg/track-record", (e) => {
-  const parsePips = (raw) => {
-    const m = String(raw || "").match(/(-?\d+(?:\.\d+)?)/);
-    return m ? parseFloat(m[1]) : null;
-  };
 
-  let closed = [];
+var ROOM_AUDIENCES = ["all", "sr", "vip"];
+var ROOM_EMOJIS = ["\uD83D\uDD25", "\uD83D\uDC4D", "\uD83C\uDFAF", "\uD83D\uDCB0", "\uD83D\uDE4F"];
+
+var roomFetchUser = function (id, $app) {
   try {
-    closed = $app.findRecordsByFilter("signals", "status = 'closed'", "-created", 100000, 0);
+    return $app.findRecordById("users", id);
   } catch {
-    closed = [];
+    return null;
+  }
+};
+
+var roomIsActive = function (u) {
+  if (!u) return false;
+  const plan = String(u.get("plan") || "");
+  if (!plan || plan === "NONE") return false;
+  let exp = 0;
+  try {
+    exp = new Date(String(u.get("cycle_expires_at") || "").replace(" ", "T")).getTime();
+  } catch {
+    exp = 0;
+  }
+  return exp > Date.now();
+};
+
+var roomCanReadContent = function (u, audience) {
+  if (!u) return false;
+  if (String(u.collectionId || "") === "_pb_users_auth_" && String(u.get("role") || "") === "admin") return true;
+  if (String(u.collectionId || "") !== "_pb_users_auth_") return true; // superuser
+  if (audience === "all") return true;
+  if (!roomIsActive(u)) return false;
+  if (audience === "sr") return true;
+  return String(u.get("plan") || "") === "PERFECT_SIGNAL_BOX";
+};
+
+onRecordCreateRequest((e) => {
+  if (e.record && e.record.collection().name !== "messages") { e.next(); return; }
+    const rec = e.record;
+  const auth = e.auth;
+
+  const audience = String(rec.get("audience") || "all");
+  if (["all", "sr", "vip"].indexOf(audience) === -1) {
+    throw new BadRequestError("Unknown audience.");
   }
 
-  const months = {};
-  let wins = 0, losses = 0, be = 0, net = 0, counted = 0;
-  for (const s of closed) {
-    const month = String(s.get("created") || "").slice(0, 7); // YYYY-MM
-    if (!months[month]) months[month] = { month, closed: 0, wins: 0, losses: 0, be: 0, net: 0 };
-    const m = months[month];
-    m.closed += 1;
-    const pips = parsePips(s.get("pnl"));
-    if (pips === null) { m.be += 1; be += 1; continue; }
-    if (pips > 0) { m.wins += 1; wins += 1; }
-    else if (pips < 0) { m.losses += 1; losses += 1; }
-    else { m.be += 1; be += 1; }
-    m.net = Math.round((m.net + pips) * 10) / 10;
-    net = Math.round((net + pips) * 10) / 10;
-    counted += 1;
+  rec.set("author", auth && auth.id ? auth.id : "");
+  rec.set("has_image", rec.get("has_image") === true);
+  // pinned is only ever adopted via the update hook (replace-pin)
+  rec.set("pinned", false);
+  e.next();
+});
+
+onRecordUpdateRequest((e) => {
+  if (e.record && e.record.collection().name !== "messages") { e.next(); return; }
+  const rec = e.record;
+  const audience = String(rec.get("audience") || "all");
+  if (["all", "sr", "vip"].indexOf(audience) === -1) {
+    throw new BadRequestError("Unknown audience.");
   }
 
-  const list = Object.values(months).sort((a, b) => b.month.localeCompare(a.month)).slice(0, 12);
-  const decided = wins + losses;
+  const before = $app.findRecordById("messages", rec.id);
+  if (rec.get("pinned") === true && before.get("pinned") !== true) {
+    const others = $app.findRecordsByFilter("messages", "pinned = true", "", 50, 0);
+    for (const o of others) {
+      if (o.id === rec.id) continue;
+      o.set("pinned", false);
+      $app.save(o);
+    }
+  }
+  e.next();
+});
+
+onRecordCreateRequest((e) => {
+  if (e.record && e.record.collection().name !== "reactions") { e.next(); return; }
+  const rec = e.record;
+  const auth = e.auth;
+  if (!auth) throw new BadRequestError("Sign in to react.");
+  rec.set("user", auth.id);
+  if (["\uD83D\uDD25", "\uD83D\uDC4D", "\uD83C\uDFAF", "\uD83D\uDCB0", "\uD83D\uDE4F"].indexOf(String(rec.get("emoji") || "")) === -1) {
+    throw new BadRequestError("Unknown reaction.");
+  }
+  let msg = null;
+  try { msg = $app.findRecordById("messages", rec.get("message")); } catch { msg = null; }
+  if (!msg) throw new BadRequestError("Unknown message.");
+
+  const audience = String(msg.get("audience") || "all");
+
+  // same gate as message_content reads
+  const collName = String(auth.collection().name || "");
+  const isUserRec = collName === "users";
+  const roleAdmin = isUserRec && String(auth.get("role") || "") === "admin";
+  let mayRead = audience === "all";
+  if (!mayRead && (roleAdmin || !isUserRec)) mayRead = true;
+  if (!mayRead) {
+    const plan = String(auth.get("plan") || "");
+    let exp = 0;
+    try { exp = new Date(String(auth.get("cycle_expires_at") || "").replace(" ", "T")).getTime(); } catch {}
+    const isLive = plan && plan !== "NONE" && exp > Date.now();
+    mayRead = audience === "sr" ? isLive : isLive && plan === "PERFECT_SIGNAL_BOX";
+  }
+  if (!mayRead) throw new BadRequestError("Subscribe to unlock.");
+  e.next();
+});
+
+// ---------------------------------------------------------------------------
+// Silent License Verification Endpoint: POST /api/license/verify
+// Called by EA WebRequest on OnInit / OnTimer in MT4 / MT5
+// ---------------------------------------------------------------------------
+
+routerAdd("POST", "/api/license/verify", (e) => {
+  const LICENSE_WINDOW_MS = 60 * 1000;
+  const LICENSE_MAX_REQS = 30;
+
+  try {
+    let ip = "global";
+    try {
+      if (e.request && e.request.remoteAddr) {
+        ip = String(e.request.remoteAddr).split(":")[0] || "global";
+      }
+    } catch (err) {
+      ip = "global";
+    }
+
+    const now = Date.now();
+    const rateKey = "rate_license_" + ip;
+    let rateInfo = null;
+    try {
+      if ($app.store().has(rateKey)) {
+        rateInfo = $app.store().get(rateKey);
+      }
+    } catch (err) {}
+
+    if (!rateInfo || (now - Number(rateInfo.ts || 0)) > LICENSE_WINDOW_MS) {
+      rateInfo = { ts: now, count: 1 };
+    } else {
+      rateInfo.count = Number(rateInfo.count || 0) + 1;
+      if (rateInfo.count > LICENSE_MAX_REQS) {
+        e.json(429, { valid: false, message: "Rate limit exceeded. Please wait a moment." });
+        return;
+      }
+    }
+    try {
+      $app.store().set(rateKey, rateInfo);
+    } catch (err) {}
+
+    let body = {};
+    try {
+      body = e.requestInfo().body || {};
+    } catch (err) {
+      body = {};
+    }
+
+    const key = String(body.key || "").trim().toUpperCase();
+    const account = String(body.account || "").trim();
+    const platform = String(body.platform || "").trim().toUpperCase();
+
+    if (!key || !account) {
+      e.json(400, { valid: false, message: "License key and account number are required." });
+      return;
+    }
+
+    let payment = null;
+    try {
+      const list = $app.findRecordsByFilter(
+        "payments",
+        "license_key = {:key} && status = 'confirmed'",
+        "-created",
+        1,
+        0,
+        { key: key }
+      );
+      if (list && list.length > 0) payment = list[0];
+    } catch (err) {
+      console.log("akg: license verify find error:", err);
+      payment = null;
+    }
+
+    if (!payment) {
+      e.json(404, { valid: false, message: "Invalid or unconfirmed license key." });
+      return;
+    }
+
+    const bound = String(payment.get("bound_account") || "").trim();
+
+    // First call: silently bind account and set bound_at
+    if (!bound) {
+      payment.set("bound_account", account);
+      payment.set("bound_at", new Date().toISOString().replace("T", " ").slice(0, 23) + "Z");
+      $app.save(payment);
+      e.json(200, {
+        valid: true,
+        bound: true,
+        account: account,
+        message: "License activated and bound to MetaTrader account #" + account + ".",
+      });
+      return;
+    }
+
+    // Subsequent calls: valid only if account matches
+    if (bound === account) {
+      e.json(200, {
+        valid: true,
+        bound: true,
+        account: account,
+        message: "License valid.",
+      });
+      return;
+    }
+
+    // Mismatch
+    e.json(403, {
+      valid: false,
+      bound: false,
+      message: "License is bound to another MetaTrader account.",
+    });
+  } catch (err) {
+    console.log("akg: /api/license/verify unhandled error:", err);
+    e.json(500, { valid: false, message: "Internal server error: " + String(err) });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Admin Reset License Binding: POST /api/license/reset
+// ---------------------------------------------------------------------------
+routerAdd("POST", "/api/license/reset", (e) => {
+  const auth = e.auth;
+  const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
+  if (!isManager) {
+    e.json(403, { message: "Administrators only." });
+    return;
+  }
+
+  let body = {};
+  try { body = e.requestInfo().body || {}; } catch { body = {}; }
+  const id = String(body.id || body.payment_id || "").trim();
+  const key = String(body.key || "").trim().toUpperCase();
+
+  if (!id && !key) {
+    e.json(400, { message: "Provide payment ID or license key to reset." });
+    return;
+  }
+
+  let payment = null;
+  try {
+    if (id) {
+      payment = $app.findRecordById("payments", id);
+    } else {
+      const list = $app.findRecordsByFilter(
+        "payments",
+        "license_key = {:k}",
+        "-created",
+        1,
+        0,
+        { k: key }
+      );
+      if (list && list.length > 0) payment = list[0];
+    }
+  } catch {
+    payment = null;
+  }
+
+  if (!payment) {
+    e.json(404, { message: "Payment/license record not found." });
+    return;
+  }
+
+  const prev = String(payment.get("bound_account") || "");
+  payment.set("bound_account", "");
+  payment.set("bound_at", "");
+  $app.save(payment);
+
   e.json(200, {
-    months: list,
-    overall: {
-      closed: closed.length,
-      wins, losses, be,
-      netPips: net,
-      winRate: decided > 0 ? Math.round((wins / decided) * 1000) / 10 : null,
-    },
+    success: true,
+    message: "License binding reset successfully.",
+    previous_account: prev,
   });
 });
+
