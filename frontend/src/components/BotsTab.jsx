@@ -423,7 +423,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
 
           {/* Drive package link if owned */}
           {owned && bot.download_url && (
-            <div className="rounded-2xl border border-sky-400/30 bg-sky-400/[0.06] p-5 flex items-center justify-between gap-4">
+            <div className="rounded-2xl border border-sky-400/30 bg-sky-400/[0.06] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <HardDrive className="h-5 w-5 text-sky-400 shrink-0" />
                 <div>
@@ -435,7 +435,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                 href={bot.download_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-sky-400 px-4 py-2 font-data text-xs font-bold text-black hover:bg-sky-300 transition-colors"
+                className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full bg-sky-400 px-4 py-2 font-data text-xs font-bold text-black hover:bg-sky-300 transition-colors"
               >
                 <span>Open Drive</span>
                 <ExternalLink className="h-3.5 w-3.5" />

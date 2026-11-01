@@ -178,17 +178,17 @@ export default function Bots() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => setEditing(b)}
-                          className="rounded-lg p-1.5 text-akg-muted hover:bg-white/5 hover:text-white"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-akg-muted hover:bg-white/5 hover:text-white transition-colors"
                           title="Edit"
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          <Pencil className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => setDeleting(b)}
-                          className="rounded-lg p-1.5 text-akg-muted hover:bg-rose-500/10 hover:text-rose-300"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-akg-muted hover:bg-rose-500/10 hover:text-rose-300 transition-colors"
                           title="Delete"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </td>
@@ -318,7 +318,7 @@ function BotEditor({ bot, onClose, onSave }) {
     >
       <div className="space-y-4">
         {/* Core Field 1: Name & Platform */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className={labelCls}>Name *</label>
             <input value={form.name} onChange={set('name')} className={inputCls} placeholder="AKG Gold Trap EA" />
@@ -334,7 +334,7 @@ function BotEditor({ bot, onClose, onSave }) {
         </div>
 
         {/* Core Field 2: Price, Version, Live/Draft Toggle */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className={labelCls}>Price USDT *</label>
             <input value={form.price} onChange={set('price')} type="number" className={cn(inputCls, 'font-data')} placeholder="299" />
@@ -410,7 +410,7 @@ function BotEditor({ bot, onClose, onSave }) {
           </button>
           {openStats && (
             <div className="space-y-3 border-t border-white/10 p-4">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className={labelCls}>Win rate</label>
                   <input value={form.win_rate} onChange={set('win_rate')} className={cn(inputCls, 'font-data')} placeholder="81.4%" />
@@ -479,7 +479,7 @@ function BotEditor({ bot, onClose, onSave }) {
           </button>
           {openAdvanced && (
             <div className="space-y-3 border-t border-white/10 p-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls}>Strategy type</label>
                   <input value={form.strategy_type} onChange={set('strategy_type')} className={inputCls} placeholder="Session Liquidity Sweep" />
@@ -489,7 +489,7 @@ function BotEditor({ bot, onClose, onSave }) {
                   <input value={form.trading_style} onChange={set('trading_style')} className={inputCls} placeholder="Intraday swing" />
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className={labelCls}>Timeframes</label>
                   <input value={form.timeframes} onChange={set('timeframes')} className={cn(inputCls, 'font-data')} placeholder="M15, H1" />

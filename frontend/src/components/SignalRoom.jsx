@@ -60,16 +60,16 @@ function LockedBubble({ audience, user, onOpenPricing, onOpenAuth, hasImage }) {
   const activeButNotVip = !!user && subActive(user) && String(user.plan || '').toUpperCase().includes('SR');
   const label = activeButNotVip ? 'Upgrade to Perfect Box' : user ? 'Subscribe to unlock' : 'Subscribe to unlock';
   return (
-    <div className="mt-0.5 w-full max-w-[340px] overflow-hidden rounded-2xl rounded-bl-md border border-white/[0.06] bg-akg-surface">
-      <div className="pointer-events-none select-none px-4 py-3 blur-[5px]" aria-hidden="true">
+    <div className="mt-0.5 w-full max-w-full sm:max-w-[340px] overflow-hidden rounded-2xl rounded-bl-md border border-white/[0.06] bg-akg-surface">
+      <div className="pointer-events-none select-none px-3.5 sm:px-4 py-3 blur-[5px]" aria-hidden="true">
         <p className="font-sans text-[13px] leading-relaxed text-akg-silver">{fakeTextFor(audience + 'x')}</p>
         {hasImage && <div className="mt-2 h-16 w-32 rounded-lg border border-white/10 bg-white/[0.02]" />}
       </div>
       <button
         onClick={user ? onOpenPricing : onOpenAuth}
-        className="flex w-full items-center justify-center gap-2 border-t border-white/[0.06] px-4 py-2 transition-colors hover:bg-[#F3C653]/[0.08]"
+        className="flex w-full items-center justify-center gap-2 border-t border-white/[0.06] px-4 py-2.5 transition-colors hover:bg-[#F3C653]/[0.08]"
       >
-        <Lock className="h-3 w-3 text-akg-gold" />
+        <Lock className="h-3.5 w-3.5 text-akg-gold" />
         <span className="text-[11px] font-semibold text-akg-gold">{label}</span>
       </button>
     </div>
@@ -167,11 +167,11 @@ function MessageRow({ msg, content, audience, user, meId, reactions, onToggle, o
   const attCount = msg.has_image ? (files.length || (msg.has_image ? 1 : 0)) : 0;
 
   return (
-    <div className={'group relative flex w-full gap-2 px-3 py-0.5 ' + (right ? 'flex-row-reverse justify-start' : 'flex-row justify-start')}>
+    <div className={'group relative flex w-full gap-2 px-2.5 sm:px-3 py-0.5 ' + (right ? 'flex-row-reverse justify-start' : 'flex-row justify-start')}>
       <div className={cn('flex flex-col', right ? 'items-end' : 'items-start')}>
         <div
           className={cn(
-            'max-w-[min(420px,88%)] rounded-2xl border px-4 py-2.5 ' + (right ? 'rounded-br-md' : 'rounded-bl-md'),
+            'max-w-[min(420px,90%)] sm:max-w-[min(420px,88%)] rounded-2xl border px-3.5 sm:px-4 py-2.5 ' + (right ? 'rounded-br-md' : 'rounded-bl-md'),
             msg.pinned ? 'border-[#F3C653]/40 bg-[#F3C653]/[0.06]' : right ? 'border-white/[0.07] bg-white/[0.03]' : 'border-white/[0.06] bg-akg-surface',
           )}
         >
@@ -180,7 +180,7 @@ function MessageRow({ msg, content, audience, user, meId, reactions, onToggle, o
             <LockedBubble audience={audience} user={user} onOpenPricing={onOpenPricing} onOpenAuth={onOpenAuth} hasImage={msg.has_image} />
           )}
           {readable && !!body && (
-            <pre className="max-w-[400px] whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-akg-silver">{body}</pre>
+            <pre className="max-w-full whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-akg-silver">{body}</pre>
           )}
           {readable && files.length > 0 && (
             <div className="mt-2 flex flex-col gap-1.5">
@@ -221,7 +221,7 @@ function MessageRow({ msg, content, audience, user, meId, reactions, onToggle, o
       </div>
 
       {staff && (
-        <div className="absolute top-1 z-20 flex gap-0.5 rounded-xl border border-white/10 bg-[#10131A] p-1 opacity-0 shadow-xl shadow-black/50 transition-opacity group-hover:opacity-100"
+        <div className="absolute top-1 z-20 flex gap-0.5 rounded-xl border border-white/10 bg-[#10131A] p-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 shadow-xl shadow-black/50 transition-opacity"
           style={{ [right ? 'left' : 'right']: '6px' }}>
           <IconBtn title="Reply" onClick={() => onReply(msg)}><Reply className="h-3.5 w-3.5" /></IconBtn>
           <IconBtn title={msg.pinned ? 'Unpin' : 'Pin'} onClick={() => onPin(msg)}>
@@ -530,7 +530,7 @@ export default function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
           </div>
         )}
 
-        <div ref={scrollRef} onScroll={(e) => { if (e.currentTarget.scrollTop < 140) loadOlder(); }} className="relative h-[62vh] min-h-[360px] overflow-y-auto">
+        <div ref={scrollRef} onScroll={(e) => { if (e.currentTarget.scrollTop < 140) loadOlder(); }} className="relative h-[65vh] sm:h-[62vh] min-h-[360px] overflow-y-auto overscroll-contain">
           {hasOlder && msgs.length >= PAGE_SIZE && (
             <div className="flex justify-center py-2">
               {loadingOlder ? (
@@ -634,8 +634,29 @@ export default function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
                 </div>
               </div>
             )}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.04] px-3.5 py-1.5">
+              <div className="flex items-center gap-1.5">
+                <span className="font-data text-[10px] uppercase tracking-wider text-akg-muted">Audience:</span>
+                {['vip', 'sr', 'all'].map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => { setAudience(k); localStorage.setItem('akg_room_audience', k); }}
+                    className={cn(
+                      'rounded-full px-2.5 py-0.5 font-data text-[10px] font-bold transition-colors',
+                      audience === k ? 'bg-[#F3C653] text-[#1C1403]' : 'border border-white/10 text-akg-muted hover:text-white',
+                    )}
+                  >
+                    {k.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              <span className="hidden font-data text-[9.5px] text-akg-muted sm:inline">
+                Enter to send · Shift+Enter for newline
+              </span>
+            </div>
             <div className="flex items-end gap-2 px-3 py-2.5">
-              <label className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/10 text-akg-muted transition-colors hover:border-[#F3C653]/40 hover:text-akg-gold">
+              <label className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/10 text-akg-muted transition-colors hover:border-[#F3C653]/40 hover:text-akg-gold" title="Attach images">
                 <ImagePlus className="h-4 w-4" />
                 <input
                   type="file"
@@ -650,31 +671,18 @@ export default function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
                 onKeyDown={onKeyDown}
                 onPaste={onPaste}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder={'Broadcast to ' + (AUDIENCE_LABEL[audience] || 'members') + '…  (Enter to send)'}
+                placeholder={'Broadcast to ' + (AUDIENCE_LABEL[audience] || 'members') + '…'}
                 rows={1}
                 className="max-h-32 min-h-[38px] flex-1 resize-none rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2 font-sans text-[13px] text-white outline-none transition-colors placeholder:text-akg-muted focus:border-[#F3C653]/40"
               />
-              <div className="flex shrink-0 items-center gap-1.5 pb-0.5">
-                {['vip', 'sr', 'all'].map((k) => (
-                  <button
-                    key={k}
-                    onClick={() => { setAudience(k); localStorage.setItem('akg_room_audience', k); }}
-                    className={cn(
-                      'rounded-full px-2.5 py-1.5 font-data text-[10px] font-bold transition-colors',
-                      audience === k ? 'bg-[#F3C653] text-[#1C1403]' : 'border border-white/10 text-akg-muted hover:text-white',
-                    )}
-                  >
-                    {k.toUpperCase()}
-                  </button>
-                ))}
-                <button
-                  onClick={send}
-                  disabled={sending}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-[linear-gradient(120deg,#E8BC4F,#F3C653,#DFAE3E)] text-[#1C1403] transition-opacity disabled:opacity-40"
-                >
-                  {files.length > 0 ? <Paperclip className="h-4 w-4" /> : <Send className="h-4 w-4" />}
-                </button>
-              </div>
+              <button
+                onClick={send}
+                disabled={sending || (!draft.trim() && files.length === 0)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(120deg,#E8BC4F,#F3C653,#DFAE3E)] text-[#1C1403] transition-opacity disabled:opacity-40"
+                title="Send broadcast"
+              >
+                {files.length > 0 ? <Paperclip className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+              </button>
             </div>
             {files.length > 0 && (
               <div className="flex select-none flex-wrap items-center gap-2 px-4 pb-2">
@@ -689,7 +697,7 @@ export default function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
             )}
           </div>
         ) : (
-          <div className="flex select-none items-center justify-between gap-3 border-t border-white/[0.06] px-4 py-2.5">
+          <div className="flex select-none flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-t border-white/[0.06] px-4 py-3 sm:py-2.5">
             {!user ? (
               <span className="text-[11px] text-akg-muted">Sign in to follow the desk in real time.</span>
             ) : subActive(user) ? (
@@ -701,7 +709,7 @@ export default function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
             )}
             <button
               onClick={user ? onOpenPricing : onOpenAuth}
-              className="shrink-0 rounded-full bg-[linear-gradient(120deg,#E8BC4F,#F3C653,#DFAE3E)] px-3 py-1.5 font-data text-[10px] font-bold text-[#1C1403]"
+              className="w-full sm:w-auto text-center shrink-0 rounded-full bg-[linear-gradient(120deg,#E8BC4F,#F3C653,#DFAE3E)] px-3.5 py-1.5 font-data text-[10px] font-bold text-[#1C1403]"
             >
               {!user ? 'Sign in' : String(user.plan || '').toUpperCase().includes('SR') && subActive(user) ? 'Upgrade to Perfect Box' : 'Subscribe'}
             </button>
