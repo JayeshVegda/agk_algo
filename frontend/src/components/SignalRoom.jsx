@@ -243,7 +243,7 @@ function IconBtn({ title, onClick, children }) {
   );
 }
 
-export default function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
+export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
   const meId = user && user.id;
   const staff = isStaff(user);
   const [msgs, setMsgs] = useState([]);
@@ -730,3 +730,5 @@ export default function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
     </div>
   );
 }
+
+export default SignalRoom;

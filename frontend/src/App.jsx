@@ -8,7 +8,7 @@ import { Footer } from './components/Footer';
 import { Compass, Zap, Cpu, Network, User } from 'lucide-react';
 
 // Rest of the SPA streams in on first visit to each tab (per-tab chunks)
-const lazily = (loader, name) => lazy(() => loader().then((m) => ({ default: m[name] })));
+const lazily = (loader, name) => lazy(() => loader().then((m) => ({ default: m[name] || m.default })));
 const SignalsTab = lazily(() => import('./components/SignalsTab'), 'SignalsTab');
 const BotsTab = lazily(() => import('./components/BotsTab'), 'BotsTab');
 const ChartsTab = lazily(() => import('./components/ChartsTab'), 'ChartsTab');
