@@ -880,7 +880,7 @@ const GAINS = [
     checks: [
       'Priority support over Telegram and email',
       'Short briefings whenever market conditions shift',
-      'A track record built from real closed signals',
+      'Live execution broadcasts with transparent member rooms',
       'Setup guide and step-by-step activation for each bot',
       'One-time prices — no automatic rebilling',
     ],
@@ -1078,18 +1078,18 @@ const TOOLS = [
   },
   {
     id: 'record',
-    tab: 'Track record',
-    prefix: 'Numbers you can check yourself',
+    tab: 'Signal room',
+    prefix: 'Follow the desk while it works',
     cards: [
       {
-        icon: Database,
-        title: 'Closed-signal aggregates',
-        body: 'Monthly win rate and net pips computed only from signals the desk marked closed.',
+        icon: Activity,
+        title: 'Live broadcasts',
+        body: 'Entries, stops and take-profits posted in real time inside the member signal room.',
       },
       {
-        icon: Activity,
-        title: 'Per-month breakdown',
-        body: 'Each month listed separately — you read the record, not a highlight reel.',
+        icon: Database,
+        title: 'Locked-tier previews',
+        body: 'Guests and lower tiers see that a broadcast exists — never its content.',
       },
       {
         icon: BellRing,

@@ -129,6 +129,24 @@ export default function App() {
     return () => unsub();
   }, [notify]);
 
+  // Re-validate a stored session once at boot: a token whose user no longer
+  // exists used to keep sliding through list rules as empty data. Expired
+  // tokens are already flagged by LocalAuthStore.isValid and dropped outright.
+  useEffect(() => {
+    const store = pb.authStore;
+    if (!store.record && !store.token) return undefined;
+    if (!store.isValid) {
+      store.clear();
+      return undefined;
+    }
+    let alive = true;
+    const collectionName = store.record?.collectionName || 'users';
+    pb.collection(collectionName).authRefresh().catch(() => {
+      if (alive) store.clear();
+    });
+    return () => { alive = false; };
+  }, []);
+
   // Real-time synchronization for current user record (plan upgrades, cycle expiration, role changes)
   useEffect(() => {
     if (!user?.id) return;

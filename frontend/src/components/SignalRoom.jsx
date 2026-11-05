@@ -162,6 +162,7 @@ function MessageRow({ msg, content, audience, user, meId, reactions, onToggle, o
   const staff = isStaff(user);
   const mine = !!msg.author && (msg.author === meId || msg.author === meId);
   const right = mine || (staff && !msg.author);
+  const [mobileMenu, setMobileMenu] = useState(false);
   const body = readable ? String(content?.body || '') : '';
   const files = readable && Array.isArray(content?.attachments) ? content.attachments : [];
   const attCount = msg.has_image ? (files.length || (msg.has_image ? 1 : 0)) : 0;
@@ -204,6 +205,7 @@ function MessageRow({ msg, content, audience, user, meId, reactions, onToggle, o
         {readable && (
           <Reactions msgId={msg.id} reactions={reactions} meId={meId} onToggle={onToggle} />
         )}
+        {staff && <MobileStaffMenu open={mobileMenu} setOpen={setMobileMenu} msg={msg} onReply={onReply} onPin={onPin} onEdit={onEdit} onDelete={onDelete} right={right} />}
       </div>
 
       <div className={cn('flex flex-col', right ? 'items-end' : 'items-start', 'pt-1')}>
@@ -221,7 +223,8 @@ function MessageRow({ msg, content, audience, user, meId, reactions, onToggle, o
       </div>
 
       {staff && (
-        <div className="absolute top-1 z-20 flex gap-0.5 rounded-xl border border-white/10 bg-[#10131A] p-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 shadow-xl shadow-black/50 transition-opacity"
+        <div
+          className="absolute top-1 z-20 hidden gap-0.5 rounded-xl border border-white/10 bg-[#10131A] p-1 opacity-0 shadow-xl shadow-black/50 transition-opacity sm:flex sm:group-hover:opacity-100"
           style={{ [right ? 'left' : 'right']: '6px' }}>
           <IconBtn title="Reply" onClick={() => onReply(msg)}><Reply className="h-3.5 w-3.5" /></IconBtn>
           <IconBtn title={msg.pinned ? 'Unpin' : 'Pin'} onClick={() => onPin(msg)}>
@@ -240,6 +243,30 @@ function IconBtn({ title, onClick, children }) {
     <button title={title} onClick={onClick} className="flex h-7 w-7 items-center justify-center rounded-lg text-akg-silver transition-colors hover:bg-white/5 hover:text-white">
       {children}
     </button>
+  );
+}
+
+function MobileStaffMenu({ open, setOpen, msg, onReply, onPin, onEdit, onDelete, right }) {
+  return (
+    <div className={cn("flex flex-col gap-0.5 sm:hidden", right ? "items-end" : "items-start")}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        title="Message actions"
+        className="mt-0.5 flex h-6 items-center rounded-lg border border-white/10 bg-[#10131A] px-2 font-data text-[11px] tracking-widest text-akg-muted"
+      >
+        {open ? '×' : '···'}
+      </button>
+      {open && (
+        <div className="flex gap-0.5 rounded-xl border border-white/10 bg-[#10131A] p-1">
+          <IconBtn title="Reply" onClick={() => { setOpen(false); onReply(msg); }}><Reply className="h-3.5 w-3.5" /></IconBtn>
+          <IconBtn title={msg.pinned ? 'Unpin' : 'Pin'} onClick={() => { setOpen(false); onPin(msg); }}>
+            {msg.pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+          </IconBtn>
+          <IconBtn title="Edit" onClick={() => { setOpen(false); onEdit(msg); }}><Pencil className="h-3.5 w-3.5" /></IconBtn>
+          <IconBtn title="Delete" onClick={() => { setOpen(false); onDelete(msg); }}><Trash2 className="h-3.5 w-3.5" /></IconBtn>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -488,9 +515,11 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
             <span className="rounded-full border border-akg-green/30 bg-akg-green/10 px-2 py-0.5 font-data text-[9px] font-semibold uppercase tracking-wider text-akg-green">
               Live Feed
             </span>
-            <span className="hidden rounded-full border border-white/10 px-2 py-0.5 font-data text-[9px] uppercase tracking-wide text-akg-muted sm:inline">
-              {count24h} updates (24h)
-            </span>
+            {user && (
+              <span className="hidden rounded-full border border-white/10 px-2 py-0.5 font-data text-[9px] uppercase tracking-wide text-akg-muted sm:inline">
+                {count24h} updates (24h)
+              </span>
+            )}
             <span className="hidden rounded-full border border-white/10 px-2 py-0.5 font-data text-[9px] uppercase tracking-wide text-akg-silver md:inline">
               {staff ? 'Lead Desk' : !user ? 'Guest' : subActive(user) ? (String(user.plan || '').toUpperCase().includes('PERFECT') ? 'VIP Perfect' : 'SR Box') : 'Preview'}
             </span>

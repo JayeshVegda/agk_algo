@@ -129,7 +129,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         <div className="mt-6 flex justify-center gap-2.5">
           <Button variant="outline" onClick={() => onNavigate('account')}>My Orders</Button>
           <Button onClick={() => onNavigate(isBot ? 'bots' : 'signals')}>
-            {isBot ? 'Back to Bots' : 'Signals Desk'}
+            {isBot ? 'Back to Bots' : 'Signal Room'}
           </Button>
         </div>
         <SupportCard settings={settings} />

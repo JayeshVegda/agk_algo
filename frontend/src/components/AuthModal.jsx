@@ -98,9 +98,12 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           <form onSubmit={handleSubmit} className="space-y-3 text-xs">
             {isRegister && (
               <div>
-                <label className="block text-[#E7E9EF] font-semibold mb-1">Trader Name</label>
+                <label htmlFor="auth-trader-name" className="block text-[#E7E9EF] font-semibold mb-1">Trader Name</label>
                 <input
                   type="text"
+                  name="traderName"
+                  id="auth-trader-name"
+                  autoComplete="name"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -111,9 +114,12 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             )}
 
             <div>
-              <label className="block text-[#E7E9EF] font-semibold mb-1">Email Address</label>
+              <label htmlFor="auth-email" className="block text-[#E7E9EF] font-semibold mb-1">Email Address</label>
               <input
                 type="email"
+                name="email"
+                id="auth-email"
+                autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -124,10 +130,13 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="text-[#E7E9EF] font-semibold">Password</label>
+                <label htmlFor="auth-password" className="text-[#E7E9EF] font-semibold">Password</label>
               </div>
               <input
                 type="password"
+                name="password"
+                id="auth-password"
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

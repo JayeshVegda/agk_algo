@@ -48,8 +48,8 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
   const tradingSystems = [
     {
       id: 'signals',
-      title: 'Signals Desk',
-      description: 'Institutional trade entries with strict SL/TP and real-time execution coordinates.',
+      title: 'Signal Room',
+      description: 'Real-time trade broadcasts with strict tier gating and live desk updates.',
       icon: Zap,
       badge: 'LIVE',
       badgeClass: 'bg-[#00D878]/15 text-[#00D878] border border-[#00D878]/30',
@@ -99,7 +99,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
 
   const quickSearchItems = [
     { label: 'Overview', tab: 'home', icon: Compass },
-    { label: 'Signals Desk (Live Setups)', tab: 'signals', icon: Zap },
+    { label: 'Signal Room (Live Broadcasts)', tab: 'signals', icon: Zap },
     { label: 'Expert Advisors', tab: 'bots', icon: Cpu },
     { label: 'Live Charts', tab: 'charts', icon: BarChart3 },
     { label: 'Bridge Connector Demo', tab: 'connector', icon: Network },
@@ -220,7 +220,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                 <NavigationMenuItem>
                   <NavigationMenuTrigger
                     className={cn(
-                      ['charts', 'broadcasts', 'track'].includes(activeTab) &&
+                      ['charts', 'broadcasts'].includes(activeTab) &&
                         'bg-[#F3C653]/15 text-[#F3C653] border border-[#F3C653]/30 font-bold'
                     )}
                   >

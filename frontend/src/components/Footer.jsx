@@ -6,7 +6,7 @@ const LINK_GROUPS = [
   {
     title: 'Systems',
     links: [
-      { label: 'Signals Desk', tab: 'signals' },
+      { label: 'Signal Room', tab: 'signals' },
       { label: 'Expert Advisors', tab: 'bots' },
       { label: 'Account Management', tab: 'connector' },
       { label: 'Live Charts', tab: 'charts' },
@@ -15,7 +15,6 @@ const LINK_GROUPS = [
   {
     title: 'Desk',
     links: [
-      { label: 'Track Record', tab: 'track' },
       { label: 'Desk Briefings', tab: 'broadcasts' },
       { label: 'Traders Kit', tab: 'resources' },
     ],
