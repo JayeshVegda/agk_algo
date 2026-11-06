@@ -152,7 +152,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
   const [botCount, setBotCount] = useState(FALLBACK_BOTS.length);
   const [briefings, setBriefings] = useState([]);
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const { settings } = useSiteSettings();
+  const settings = useSiteSettings();
 
   const [botsAutoplay] = useState(() => Autoplay({ delay: 3800, stopOnInteraction: false }));
   const [botsEmblaRef, botsEmbla] = useEmblaCarousel(
@@ -245,7 +245,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
 
   return (
     <div className="font-sans text-akg-text w-full -mt-6">
-      {settings.landing_announcement && !bannerDismissed && (
+      {settings?.landing_announcement && !bannerDismissed && (
         <div className="-mt-2 mb-4 flex items-center justify-between gap-3 rounded-xl border border-akg-hairline bg-akg-surface px-4 py-2.5">
           <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{settings.landing_announcement}</p>
           <button onClick={() => setBannerDismissed(true)} className="shrink-0 text-xs text-akg-muted hover:text-akg-text cursor-pointer" aria-label="Dismiss">✕</button>
