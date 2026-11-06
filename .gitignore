@@ -20,6 +20,7 @@ build/
 # Logs
 *.log
 npm-debug.log*
+tunnel_url.txt
 
 # OS files
 .DS_Store
