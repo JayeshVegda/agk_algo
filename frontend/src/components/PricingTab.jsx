@@ -40,19 +40,22 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
     return () => { unsub?.then?.((u) => u && u()); };
   }, [user?.email, loadMyPayments]);
 
-  const WALLETS = walletsToMap(useWallets());
+  const walletList = useWallets();
+  const WALLETS = walletsToMap(walletList);
 
   useEffect(() => {
     if (WALLETS && !WALLETS[network]) setNetwork(Object.keys(WALLETS)[0] || '');
   }, [network, WALLETS]);
 
   const currentAddress = WALLETS[network];
+  const uploadedQr = walletList.find((w) => w.label === network)?.qr_image;
+  const qrSrc = uploadedQr || walletQr;
   useEffect(() => {
-    if (!currentAddress) { setWalletQr(''); return; }
+    if (!currentAddress || uploadedQr) { setWalletQr(''); return; }
     QRCode.toDataURL(currentAddress, { width: 220, margin: 1, color: { dark: '#0C1619E6', light: '#FFFFFF' } })
       .then(setWalletQr)
       .catch(() => setWalletQr(''));
-  }, [currentAddress]);
+  }, [currentAddress, uploadedQr]);
 
   useEffect(() => {
     if (!selectedPlan) return undefined;
@@ -383,10 +386,10 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
                      <div className="p-3 rounded-lg border border-akg-hairline bg-akg-raised text-akg-accent break-all select-all font-mono text-xs">
                        {WALLETS[network]}
                      </div>
-                     {walletQr && (
+                     {qrSrc && (
                        <div className="flex justify-center pt-1">
                          <div className="rounded-lg border border-akg-hairline bg-white p-2">
-                           <img src={walletQr} alt={`${network} deposit QR`} className="h-32 w-32 object-contain" />
+                           <img src={qrSrc} alt={`${network} deposit QR`} className="h-32 w-32 object-contain" />
                          </div>
                        </div>
                      )}

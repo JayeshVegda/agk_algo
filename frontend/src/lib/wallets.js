@@ -7,9 +7,9 @@ import { pb } from './pocketbase';
  * are the fallback while the collection loads (or if the API is unreachable).
  */
 export const DEFAULT_WALLETS = [
-  { id: 'default-trc20', label: 'USDT-TRC20', address: 'TLa2g9Y8kP2qXvL1b8Jp9wZmN4qK7dEf9A', note: '' },
-  { id: 'default-bep20', label: 'USDT-BEP20', address: '0x48D406F20110D753C90D7465D35889F7628192F9', note: '' },
-  { id: 'default-erc20', label: 'USDT-ERC20', address: '0x71C2B81F1A9D4E72b83A072fCc8295b7A19D38Ef', note: '' },
+  { id: 'default-trc20', label: 'USDT-TRC20', address: 'TLa2g9Y8kP2qXvL1b8Jp9wZmN4qK7dEf9A', note: '', qr_image: '' },
+  { id: 'default-bep20', label: 'USDT-BEP20', address: '0x48D406F20110D753C90D7465D35889F7628192F9', note: '', qr_image: '' },
+  { id: 'default-erc20', label: 'USDT-ERC20', address: '0x71C2B81F1A9D4E72b83A072fCc8295b7A19D38Ef', note: '', qr_image: '' },
 ];
 
 let cachePromise = null;
@@ -19,7 +19,7 @@ function fetchWallets() {
     cachePromise = pb.collection('wallets')
       .getList(1, 50, { filter: 'enabled = true', sort: 'sort,created' })
       .then((res) => {
-        const rows = (res.items || []).map((r) => ({ id: r.id, label: r.label, address: r.address, note: r.note || '' }));
+        const rows = (res.items || []).map((r) => ({ id: r.id, label: r.label, address: r.address, note: r.note || '', qr_image: r.qr_image || '' }));
         return rows.length ? rows : DEFAULT_WALLETS;
       })
       .catch(() => DEFAULT_WALLETS);

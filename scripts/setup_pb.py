@@ -275,6 +275,7 @@ def main():
                 {"name": "label", "type": "text", "required": True, "min": 1, "max": 60},
                 {"name": "address", "type": "text", "required": True, "min": 10, "max": 200},
                 {"name": "note", "type": "text", "required": False, "max": 200},
+                {"name": "qr_image", "type": "text", "required": False, "max": 262144},
                 {"name": "enabled", "type": "bool", "required": False},
                 {"name": "sort", "type": "number", "required": False, "onlyInt": True}
             ]

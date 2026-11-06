@@ -39,7 +39,7 @@ export default function Settings() {
   const loadWallets = useCallback(async () => {
     try {
       const rows = await pb.collection('wallets').getFullList({ sort: 'sort,created' });
-      setWalletRows(rows.map((r) => ({ id: r.id, label: r.label, address: r.address, note: r.note || '', enabled: !!r.enabled, sort: r.sort ?? 0 })));
+      setWalletRows(rows.map((r) => ({ id: r.id, label: r.label, address: r.address, note: r.note || '', enabled: !!r.enabled, sort: r.sort ?? 0, qr_image: r.qr_image || '' })));
       setLoadedIds(rows.map((r) => r.id));
       setWalletDirty(false);
     } catch { /* starts empty */ }
@@ -106,7 +106,7 @@ export default function Settings() {
   // --- wallets manager ops ---
   const addWalletRow = () => {
     const maxSort = walletRows.reduce((m, r) => Math.max(m, Number(r.sort) || 0), 0);
-    setWalletRows([...walletRows, { id: null, label: '', address: '', note: '', enabled: true, sort: maxSort + 10 }]);
+    setWalletRows([...walletRows, { id: null, label: '', address: '', note: '', enabled: true, sort: maxSort + 10, qr_image: '' }]);
     setWalletDirty(true);
   };
   const patchWalletRow = (idx, patch) => {
@@ -121,7 +121,7 @@ export default function Settings() {
     setSaving(true);
     try {
       for (const r of walletRows) {
-        const body = { label: r.label.trim(), address: r.address.trim(), note: r.note, enabled: !!r.enabled, sort: Number(r.sort) || 0 };
+        const body = { label: r.label.trim(), address: r.address.trim(), note: r.note, enabled: !!r.enabled, sort: Number(r.sort) || 0, qr_image: r.qr_image || '' };
         if (r.id) await pb.collection('wallets').update(r.id, body);
         else await pb.collection('wallets').create(body);
       }
@@ -258,22 +258,49 @@ export default function Settings() {
                         </div>
                       </div>
                     </div>
-                    {qrs[row.label + row.address] ? (
-                      <div className="shrink-0 text-center">
-                        <img src={qrs[row.label + row.address]} alt={`${row.label} QR`} className="h-24 w-24 rounded-lg border border-[var(--akg-hairline)] bg-white p-1" />
-                        <a
-                          href={qrs[row.label + row.address]}
-                          download={`${row.label || 'wallet'}-qr.png`}
-                          className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold text-akg-accent hover:underline"
-                        >
-                          <Download className="h-2.5 w-2.5" /> PNG
-                        </a>
-                      </div>
-                    ) : (
-                      <div className="grid h-24 w-24 shrink-0 place-items-center rounded-lg border border-[var(--akg-hairline)] bg-akg-card text-akg-muted">
-                        <QrCode className="h-6 w-6" />
-                      </div>
-                    )}
+                    {(() => {
+                      const generated = qrs[row.label + row.address];
+                      const preview = row.qr_image || generated;
+                      return (
+                        <div className="shrink-0 text-center">
+                          {preview ? (
+                            <img src={preview} alt={`${row.label} QR`} className="h-24 w-24 rounded-lg border border-[var(--akg-hairline)] bg-white p-1" />
+                          ) : (
+                            <div className="grid h-24 w-24 place-items-center rounded-lg border border-[var(--akg-hairline)] bg-akg-card text-akg-muted">
+                              <QrCode className="h-6 w-6" />
+                            </div>
+                          )}
+                          <label className="mt-1.5 block cursor-pointer text-[10px] font-semibold text-akg-accent hover:underline" title="Upload your own QR image; leave empty to auto-generate from the address">
+                            {row.qr_image ? 'Replace QR' : 'Upload QR'}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const f = e.target.files?.[0];
+                                if (!f) return;
+                                try {
+                                  const url = await downscaleImage(f, 320);
+                                  patchWalletRow(idx, { qr_image: url });
+                                } catch { /* ignore */ }
+                                e.target.value = '';
+                              }}
+                            />
+                          </label>
+                          <div className="mt-0.5 flex items-center justify-center gap-2">
+                            {row.qr_image ? (
+                              <button onClick={() => patchWalletRow(idx, { qr_image: '' })} className="text-[10px] font-semibold text-rose-600 hover:underline dark:text-rose-300">remove custom</button>
+                            ) : (
+                              generated && (
+                                <a href={generated} download={`${row.label || 'wallet'}-qr.png`} className="inline-flex items-center gap-1 text-[10px] font-semibold text-akg-accent hover:underline">
+                                  <Download className="h-2.5 w-2.5" /> PNG
+                                </a>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
                     <button onClick={() => dropWalletRow(idx)} title="Remove wallet" className="cursor-pointer rounded-lg border border-[var(--akg-hairline)] bg-akg-card p-2 text-rose-600 transition-colors hover:bg-rose-500/10 dark:text-rose-300">
                       <Trash2 className="h-4 w-4" />
                     </button>

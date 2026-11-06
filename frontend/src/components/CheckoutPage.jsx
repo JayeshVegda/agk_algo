@@ -44,7 +44,8 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
 
   useEffect(() => {
     const address = walletMap[network];
-    if (!address) { setWalletQr(''); return; }
+    const uploaded = walletList.find((w) => w.label === network)?.qr_image;
+    if (!address || uploaded) { setWalletQr(''); return; }
     QRCode.toDataURL(address, { width: 220, margin: 1, color: { dark: '#0C1619E6', light: '#FFFFFF' } })
       .then(setWalletQr)
       .catch(() => setWalletQr(''));
@@ -69,6 +70,8 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
     ? Math.round(order.price * settings.usdt_inr_rate)
     : 0;
   const isBot = order.kind === 'bot';
+  const selectedWallet = walletList.find((w) => w.label === network);
+  const qrSrc = selectedWallet?.qr_image || walletQr;
   const upiLink = settings.upi_id
     ? `upi://pay?pa=${encodeURIComponent(settings.upi_id)}${settings.payee_name ? `&pn=${encodeURIComponent(settings.payee_name)}` : ''}${inr ? `&am=${inr}&cu=INR` : ''}&tn=${encodeURIComponent('AKG ALGO order')}`
     : '';
@@ -251,9 +254,9 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
                 <span className="min-w-0 break-all font-mono text-xs text-akg-accent">{walletMap[network] || 'Loading…'}</span>
                 {copied === 'wallet' ? <Check className="h-4 w-4 shrink-0 text-akg-green" /> : <Copy className="h-4 w-4 shrink-0 text-akg-muted" />}
               </button>
-              {walletQr && (
+              {qrSrc && (
                 <div className="self-center shrink-0 rounded-lg border border-akg-hairline bg-white p-2 sm:self-auto">
-                  <img src={walletQr} alt={`${network} deposit QR`} className="h-32 w-32 object-contain" />
+                  <img src={qrSrc} alt={`${network} deposit QR`} className="h-32 w-32 object-contain" />
                 </div>
               )}
             </div>
