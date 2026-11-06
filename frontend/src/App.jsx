@@ -302,11 +302,13 @@ export default function App() {
         </main>
       </div>
 
-      <Footer
-        onNavigate={switchTab}
-        user={user}
-        onNavigateAdmin={() => navigateTo('/admin')}
-      />
+      {['home', 'terms', 'refund', 'risk', 'privacy'].includes(activeTab) && (
+        <Footer
+          onNavigate={switchTab}
+          user={user}
+          onNavigateAdmin={() => navigateTo('/admin')}
+        />
+      )}
 
       {/* Auth Modal */}
       <AuthModal

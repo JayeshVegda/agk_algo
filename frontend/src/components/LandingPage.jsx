@@ -14,7 +14,7 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './ui/Accordion';
 import Reveal, { RevealGroup, RevealItem } from './motion/Reveal';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion, useMotionValue, useSpring, useMotionTemplate } from 'motion/react';
 import CountUp from './motion/CountUp';
 import EquityCurve from './EquityCurve';
 import { useSiteSettings } from '../lib/wallets';
@@ -121,6 +121,86 @@ const PLANS = [
 ];
 
 
+
+function FluidHeroHeader() {
+  const containerRef = React.useRef(null);
+  const mouseX = useMotionValue(300);
+  const mouseY = useMotionValue(100);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Smooth fluid spring with liquid inertia
+  const springConfig = { damping: 25, stiffness: 120, mass: 0.5 };
+  const fluidX = useSpring(mouseX, springConfig);
+  const fluidY = useSpring(mouseY, springConfig);
+
+  // A lagging secondary fluid orb for organic liquid viscosity
+  const trailConfig = { damping: 35, stiffness: 70, mass: 0.9 };
+  const trailX = useSpring(mouseX, trailConfig);
+  const trailY = useSpring(mouseY, trailConfig);
+
+  const handleMouseMove = (e) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    mouseX.set(e.clientX - rect.left);
+    mouseY.set(e.clientY - rect.top);
+  };
+
+  const fluidSpotlight = useMotionTemplate`radial-gradient(420px circle at ${fluidX}px ${fluidY}px, rgba(16, 185, 129, 0.22), rgba(6, 182, 212, 0.12) 40%, transparent 75%)`;
+
+  return (
+    <div
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="relative mx-auto max-w-4xl px-4 sm:px-6 text-center select-none py-2"
+    >
+      {/* Interactive Fluid Cursor Light */}
+      <motion.div
+        className="pointer-events-none absolute -inset-8 rounded-full transition-opacity duration-500 blur-2xl"
+        style={{
+          opacity: isHovered ? 1 : 0.35,
+          background: fluidSpotlight,
+        }}
+      />
+
+      {/* Fluid Viscous Secondary Orb tracking with lag */}
+      <motion.div
+        className="pointer-events-none absolute h-60 w-60 rounded-full blur-3xl opacity-35 mix-blend-screen transition-opacity duration-700"
+        style={{
+          x: trailX,
+          y: trailY,
+          translateX: '-50%',
+          translateY: '-50%',
+          background: 'radial-gradient(circle, rgba(6, 182, 212, 0.5) 0%, rgba(16, 185, 129, 0.25) 50%, transparent 75%)',
+        }}
+      />
+
+      <div className="relative z-10">
+        <Reveal>
+          <div className="inline-flex items-center gap-2 rounded-full badge-gradient px-3.5 py-1 text-xs font-medium text-akg-text shadow-sm">
+            <span className="live-dot" />
+            <span>Verified MetaTrader 4 &amp; 5 Expert Advisors</span>
+          </div>
+        </Reveal>
+
+        <Reveal delay={0.06}>
+          <h1 className="mt-6 font-display text-4xl sm:text-6xl font-extrabold tracking-tight text-akg-text leading-[1.08]">
+            Algorithmic Trading Robots.
+            <br />
+            <span className="text-gradient-emerald">Built for MetaTrader.</span>
+          </h1>
+        </Reveal>
+
+        <Reveal delay={0.1}>
+          <p className="mt-4 max-w-xl mx-auto text-base sm:text-lg text-akg-muted leading-relaxed">
+            Automated Expert Advisors engineered with hard equity-lockouts, verified forward history, and sub-15ms execution.
+          </p>
+        </Reveal>
+      </div>
+    </div>
+  );
+}
 
 export function LandingPage({ onNavigate, onOpenAuth, notify }) {
   const [bots, setBots] = useState(FALLBACK_BOTS);
@@ -233,28 +313,9 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       <section className="relative overflow-hidden pt-10 pb-16 sm:pt-16 sm:pb-24 bg-tech-grid">
         <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[380px] w-[800px] rounded-full bg-gradient-to-b from-emerald-500/10 via-teal-500/10 to-transparent blur-3xl" />
 
+        <FluidHeroHeader />
+
         <div className="relative mx-auto max-w-4xl px-4 sm:px-6 text-center">
-          <Reveal>
-            <div className="inline-flex items-center gap-2 rounded-full badge-gradient px-3.5 py-1 text-xs font-medium text-akg-text shadow-sm">
-              <span className="live-dot" />
-              <span>Verified MetaTrader 4 &amp; 5 Expert Advisors</span>
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.06}>
-            <h1 className="mt-6 font-display text-4xl sm:text-6xl font-extrabold tracking-tight text-akg-text leading-[1.08]">
-              Algorithmic Trading Robots.
-              <br />
-              <span className="text-gradient-emerald">Built for MetaTrader.</span>
-            </h1>
-          </Reveal>
-
-          <Reveal delay={0.1}>
-            <p className="mt-4 max-w-xl mx-auto text-base sm:text-lg text-akg-muted leading-relaxed">
-              Automated Expert Advisors engineered with hard equity-lockouts, verified forward history, and sub-15ms execution.
-            </p>
-          </Reveal>
-
           <Reveal delay={0.14}>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5">
               <button

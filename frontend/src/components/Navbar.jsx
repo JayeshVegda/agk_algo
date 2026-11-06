@@ -6,13 +6,7 @@ import {
   Compass, Search, Menu, ArrowRight, Download, 
   KeyRound, Sun, Moon
 } from 'lucide-react';
-import { 
-  NavigationMenu, 
-  NavigationMenuList, 
-  NavigationMenuItem, 
-  NavigationMenuTrigger, 
-  NavigationMenuContent, 
-} from './ui/NavigationMenu';
+
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
@@ -120,181 +114,58 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-akg-hairline bg-akg-bg/80 backdrop-blur-xl transition-[background-color,border-color] duration-150">
-      <div className="w-[94%] max-w-[1560px] mx-auto px-2 sm:px-4 h-15 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 w-full border-b border-akg-hairline bg-akg-bg/85 backdrop-blur-xl transition-[background-color,border-color] duration-150">
+      <div className="w-[94%] max-w-[1560px] mx-auto px-2 sm:px-4 h-16 flex items-center justify-between gap-4">
 
-        {/* Left: Brand Header Logo */}
-        <div className="flex items-center gap-8">
+        {/* Left: Brand Header Logo & Live Pill */}
+        <div className="flex items-center gap-6">
           <div
             onClick={() => setActiveTab('home')}
-            className="flex items-center cursor-pointer select-none shrink-0 group"
+            className="flex items-center gap-3 cursor-pointer select-none shrink-0 group"
           >
             <img
               src="/assets/logos/akg-algo-metallic-nav.png"
               alt="AKG ALGO"
               className="h-8 sm:h-9 w-auto group-hover:opacity-90 transition-opacity"
             />
+            <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                Live Desk
+              </span>
+            </div>
           </div>
 
-          {/* Desktop Navigation Menu */}
-          <div className="hidden lg:block">
-            <NavigationMenu>
-              <NavigationMenuList className="flex items-center gap-1">
-                
-                {/* 1. Overview */}
-                <NavigationMenuItem>
-                  <button
-                    onClick={() => setActiveTab('home')}
-                    className={cn(
-                      'inline-flex h-8 items-center justify-center rounded-md px-3 text-xs font-medium whitespace-nowrap transition-colors cursor-pointer',
-                      activeTab === 'home'
-                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25'
-                        : 'text-akg-muted hover:text-akg-text hover:bg-akg-surface border border-transparent'
-                    )}
-                  >
-                    Overview
-                  </button>
-                </NavigationMenuItem>
-
-                {/* 2. Trading Systems Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger
-                    className={cn(
-                      ['signals', 'bots', 'connector'].includes(activeTab) &&
-                        'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 font-medium'
-                    )}
-                  >
-                    Trading Systems
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <div className="w-[400px] p-2.5 grid gap-1 bg-akg-card rounded-xl shadow-lg border border-akg-hairline">
-                      <div className="px-2 py-1 text-[10px] font-medium text-akg-muted uppercase tracking-wider">
-                        Execution Modules
-                      </div>
-                      {tradingSystems.map((item) => {
-                        const Icon = item.icon;
-                        const isCurrent = activeTab === item.id;
-                        return (
-                          <div
-                            key={item.id}
-                            onClick={() => setActiveTab(item.id)}
-                            className={cn(
-                              'group flex items-start gap-3 p-2.5 rounded-lg transition-colors cursor-pointer border',
-                              isCurrent
-                                ? 'bg-emerald-500/10 border-emerald-500/20'
-                                : 'hover:bg-akg-surfaceElevated border-transparent'
-                            )}
-                          >
-                            <div className={cn(
-                              'p-2 rounded-md shrink-0 transition-colors',
-                              isCurrent 
-                                ? 'bg-[#00D878] text-[#07080D]' 
-                                : 'bg-akg-surfaceElevated text-akg-muted group-hover:text-akg-green'
-                            )}>
-                              <Icon className="h-4 w-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-akg-text group-hover:text-akg-green transition-colors">
-                                  {item.title}
-                                </span>
-                                {item.badge && (
-                                  <span className={cn('text-[9px] px-1.5 py-0.5 rounded font-medium', item.badgeClass)}>
-                                    {item.badge}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[11px] text-akg-muted leading-snug mt-0.5">
-                                {item.description}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-
-                {/* 3. Market Intelligence Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger
-                    className={cn(
-                      ['charts', 'broadcasts', 'resources'].includes(activeTab) &&
-                        'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 font-medium'
-                    )}
-                  >
-                    Intelligence
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <div className="w-[360px] p-2.5 grid gap-1 bg-akg-card rounded-xl shadow-lg border border-akg-hairline">
-                      <div className="px-2 py-1 text-[10px] font-medium text-akg-muted uppercase tracking-wider">
-                        Market Telemetry
-                      </div>
-                      {marketIntelligence.map((item) => {
-                        const Icon = item.icon;
-                        const isCurrent = activeTab === item.id;
-                        return (
-                          <div
-                            key={item.id}
-                            onClick={() => setActiveTab(item.id)}
-                            className={cn(
-                              'group flex items-start gap-3 p-2.5 rounded-lg transition-colors cursor-pointer border',
-                              isCurrent
-                                ? 'bg-emerald-500/10 border-emerald-500/20'
-                                : 'hover:bg-akg-surfaceElevated border-transparent'
-                            )}
-                          >
-                            <div className={cn(
-                              'p-2 rounded-md shrink-0 transition-colors',
-                              isCurrent 
-                                ? 'bg-[#00D878] text-[#07080D]' 
-                                : 'bg-akg-surfaceElevated text-akg-muted group-hover:text-akg-green'
-                            )}>
-                              <Icon className="h-4 w-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-akg-text group-hover:text-akg-green transition-colors">
-                                  {item.title}
-                                </span>
-                                {item.badge && (
-                                  <span className={cn('text-[9px] px-1.5 py-0.5 rounded font-medium', item.badgeClass)}>
-                                    {item.badge}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[11px] text-akg-muted leading-snug mt-0.5">
-                                {item.description}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-
-                {/* 4. Plans & Pricing */}
-                <NavigationMenuItem>
-                  <button
-                    onClick={() => setActiveTab('pricing')}
-                    className={cn(
-                      'inline-flex h-8 items-center justify-center rounded-md px-3 text-xs font-medium whitespace-nowrap transition-colors cursor-pointer gap-1.5',
-                      activeTab === 'pricing'
-                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25'
-                        : 'text-akg-muted hover:text-akg-text hover:bg-akg-surface border border-transparent'
-                    )}
-                  >
-                    <span>Plans & Pricing</span>
-                    <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
-                      USDT
-                    </span>
-                  </button>
-                </NavigationMenuItem>
-
-              </NavigationMenuList>
-            </NavigationMenu>
-          </div>
+          {/* Desktop Navigation Menu - Clean Segmented Bar */}
+          <nav className="hidden lg:flex items-center gap-1 rounded-xl border border-akg-hairline bg-akg-card/70 p-1 backdrop-blur-md shadow-xs">
+            {[
+              { id: 'home', label: 'Overview' },
+              { id: 'bots', label: 'Robots' },
+              { id: 'signals', label: 'Signal Room' },
+              { id: 'connector', label: 'Terminal Desk' },
+              { id: 'pricing', label: 'Pricing' },
+              { id: 'resources', label: 'Traders Kit' },
+            ].map((link) => {
+              const isActive = activeTab === link.id;
+              return (
+                <button
+                  key={link.id}
+                  onClick={() => setActiveTab(link.id)}
+                  className={cn(
+                    'relative rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer',
+                    isActive
+                      ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 shadow-xs'
+                      : 'text-akg-muted hover:text-akg-text hover:bg-akg-surface/80 border border-transparent'
+                  )}
+                >
+                  {link.label}
+                  {link.id === 'signals' && (
+                    <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
         </div>
 
         {/* Right: Theme Toggle + Search + Notifications + Profile & Auth */}
