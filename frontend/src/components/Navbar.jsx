@@ -115,10 +115,10 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-akg-hairline bg-akg-bg/85 backdrop-blur-xl transition-[background-color,border-color] duration-150">
-      <div className="w-[94%] max-w-[1560px] mx-auto px-2 sm:px-4 h-16 flex items-center justify-between gap-4">
+      <div className="mx-auto flex h-16 w-full max-w-[1360px] items-center px-4 sm:px-6">
 
         {/* Left: Brand Header Logo */}
-        <div className="flex items-center gap-8">
+        <div className="flex flex-1 items-center">
           <div
             onClick={() => setActiveTab('home')}
             className="flex items-center gap-2 cursor-pointer select-none shrink-0 group"
@@ -129,9 +129,10 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
               className="h-8 sm:h-9 w-auto group-hover:opacity-90 transition-opacity"
             />
           </div>
+        </div>
 
-          {/* Desktop Navigation Links — Clean inline links with active indicator */}
-          <nav className="hidden lg:flex items-center gap-7">
+        {/* Desktop Navigation Links — centered group, flush with header border */}
+        <nav className="hidden lg:flex h-full items-stretch">
             {[
               { id: 'home', label: 'Overview' },
               { id: 'bots', label: 'Robots' },
@@ -146,9 +147,9 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                   key={link.id}
                   onClick={() => setActiveTab(link.id)}
                   className={cn(
-                    'relative py-2 text-sm font-medium transition-colors cursor-pointer',
+                    'relative flex items-center px-3 xl:px-4 text-[13px] font-medium transition-colors cursor-pointer',
                     isActive
-                      ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+                      ? 'text-emerald-700 dark:text-emerald-400 font-semibold'
                       : 'text-akg-muted hover:text-akg-text'
                   )}
                 >
@@ -157,16 +158,15 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                     <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   )}
                   {isActive && (
-                    <span className="absolute -bottom-[21px] left-0 right-0 h-[2.5px] bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                    <span className="absolute bottom-0 left-3 right-3 h-[2.5px] bg-emerald-500 rounded-t-full shadow-[0_0_8px_rgba(16,185,129,0.35)]" />
                   )}
                 </button>
               );
             })}
-          </nav>
-        </div>
+        </nav>
 
         {/* Right: Theme Toggle + Search + Notifications + Profile & Auth */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
+        <div className="flex flex-1 items-center justify-end gap-2 sm:gap-2.5">
           {/* Quick Search Trigger Icon */}
           <button
             onClick={() => setSearchOpen(true)}
