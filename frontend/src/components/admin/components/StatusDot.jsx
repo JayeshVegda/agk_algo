@@ -52,9 +52,9 @@ export function StatusDot({ status, className, pulse = true }) {
       <span className={cn(
         'text-xs font-medium',
         tone === 'green' && 'text-akg-green',
-        tone === 'amber' && 'text-amber-300',
-        tone === 'rose' && 'text-rose-300',
-        tone === 'sky' && 'text-sky-300',
+        tone === 'amber' && 'text-amber-600 dark:text-amber-300',
+        tone === 'rose' && 'text-rose-600 dark:text-rose-300',
+        tone === 'sky' && 'text-sky-600 dark:text-sky-300',
         tone === 'slate' && 'text-akg-muted',
       )}>{label}</span>
     </span>

@@ -5,7 +5,7 @@ export function Card({ className, ...props }) {
   return (
     <div
       className={cn(
-        'rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#0E141B] text-slate-900 dark:text-slate-100 shadow-sm transition-[border-color,box-shadow,transform] duration-200',
+        'rounded-2xl border border-[var(--akg-hairline)] bg-akg-card text-akg-text shadow-sm transition-[border-color,box-shadow,transform] duration-200',
         className
       )}
       {...props}
@@ -25,7 +25,7 @@ export function CardHeader({ className, ...props }) {
 export function CardTitle({ className, ...props }) {
   return (
     <div
-      className={cn('text-lg font-bold leading-tight tracking-tight text-slate-900 dark:text-white font-display', className)}
+      className={cn('text-lg font-bold leading-tight tracking-tight text-akg-text font-display', className)}
       {...props}
     />
   );
@@ -34,7 +34,7 @@ export function CardTitle({ className, ...props }) {
 export function CardDescription({ className, ...props }) {
   return (
     <div
-      className={cn('text-xs text-slate-500 dark:text-slate-400 leading-relaxed', className)}
+      className={cn('text-xs text-akg-muted leading-relaxed', className)}
       {...props}
     />
   );

@@ -32,7 +32,7 @@ export default function PaymentRow({ payment: p, prior = 0, onOpen, onReject }) 
           isPending && 'bg-amber-500/[0.04]'
         )}
       >
-        <span className={cn('w-[64px] shrink-0 font-mono text-[10px]', isPending ? 'text-amber-500' : 'text-akg-muted')}>
+        <span className={cn('w-[64px] shrink-0 font-mono text-[10px]', isPending ? 'text-amber-700 dark:text-amber-400' : 'text-akg-muted')}>
           {isPending ? fmtWaiting(p.created) : fmtRelative(p.created)}
         </span>
 
@@ -68,7 +68,7 @@ export default function PaymentRow({ payment: p, prior = 0, onOpen, onReject }) 
               <button
                 onClick={() => onReject?.(p)}
                 title="Reject with reason"
-                className="flex h-7 w-7 items-center justify-center rounded-md border border-rose-500/30 text-rose-400 transition-colors hover:bg-rose-500/10 active:scale-95 cursor-pointer"
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-rose-500/30 text-rose-600 dark:text-rose-400 transition-colors hover:bg-rose-500/10 active:scale-95 cursor-pointer"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -76,7 +76,7 @@ export default function PaymentRow({ payment: p, prior = 0, onOpen, onReject }) 
           ) : (
             <span className={cn('rounded px-1.5 py-px font-mono text-[9px] font-bold uppercase',
               p.status === 'confirmed' ? 'bg-emerald-500/15 text-akg-green'
-              : p.status === 'rejected' ? 'bg-rose-500/15 text-rose-400' : 'bg-akg-raised text-akg-muted')}>
+              : p.status === 'rejected' ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' : 'bg-akg-raised text-akg-muted')}>
               {p.status}
             </span>
           )}

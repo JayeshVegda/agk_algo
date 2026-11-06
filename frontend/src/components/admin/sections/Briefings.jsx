@@ -127,7 +127,7 @@ export default function Briefings() {
                   <button onClick={() => setEditing(b)} className="rounded-lg p-1.5 text-akg-muted hover:bg-white/5 hover:text-[var(--akg-text)]" title="Edit">
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
-                  <button onClick={() => setDeleting(b)} className="rounded-lg p-1.5 text-akg-muted hover:bg-rose-500/10 hover:text-rose-300" title="Delete">
+                  <button onClick={() => setDeleting(b)} className="rounded-lg p-1.5 text-akg-muted hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-300" title="Delete">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>

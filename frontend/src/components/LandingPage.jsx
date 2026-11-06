@@ -19,7 +19,7 @@ import Reveal, { RevealGroup, RevealItem } from './motion/Reveal';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import CountUp from './motion/CountUp';
 import EquityCurve from './EquityCurve';
-import { useSiteSettings } from '../lib/wallets';
+import { useSiteSettings, getPlans } from '../lib/wallets';
 import { SpotlightCard } from './ui/SpotlightCard';
 import FluidCursorCanvas from './ui/FluidCursorCanvas';
 
@@ -90,45 +90,14 @@ const FAQS = [
   },
 ];
 
-const PLANS = [
-  {
-    id: 'standard',
-    name: 'Standard Signal Room',
-    price: 99,
-    tier: 'Tier 1',
-    vip: false,
-    blurb: 'Complete setups on major forex pairs and indices, broadcast with clear entry and stop levels.',
-    features: [
-      'Forex majors and indices coverage',
-      'Hard stop-loss on every broadcast',
-      'Desk commentary and session updates',
-      'Web broadcast room with live alerts',
-      '30-day manual renewal, no auto-billing',
-    ],
-  },
-  {
-    id: 'vip',
-    name: 'VIP Executive Room',
-    price: 199,
-    tier: 'Tier 2',
-    vip: true,
-    blurb: 'Gold (XAUUSD) liquidity sweeps, high-volatility session updates, and direct desk priority.',
-    features: [
-      'Everything in Standard',
-      'Exclusive Gold (XAUUSD) trade setups',
-      'Desk directives before red-folder news',
-      'Priority execution channel',
-      'Direct Telegram & email support access',
-    ],
-  },
-];
+
 
 
 
 function HeroHeadline({ botCount = 8 }) {
   return (
     <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 text-center select-none py-2">
-      <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-[#0E141B]/95 px-4 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs">
+      <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-akg-card/95 px-4 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs">
         <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
         <span className="font-bold text-slate-900 dark:text-white">{botCount} robots</span>
         <span className="text-slate-400">·</span>
@@ -154,6 +123,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
   const [briefings, setBriefings] = useState([]);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const settings = useSiteSettings();
+  const PLANS = getPlans(settings);
 
   const [botsAutoplay] = useState(() => Autoplay({ delay: 3800, stopOnInteraction: false }));
   const [botsEmblaRef, botsEmbla] = useEmblaCarousel(
@@ -297,7 +267,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
           </div>
 
           {/* Minimal 4-Metric Strip with tactile unified card matching reference Image 0 */}
-          <div className="mt-10 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#0E141B] shadow-sm overflow-hidden text-left">
+          <div className="mt-10 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-akg-card shadow-sm overflow-hidden text-left">
             <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-white/10">
               <div className="p-5 sm:p-6 flex flex-col justify-between">
                 <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">Robots</div>
@@ -433,7 +403,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
 
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {/* Step 1 */}
-          <Card className="group rounded-[28px] border border-emerald-200/70 dark:border-white/10 bg-[#EEF7F2] dark:bg-[#0C1619] p-6 sm:p-7 flex flex-col justify-between overflow-hidden relative shadow-sm hover:shadow-md transition-all">
+          <Card className="group rounded-[28px] border border-emerald-200/70 dark:border-white/10 bg-[var(--akg-accent-soft)] dark:bg-akg-tint p-6 sm:p-7 flex flex-col justify-between overflow-hidden relative shadow-sm hover:shadow-md transition-all">
             <div>
               <Badge variant="emerald" className="font-mono text-[10px] font-bold px-3 py-1">
                 STEP 01
@@ -487,7 +457,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
           </Card>
 
           {/* Step 2 */}
-          <Card className="group rounded-[28px] border border-emerald-200/70 dark:border-white/10 bg-[#EEF7F2] dark:bg-[#0C1619] p-6 sm:p-7 flex flex-col justify-between overflow-hidden relative shadow-sm hover:shadow-md transition-all">
+          <Card className="group rounded-[28px] border border-emerald-200/70 dark:border-white/10 bg-[var(--akg-accent-soft)] dark:bg-akg-tint p-6 sm:p-7 flex flex-col justify-between overflow-hidden relative shadow-sm hover:shadow-md transition-all">
             <div>
               <Badge variant="emerald" className="font-mono text-[10px] font-bold px-3 py-1">
                 STEP 02
@@ -545,7 +515,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
           </Card>
 
           {/* Step 3 */}
-          <Card className="group rounded-[28px] border border-emerald-200/70 dark:border-white/10 bg-[#EEF7F2] dark:bg-[#0C1619] p-6 sm:p-7 flex flex-col justify-between overflow-hidden relative shadow-sm hover:shadow-md transition-all">
+          <Card className="group rounded-[28px] border border-emerald-200/70 dark:border-white/10 bg-[var(--akg-accent-soft)] dark:bg-akg-tint p-6 sm:p-7 flex flex-col justify-between overflow-hidden relative shadow-sm hover:shadow-md transition-all">
             <div>
               <Badge variant="emerald" className="font-mono text-[10px] font-bold px-3 py-1">
                 STEP 03

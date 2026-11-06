@@ -88,7 +88,22 @@ onRecordUpdateRequest((e) => {
 
 onRecordCreateRequest((e) => {
   if (e.record && e.record.collection().name !== "payments") { e.next(); return; }
-  const PLAN_PRICES = { SR_SIGNAL_BOX: 10, PERFECT_SIGNAL_BOX: 20 };
+
+  // Plan prices are admin-editable (site_settings) with a fallback for a
+  // missing record; the server is still the source of truth for validation.
+  const FALLBACK_PRICES = { SR_SIGNAL_BOX: 10, PERFECT_SIGNAL_BOX: 20 };
+  const readPlanPrices = () => {
+    const prices = Object.assign({}, FALLBACK_PRICES);
+    try {
+      const s = $app.findFirstRecordByFilter("site_settings", "id != ''");
+      const sr = Number(s.get("plan_sr_price"));
+      const vip = Number(s.get("plan_vip_price"));
+      if (sr > 0) prices.SR_SIGNAL_BOX = sr;
+      if (vip > 0) prices.PERFECT_SIGNAL_BOX = vip;
+    } catch {}
+    return prices;
+  };
+  const PLAN_PRICES = readPlanPrices();
 
   if (!e.auth) throw new BadRequestError("Authentication required.");
 

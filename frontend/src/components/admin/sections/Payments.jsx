@@ -134,8 +134,8 @@ export default function Payments() {
         return (
           <span className={cn(
             'font-data text-[10px] whitespace-nowrap',
-            isPending && hrs > 24 ? 'font-bold text-rose-300'
-              : isPending && hrs > 12 ? 'text-amber-300'
+            isPending && hrs > 24 ? 'font-bold text-rose-600 dark:text-rose-300'
+              : isPending && hrs > 12 ? 'text-amber-600 dark:text-amber-300'
                 : 'text-akg-muted',
           )}>
             {isPending ? timeWaiting(p.created) : fmtRelative(p.created)}

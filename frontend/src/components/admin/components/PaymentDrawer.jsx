@@ -81,7 +81,7 @@ export default function PaymentDrawer({ payment, loading = false, onClose, onRej
                 </button>
                 <button
                   onClick={() => { onClose(); onReject?.(p); }}
-                  className="h-10 rounded-lg border border-rose-500/30 px-4 text-sm font-bold text-rose-300 hover:bg-rose-500/10 transition-colors"
+                  className="h-10 rounded-lg border border-rose-500/30 px-4 text-sm font-bold text-rose-600 hover:bg-rose-500/10 dark:text-rose-300 transition-colors"
                 >
                   Reject...
                 </button>

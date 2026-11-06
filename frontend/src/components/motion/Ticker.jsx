@@ -29,7 +29,7 @@ export default function Ticker({ items = [], className = '' }) {
 
   return (
     <div
-      className={`relative overflow-hidden border-y border-white/[0.07] bg-[#0A0D13] py-2.5 ${className}`}
+      className={`relative overflow-hidden border-y border-[var(--akg-hairline)] bg-akg-tint py-2.5 ${className}`}
       aria-label="Live signal tape"
     >
       <div className={`ticker-track ${reduce ? '!animate-none' : ''}`}>
@@ -37,8 +37,8 @@ export default function Ticker({ items = [], className = '' }) {
         {strip(true)}
       </div>
       {/* edge fades */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-[#0A0D13] to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-[#0A0D13] to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-akg-tint to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-akg-tint to-transparent" />
     </div>
   );
 }

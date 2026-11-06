@@ -2,30 +2,25 @@ import { useEffect, useState } from 'react';
 import { pb } from './pocketbase';
 
 /**
- * USDT deposit wallets. Served from the `site_settings` collection so the desk
- * can rotate addresses without a frontend redeploy; these constants are the
- * fallback while the record loads (or if the API is unreachable).
+ * USDT deposit wallets. Since the wallets collection became admin-managed the
+ * public read goes straight to it (addresses are public data); these constants
+ * are the fallback while the collection loads (or if the API is unreachable).
  */
-export const DEFAULT_WALLETS = {
-  'USDT-TRC20': 'TLa2g9Y8kP2qXvL1b8Jp9wZmN4qK7dEf9A',
-  'USDT-BEP20': '0x71C2B81F1A9D4E72b83A072fCc8295b7A19D38Ef',
-  'USDT-ERC20': '0x71C2B81F1A9D4E72b83A072fCc8295b7A19D38Ef',
-};
+export const DEFAULT_WALLETS = [
+  { id: 'default-trc20', label: 'USDT-TRC20', address: 'TLa2g9Y8kP2qXvL1b8Jp9wZmN4qK7dEf9A', note: '' },
+  { id: 'default-bep20', label: 'USDT-BEP20', address: '0x48D406F20110D753C90D7465D35889F7628192F9', note: '' },
+  { id: 'default-erc20', label: 'USDT-ERC20', address: '0x71C2B81F1A9D4E72b83A072fCc8295b7A19D38Ef', note: '' },
+];
 
 let cachePromise = null;
 
 function fetchWallets() {
   if (!cachePromise) {
-    cachePromise = pb.collection('site_settings')
-      .getList(1, 1)
+    cachePromise = pb.collection('wallets')
+      .getList(1, 50, { filter: 'enabled = true', sort: 'sort,created' })
       .then((res) => {
-        const s = res.items[0];
-        if (!s) return DEFAULT_WALLETS;
-        return {
-          'USDT-TRC20': s.wallet_trc20 || DEFAULT_WALLETS['USDT-TRC20'],
-          'USDT-BEP20': s.wallet_bep20 || DEFAULT_WALLETS['USDT-BEP20'],
-          'USDT-ERC20': s.wallet_erc20 || DEFAULT_WALLETS['USDT-ERC20'],
-        };
+        const rows = (res.items || []).map((r) => ({ id: r.id, label: r.label, address: r.address, note: r.note || '' }));
+        return rows.length ? rows : DEFAULT_WALLETS;
       })
       .catch(() => DEFAULT_WALLETS);
   }
@@ -46,6 +41,12 @@ export const DEFAULT_SETTINGS = {
   display_currency: 'BOTH',
   landing_announcement: '',
   auto_pin_trade_alerts: true,
+  plan_sr_name: 'SR Signal Box',
+  plan_sr_price: 10,
+  plan_sr_blurb: '',
+  plan_vip_name: 'Perfect Signal Box',
+  plan_vip_price: 20,
+  plan_vip_blurb: '',
 };
 
 let settingsPromise = null;
@@ -75,6 +76,12 @@ function fetchSettings() {
           display_currency: s.display_currency || 'BOTH',
           landing_announcement: s.landing_announcement || '',
           auto_pin_trade_alerts: s.auto_pin_trade_alerts !== false,
+          plan_sr_name: s.plan_sr_name || 'SR Signal Box',
+          plan_sr_price: Number(s.plan_sr_price) || 10,
+          plan_sr_blurb: s.plan_sr_blurb || '',
+          plan_vip_name: s.plan_vip_name || 'Perfect Signal Box',
+          plan_vip_price: Number(s.plan_vip_price) || 20,
+          plan_vip_blurb: s.plan_vip_blurb || '',
         };
       })
       .catch(() => DEFAULT_SETTINGS);
@@ -93,7 +100,7 @@ export function useSiteSettings() {
   return settings;
 }
 
-/** Returns the live wallet map (falls back to defaults). */
+/** Returns the live wallet list (falls back to defaults). */
 export function useWallets() {
   const [wallets, setWallets] = useState(DEFAULT_WALLETS);
 
@@ -106,4 +113,60 @@ export function useWallets() {
   }, []);
 
   return wallets;
+}
+
+/** Same list shaped as a legacy {label: address} map (used by QR + admin import). */
+export function walletsToMap(list) {
+  const out = {};
+  (list || []).forEach((w) => { out[w.label] = w.address; });
+  return out;
+}
+
+const STATIC_PLAN_FEATURES = {
+  SR_SIGNAL_BOX: [
+    'Photo and text signal execution parameters',
+    'Standard currency pairs (EUR/USD, GBP/USD)',
+    'Monthly archive full access',
+    'Real-time SSE desktop push notifications',
+    'Standard broker setups and PDF guides'
+  ],
+  PERFECT_SIGNAL_BOX: [
+    'High-volatility signals (XAU/USD Gold, BTC/USD, NAS100)',
+    'Multi-tier Take Profit and Trailing Stop zones',
+    'Live algorithm commentary and rationale',
+    'Full access to all bots and MT4/MT5 templates',
+    'Priority execution advisory and admin broadcast stream',
+    'VIP real-time execution channel access'
+  ]
+};
+
+/**
+ * Builds the two subscription cards. Name, price and pitch come from
+ * admin-editable site_settings; stable plan ids, feature copy and tags stay
+ * static because roles, grants and analytics key off them.
+ */
+export function getPlans(settings) {
+  const s = settings || DEFAULT_SETTINGS;
+  return [
+    {
+      id: 'SR_SIGNAL_BOX',
+      name: s.plan_sr_name || 'SR Signal Box',
+      price: Number(s.plan_sr_price) || 10,
+      blurb: s.plan_sr_blurb || '',
+      period: 'per 30-day cycle',
+      popular: false,
+      tag: 'STANDARD EXECUTION',
+      features: STATIC_PLAN_FEATURES.SR_SIGNAL_BOX
+    },
+    {
+      id: 'PERFECT_SIGNAL_BOX',
+      name: s.plan_vip_name || 'Perfect Signal Box',
+      price: Number(s.plan_vip_price) || 20,
+      blurb: s.plan_vip_blurb || '',
+      period: 'per 30-day cycle',
+      popular: true,
+      tag: 'INSTITUTIONAL VIP',
+      features: STATIC_PLAN_FEATURES.PERFECT_SIGNAL_BOX
+    }
+  ];
 }

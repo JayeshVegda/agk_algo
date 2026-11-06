@@ -14,11 +14,11 @@ const buttonVariants = cva(
         positive:
           'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400 border border-transparent shadow-sm',
         secondary:
-          'bg-slate-100 text-slate-900 hover:bg-slate-200 border border-slate-200/80 dark:bg-white/10 dark:text-white dark:border-white/10 dark:hover:bg-white/15 shadow-2xs',
+          'bg-akg-tint text-akg-text hover:bg-[var(--akg-bg-elevated-2)] border border-transparent shadow-2xs',
         outline:
-          'border border-slate-300 bg-white text-slate-900 hover:bg-slate-50 hover:border-slate-400 dark:border-white/15 dark:bg-[#0E141B] dark:text-white dark:hover:bg-white/10 shadow-2xs',
+          'border border-[var(--akg-hairline)] bg-akg-card text-akg-text hover:bg-akg-tint shadow-2xs',
         ghost:
-          'text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white',
+          'text-akg-textSecondary hover:bg-akg-tint hover:text-akg-text',
         link:
           'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 underline-offset-4 hover:underline p-0 h-auto active:scale-100',
         gold:

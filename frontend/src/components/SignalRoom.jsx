@@ -320,12 +320,13 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
     setLoadingOlder(true);
     try {
       const oldest = msgs[0];
-      const page = await fetchMessages({ beforeCreated: oldest.created, limit: PAGE_SIZE });
-      if (page.length === 0) {
+      const page = await fetchMessages({ beforeCreated: oldest.created });
+      const fresh = page.filter((p) => !msgs.some((m) => m.id === p.id));
+      if (fresh.length === 0) {
         setHasOlder(false);
         return;
       }
-      setMsgs((prev) => [...page, ...prev]);
+      setMsgs((prev) => [...fresh.filter((p) => !prev.some((m) => m.id === p.id)), ...prev]);
       const missing = page.filter((m) => canReadAudience(user, m.audience)).map((m) => m.id);
       if (missing.length > 0) {
         const rows = await fetchContent(missing);
@@ -417,17 +418,17 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
           },
           onReaction: (action, record) => {
             if (action === 'delete') {
-              setReactions((prev) => prev.filter((r) => r.id !== record.id));
+              setReactions((prev) => prev.filter((r) => r.id !== record.id && !(r.message === record.message && r.user === record.user && r.emoji === record.emoji)));
               return;
             }
+            const same = (cand) => cand.message === record.message && cand.user === record.user && cand.emoji === record.emoji;
             setReactions((prev) => {
-              const idx = prev.findIndex((r) => r.id === record.id);
-              if (idx >= 0) {
-                const next = prev.slice();
-                next[idx] = record;
-                return next;
+              const cleaned = prev.filter((r) => r.id === record.id || !(same(r) && r.id.startsWith('temp_')));
+              if (cleaned.some((r) => r.id === record.id)) {
+                return cleaned.map((r) => (r.id === record.id ? record : r));
               }
-              return [...prev, record];
+              if (cleaned.some(same)) return cleaned;
+              return [...cleaned, record];
             });
           },
         });
@@ -460,14 +461,22 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
     }
     const existing = mine || reactions.find((r) => r.message === msgId && r.user === meId && r.emoji === emoji);
     const prevReactions = reactions;
+    let tempId = null;
     if (existing) {
       setReactions((p) => p.filter((r) => r.id !== existing.id));
     } else {
-      const optimistic = { id: 'temp_' + Date.now(), message: msgId, user: meId, emoji };
+      tempId = 'temp_' + Date.now();
+      const optimistic = { id: tempId, message: msgId, user: meId, emoji };
       setReactions((p) => [...p, optimistic]);
     }
     try {
-      await toggleReaction({ messageId: msgId, emoji, existingId: existing?.id });
+      const created = await toggleReaction({ messageId: msgId, emoji, existingId: existing?.id });
+      if (created && tempId) {
+        setReactions((p) => {
+          const cleaned = p.filter((r) => r.id !== tempId);
+          return cleaned.some((r) => r.id === created.id) ? cleaned : [...cleaned, created];
+        });
+      }
     } catch (err) {
       setReactions(prevReactions);
     }

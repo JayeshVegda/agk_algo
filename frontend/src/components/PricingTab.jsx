@@ -7,15 +7,17 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
-import { useWallets } from '../lib/wallets';
+import QRCode from 'qrcode';
+import { useWallets, walletsToMap, getPlans, useSiteSettings } from '../lib/wallets';
 
 export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, notify }) {
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [network, setNetwork] = useState('USDT-TRC20');
+  const [network, setNetwork] = useState('');
   const [txid, setTxid] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [walletQr, setWalletQr] = useState('');
   const [myPayments, setMyPayments] = useState([]);
 
   const loadMyPayments = useCallback(async () => {
@@ -38,7 +40,19 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
     return () => { unsub?.then?.((u) => u && u()); };
   }, [user?.email, loadMyPayments]);
 
-  const WALLETS = useWallets();
+  const WALLETS = walletsToMap(useWallets());
+
+  useEffect(() => {
+    if (WALLETS && !WALLETS[network]) setNetwork(Object.keys(WALLETS)[0] || '');
+  }, [network, WALLETS]);
+
+  const currentAddress = WALLETS[network];
+  useEffect(() => {
+    if (!currentAddress) { setWalletQr(''); return; }
+    QRCode.toDataURL(currentAddress, { width: 220, margin: 1, color: { dark: '#0C1619E6', light: '#FFFFFF' } })
+      .then(setWalletQr)
+      .catch(() => setWalletQr(''));
+  }, [currentAddress]);
 
   useEffect(() => {
     if (!selectedPlan) return undefined;
@@ -110,39 +124,9 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
     }
   };
 
-  const PLANS = [
-    {
-      id: 'SR_SIGNAL_BOX',
-      name: 'SR Signal Box',
-      price: 10,
-      period: 'per 30-day cycle',
-      popular: false,
-      tag: 'STANDARD EXECUTION',
-      features: [
-        'Photo and text signal execution parameters',
-        'Standard currency pairs (EUR/USD, GBP/USD)',
-        'Monthly archive full access',
-        'Real-time SSE desktop push notifications',
-        'Standard broker setups and PDF guides'
-      ]
-    },
-    {
-      id: 'PERFECT_SIGNAL_BOX',
-      name: 'Perfect Signal Box',
-      price: 20,
-      period: 'per 30-day cycle',
-      popular: true,
-      tag: 'INSTITUTIONAL VIP',
-      features: [
-        'High-volatility signals (XAU/USD Gold, BTC/USD, NAS100)',
-        'Multi-tier Take Profit and Trailing Stop zones',
-        'Live algorithm commentary and rationale',
-        'Full access to all bots and MT4/MT5 templates',
-        'Priority execution advisory and admin broadcast stream',
-        'VIP real-time execution channel access'
-      ]
-    }
-  ];
+  const settings = useSiteSettings();
+  const PLANS = getPlans(settings);
+
 
   const now = Date.now();
   const expiry = user?.cycle_expires_at ? new Date(String(user.cycle_expires_at).replace(' ', 'T')).getTime() : null;
@@ -354,8 +338,8 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
                   {/* Network Picker */}
                   <div>
                     <label className="block text-akg-text font-semibold mb-1.5">Select Settlement Network</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {['USDT-TRC20', 'USDT-BEP20', 'USDT-ERC20'].map((net) => (
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(3, Math.max(1, Object.keys(WALLETS).length))}, minmax(0, 1fr))` }}>
+                      {Object.entries(WALLETS).map(([net, address]) => (
                         <button
                           key={net}
                           type="button"
@@ -366,7 +350,7 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
                               : 'border-akg-hairline bg-akg-raised text-akg-muted hover:text-akg-text'
                           }`}
                         >
-                          {net.replace('USDT-', '')}
+                          {net.replace(/^USDT[-_ ]?/, '')}
                         </button>
                       ))}
                     </div>
@@ -396,9 +380,16 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
                         <span>{copied ? 'Copied!' : 'Copy'}</span>
                       </button>
                     </div>
-                    <div className="p-3 rounded-lg border border-akg-hairline bg-akg-raised text-akg-accent break-all select-all font-mono text-xs">
-                      {WALLETS[network]}
-                    </div>
+                     <div className="p-3 rounded-lg border border-akg-hairline bg-akg-raised text-akg-accent break-all select-all font-mono text-xs">
+                       {WALLETS[network]}
+                     </div>
+                     {walletQr && (
+                       <div className="flex justify-center pt-1">
+                         <div className="rounded-lg border border-akg-hairline bg-white p-2">
+                           <img src={walletQr} alt={`${network} deposit QR`} className="h-32 w-32 object-contain" />
+                         </div>
+                       </div>
+                     )}
                   </div>
 
                   {/* TXID Submission Form */}

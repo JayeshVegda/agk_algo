@@ -27,7 +27,7 @@ export default function PaymentCard({ payment: p, priorConfirmed = 0, compact = 
             <span className="font-semibold text-akg-text">{planLabel}</span>
             <span className="font-mono">{p.network}</span>
             {p.status === 'pending' ? (
-              <span className="flex items-center gap-1 font-mono text-amber-500">
+              <span className="flex items-center gap-1 font-mono text-amber-700 dark:text-amber-400">
                 <Clock className="h-3 w-3" /> {fmtWaiting(p.created)}
               </span>
             ) : (
@@ -47,7 +47,7 @@ export default function PaymentCard({ payment: p, priorConfirmed = 0, compact = 
       <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-akg-hairline bg-akg-raised px-3 py-2">
         <TxidCell network={p.network} txid={p.txid} />
         {p.admin_notes && p.status === 'rejected' && (
-          <span className="truncate text-[10px] text-rose-400/80" title={p.admin_notes}>reason saved</span>
+          <span className="truncate text-[10px] text-rose-600/90 dark:text-rose-600 dark:text-rose-400/80" title={p.admin_notes}>reason saved</span>
         )}
       </div>
 
@@ -65,7 +65,7 @@ export default function PaymentCard({ payment: p, priorConfirmed = 0, compact = 
               </button>
               <button
                 onClick={() => onReject?.(p)}
-                className="h-10 rounded-lg border border-rose-500/30 px-4 text-sm font-semibold text-rose-400 transition-colors hover:bg-rose-500/10 active:scale-[0.98] cursor-pointer"
+                className="h-10 rounded-lg border border-rose-500/30 px-4 text-sm font-semibold text-rose-600 dark:text-rose-400 transition-colors hover:bg-rose-500/10 active:scale-[0.98] cursor-pointer"
               >
                 <span className="inline-flex items-center gap-1.5">
                   <X className="h-4 w-4" /> Reject
@@ -75,7 +75,7 @@ export default function PaymentCard({ payment: p, priorConfirmed = 0, compact = 
           ) : (
             <button
               onClick={(e) => { e.stopPropagation(); deletePayment(p); }}
-              className="ml-auto flex h-9 items-center gap-1.5 rounded-lg border border-akg-hairline bg-akg-raised px-3.5 text-xs font-semibold text-akg-muted transition-colors hover:border-rose-500/40 hover:text-rose-400 cursor-pointer"
+              className="ml-auto flex h-9 items-center gap-1.5 rounded-lg border border-akg-hairline bg-akg-raised px-3.5 text-xs font-semibold text-akg-muted transition-colors hover:border-rose-500/40 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
             >
               <Trash2 className="h-3.5 w-3.5" /> Delete
             </button>

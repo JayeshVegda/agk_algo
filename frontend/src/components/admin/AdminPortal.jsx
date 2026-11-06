@@ -83,7 +83,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
             <p className="mt-1 text-center text-xs text-akg-muted">Administrator access only.</p>
 
             {loginError && (
-              <div className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-500 dark:text-rose-400">
+              <div className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-500 dark:text-rose-600 dark:text-rose-400">
                 {loginError}
               </div>
             )}
@@ -215,7 +215,7 @@ function ConsoleShell({ currentUser, onLogout, notify, onNavigatePublic }) {
                   <ChevronRight className={cn('h-3 w-3 transition-transform', !isCollapsed && 'rotate-90')} />
                   <span className="flex-1 text-left">{g.label}</span>
                   {groupBadge > 0 && (
-                    <span className="rounded-md bg-amber-100 dark:bg-amber-500/20 px-1.5 py-px font-mono text-[9px] font-bold text-amber-900 dark:text-amber-400 border border-amber-300/60 dark:border-amber-500/30">{groupBadge}</span>
+                    <span className="rounded-md bg-amber-100 dark:bg-amber-500/20 px-1.5 py-px font-mono text-[9px] font-bold text-amber-900 dark:text-amber-600 dark:text-amber-400 border border-amber-300/60 dark:border-amber-500/30">{groupBadge}</span>
                   )}
                 </button>
                 {!isCollapsed && (
@@ -237,7 +237,7 @@ function ConsoleShell({ currentUser, onLogout, notify, onNavigatePublic }) {
                           <Icon className="h-4 w-4 shrink-0" />
                           <span className="flex-1 truncate">{s.label}</span>
                           {badge > 0 && (
-                            <span className="rounded-md bg-amber-100 dark:bg-amber-500/20 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-900 dark:text-amber-400 border border-amber-300/60 dark:border-amber-500/30">{badge}</span>
+                            <span className="rounded-md bg-amber-100 dark:bg-amber-500/20 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-900 dark:text-amber-600 dark:text-amber-400 border border-amber-300/60 dark:border-amber-500/30">{badge}</span>
                           )}
                         </button>
                       );
@@ -251,7 +251,7 @@ function ConsoleShell({ currentUser, onLogout, notify, onNavigatePublic }) {
         <div className="border-t border-akg-hairline p-3">
           <button
             onClick={onLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-semibold text-rose-500 dark:text-rose-400 transition-colors hover:bg-rose-500/10 cursor-pointer"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-semibold text-rose-500 dark:text-rose-600 dark:text-rose-400 transition-colors hover:bg-rose-500/10 cursor-pointer"
           >
             <LogOut className="h-4 w-4" /> Sign out
           </button>
@@ -309,7 +309,7 @@ function ConsoleShell({ currentUser, onLogout, notify, onNavigatePublic }) {
               <button
                 onClick={() => go('payments', { f: 'pending' })}
                 title="Review the Money Queue"
-                className="flex items-center gap-1.5 rounded-md border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 font-mono text-[11px] font-bold text-amber-900 dark:text-amber-400 transition-colors hover:bg-amber-100 dark:hover:bg-amber-500/20 cursor-pointer"
+                className="flex items-center gap-1.5 rounded-md border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 font-mono text-[11px] font-bold text-amber-900 dark:text-amber-600 dark:text-amber-400 transition-colors hover:bg-amber-100 dark:hover:bg-amber-500/20 cursor-pointer"
               >
                 <AlertTriangle className="h-3.5 w-3.5" />
                 {badges.pendingPayments} deposits · {badges.pendingConnectors} bridges
@@ -432,7 +432,7 @@ function ConsoleShell({ currentUser, onLogout, notify, onNavigatePublic }) {
                     <Icon className="h-4 w-4 shrink-0" />
                     <span className="flex-1">{s.label}</span>
                     {badge > 0 && (
-                      <span className="rounded-md bg-amber-500/20 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-500">{badge}</span>
+                      <span className="rounded-md bg-amber-500/20 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-700 dark:text-amber-400">{badge}</span>
                     )}
                     <ChevronRight className="h-3.5 w-3.5 opacity-40" />
                   </button>
@@ -443,7 +443,7 @@ function ConsoleShell({ currentUser, onLogout, notify, onNavigatePublic }) {
               <div className="px-3.5 py-2 font-mono text-[10px] text-akg-muted">{currentUser.email}</div>
               <button
                 onClick={onLogout}
-                className="flex w-full items-center gap-3 rounded-lg px-3.5 py-3 text-sm font-semibold text-rose-400 transition-colors hover:bg-rose-500/10 cursor-pointer"
+                className="flex w-full items-center gap-3 rounded-lg px-3.5 py-3 text-sm font-semibold text-rose-600 dark:text-rose-400 transition-colors hover:bg-rose-500/10 cursor-pointer"
               >
                 <LogOut className="h-4 w-4" /> Sign out
               </button>

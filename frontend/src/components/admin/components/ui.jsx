@@ -4,16 +4,16 @@ import { cn } from '../../../lib/utils';
 import { explorerUrl } from '../lib/format';
 
 const STATUS_STYLES = {
-  pending: 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30',
-  pending_review: 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30',
-  confirmed: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
-  approved: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
-  active: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
-  connected: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
+  pending: 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-500/15 dark:text-amber-600 dark:text-amber-400 dark:border-amber-500/30',
+  pending_review: 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-500/15 dark:text-amber-600 dark:text-amber-400 dark:border-amber-500/30',
+  confirmed: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-600 dark:text-emerald-400 dark:border-emerald-500/30',
+  approved: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-600 dark:text-emerald-400 dark:border-emerald-500/30',
+  active: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-600 dark:text-emerald-400 dark:border-emerald-500/30',
+  connected: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-600 dark:text-emerald-400 dark:border-emerald-500/30',
   closed: 'bg-slate-100 dark:bg-akg-raised text-slate-700 dark:text-akg-muted border-slate-200 dark:border-akg-hairline',
   settled: 'bg-slate-100 dark:bg-akg-raised text-slate-700 dark:text-akg-muted border-slate-200 dark:border-akg-hairline',
-  rejected: 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-500/15 dark:text-rose-400 dark:border-rose-500/30',
-  in_progress: 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-500/15 dark:text-sky-400 dark:border-sky-500/30',
+  rejected: 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-500/15 dark:text-rose-600 dark:text-rose-400 dark:border-rose-500/30',
+  in_progress: 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-500/15 dark:text-sky-600 dark:text-sky-400 dark:border-sky-500/30',
 };
 
 export function StatusPill({ status, className }) {

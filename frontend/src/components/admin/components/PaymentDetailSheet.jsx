@@ -66,7 +66,7 @@ export default function PaymentDetailSheet({ payment: p, open, onClose, onReject
                 </button>
                 <button
                   onClick={() => { onClose(); onReject?.(p); }}
-                  className="h-10 rounded-lg border border-rose-500/30 px-5 text-sm font-semibold text-rose-400 hover:bg-rose-500/10 cursor-pointer"
+                  className="h-10 rounded-lg border border-rose-500/30 px-5 text-sm font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
                 >
                   Reject...
                 </button>
@@ -81,7 +81,7 @@ export default function PaymentDetailSheet({ payment: p, open, onClose, onReject
                 </button>
                 <button
                   onClick={() => setConfirmingDelete(true)}
-                  className="h-10 rounded-lg border border-akg-hairline px-5 text-sm font-semibold text-akg-muted hover:border-rose-500/40 hover:text-rose-400 cursor-pointer"
+                  className="h-10 rounded-lg border border-akg-hairline px-5 text-sm font-semibold text-akg-muted hover:border-rose-500/40 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
                 >
                   Delete
                 </button>
@@ -120,7 +120,7 @@ export default function PaymentDetailSheet({ payment: p, open, onClose, onReject
                         await resetLicenseBinding(p);
                       }
                     }}
-                    className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 font-mono text-[10px] font-bold text-amber-500 hover:bg-amber-500/20 active:scale-95 transition-all cursor-pointer"
+                    className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 font-mono text-[10px] font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 active:scale-95 transition-all cursor-pointer"
                   >
                     Reset Binding
                   </button>

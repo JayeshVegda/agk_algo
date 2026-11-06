@@ -67,7 +67,7 @@ export default function Overview({ onNavigate }) {
         </div>
         <div className={cn(
           'flex h-8 items-center gap-1.5 rounded-md px-3 font-mono text-[11px] font-bold',
-          attention > 0 ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-emerald-500/10 text-akg-green border border-emerald-500/20'
+          attention > 0 ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20' : 'bg-emerald-500/10 text-akg-green border border-emerald-500/20'
         )}>
           {attention > 0 ? `${attention} NEEDS ATTENTION` : 'ALL CLEAR'}
         </div>
@@ -96,7 +96,7 @@ export default function Overview({ onNavigate }) {
           <header className="flex items-center justify-between border-b border-akg-hairline px-3.5 py-2.5">
             <h2 className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-wider text-akg-accent">
               Money queue
-              {pendingTotal > 0 && <span className="rounded-md bg-amber-500/20 px-1.5 py-px text-[9px] text-amber-500 font-mono">{pendingTotal}</span>}
+              {pendingTotal > 0 && <span className="rounded-md bg-amber-500/20 px-1.5 py-px text-[9px] text-amber-700 dark:text-amber-400 font-mono">{pendingTotal}</span>}
             </h2>
             <button onClick={() => onNavigate('payments')} className="group flex items-center gap-0.5 text-[10px] font-semibold text-akg-muted hover:text-akg-accent cursor-pointer">
               all <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
@@ -146,7 +146,7 @@ export default function Overview({ onNavigate }) {
           <section className="overflow-hidden rounded-xl border border-akg-hairline bg-akg-card">
             <header className="flex items-center justify-between border-b border-akg-hairline px-3.5 py-2">
               <h3 className="font-mono text-[9px] font-bold uppercase tracking-wider text-akg-muted">Expiring ≤3d</h3>
-              <span className={cn('rounded-md px-1.5 py-px font-mono text-[9px] font-bold', expiring.length ? 'bg-amber-500/20 text-amber-500' : 'bg-emerald-500/15 text-akg-green')}>
+              <span className={cn('rounded-md px-1.5 py-px font-mono text-[9px] font-bold', expiring.length ? 'bg-amber-500/20 text-amber-700 dark:text-amber-400' : 'bg-emerald-500/15 text-akg-green')}>
                 {expiring.length || '0'}
               </span>
             </header>
@@ -157,7 +157,7 @@ export default function Overview({ onNavigate }) {
                 {expiring.slice(0, 5).map(({ u, days }) => (
                   <button key={u.id} onClick={() => onNavigate('users')} className="flex w-full items-center justify-between gap-2 px-3.5 py-2 text-left hover:bg-akg-raised cursor-pointer">
                     <span className="truncate text-[11px] font-semibold text-akg-text">{u.email}</span>
-                    <span className={cn('shrink-0 rounded-md px-1.5 py-px font-mono text-[9px] font-bold', days === 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-500')}>
+                    <span className={cn('shrink-0 rounded-md px-1.5 py-px font-mono text-[9px] font-bold', days === 0 ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400' : 'bg-amber-500/20 text-amber-700 dark:text-amber-400')}>
                       {days === 0 ? 'today' : `${days}d`}
                     </span>
                   </button>
@@ -170,7 +170,7 @@ export default function Overview({ onNavigate }) {
             <section className="overflow-hidden rounded-xl border border-akg-hairline bg-akg-card">
               <header className="flex items-center justify-between border-b border-akg-hairline px-3.5 py-2">
                 <h3 className="font-mono text-[9px] font-bold uppercase tracking-wider text-akg-muted">Bridge requests</h3>
-                <span className="rounded-md bg-amber-500/20 px-1.5 py-px font-mono text-[9px] font-bold text-amber-500">{pendingBridges.length}</span>
+                <span className="rounded-md bg-amber-500/20 px-1.5 py-px font-mono text-[9px] font-bold text-amber-700 dark:text-amber-400">{pendingBridges.length}</span>
               </header>
               <div className="divide-y divide-akg-hairline">
                 {pendingBridges.slice(0, 4).map((c) => (

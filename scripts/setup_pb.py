@@ -253,12 +253,34 @@ def main():
                 {"name": "user_email", "type": "text", "required": True},
                 {"name": "plan", "type": "text", "required": True},
                 {"name": "amount", "type": "number", "required": True},
-                {"name": "network", "type": "select", "values": ["USDT-TRC20", "USDT-BEP20", "USDT-ERC20"], "maxSelect": 1, "required": True},
+                {"name": "network", "type": "text", "required": False, "max": 80},
                 {"name": "txid", "type": "text", "required": True},
                 {"name": "status", "type": "select", "values": ["pending", "confirmed", "rejected"], "maxSelect": 1, "required": True}
             ]
         }, token)
         print("✓ 'payments' created.")
+
+    # --- WALLETS (admin-managed crypto networks) ---
+    if "wallets" not in all_colls:
+        print("Creating 'wallets' collection...")
+        post("/api/collections", {
+            "name": "wallets",
+            "type": "base",
+            "listRule": "",
+            "viewRule": "",
+            "createRule": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.collectionName = '_superusers')",
+            "updateRule": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.collectionName = '_superusers')",
+            "deleteRule": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.collectionName = '_superusers')",
+            "fields": [
+                {"name": "label", "type": "text", "required": True, "min": 1, "max": 60},
+                {"name": "address", "type": "text", "required": True, "min": 10, "max": 200},
+                {"name": "note", "type": "text", "required": False, "max": 200},
+                {"name": "enabled", "type": "bool", "required": False},
+                {"name": "sort", "type": "number", "required": False, "onlyInt": True}
+            ]
+        }, token)
+        post("/api/collections/wallets/records", {"label": "USDT-TRC20", "address": get("/api/collections/site_settings/records", token)["items"][0]["wallet_trc20"], "enabled": True, "sort": 10}, token)
+        print("✓ 'wallets' created.")
 
     # --- CONNECTOR REQUESTS ---
     if "connector_requests" not in all_colls:
@@ -285,6 +307,19 @@ def main():
         print("✓ 'connector_requests' created.")
 
     print("\n3. Seeding Base Records...")
+
+    # Seed the admin-editable plan copy into site_settings
+    settings_record = get("/api/collections/site_settings/records", token)["items"][0]
+    if not settings_record.get("plan_sr_name"):
+        patch("/api/collections/site_settings/records/" + settings_record["id"], {
+            "plan_sr_name": "SR Signal Box",
+            "plan_sr_blurb": "Desk-tested signals for a focused watchlist. Real-time entries, stops and targets across FX and crypto.",
+            "plan_sr_price": 10,
+            "plan_vip_name": "Perfect Signal Box",
+            "plan_vip_blurb": "For serious business. Includes the whole desks coverage plus priority briefings and 1:1 desk guidance etc.",
+            "plan_vip_price": 20
+        }, token)
+        print("✓ Plan copy seeded.")
 
     # Seed demo users
     existing_users = [u["email"] for u in get("/api/collections/users/records", token)["items"]]

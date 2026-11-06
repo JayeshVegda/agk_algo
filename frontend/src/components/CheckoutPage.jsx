@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { pb } from '../lib/pocketbase';
-import { useSiteSettings } from '../lib/wallets';
+import { useSiteSettings, useWallets, walletsToMap } from '../lib/wallets';
+import QRCode from 'qrcode';
 import {
   ShieldCheck, Copy, Check, ArrowLeft, Bitcoin, Smartphone,
   LifeBuoy, Info, Clock, KeyRound,
@@ -11,13 +12,16 @@ import { cn } from '../lib/utils';
 
 export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
   const settings = useSiteSettings();
+  const walletList = useWallets();
+  const walletMap = walletsToMap(walletList);
   const [order, setOrder] = useState(null);
   const [method, setMethod] = useState('crypto');
-  const [network, setNetwork] = useState('USDT-TRC20');
+  const [network, setNetwork] = useState('');
   const [ref, setRef] = useState('');
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState('');
   const [done, setDone] = useState(false);
+  const [walletQr, setWalletQr] = useState('');
 
   useEffect(() => {
     try {
@@ -31,6 +35,21 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
       setMethod('upi');
     }
   }, [settings.crypto_enabled, settings.inr_enabled, settings.upi_id]);
+
+  useEffect(() => {
+    if (walletList.length && !walletList.some((w) => w.label === network)) {
+      setNetwork(walletList[0].label);
+    }
+  }, [walletList, network]);
+
+  useEffect(() => {
+    const address = walletMap[network];
+    if (!address) { setWalletQr(''); return; }
+    QRCode.toDataURL(address, { width: 220, margin: 1, color: { dark: '#0C1619E6', light: '#FFFFFF' } })
+      .then(setWalletQr)
+      .catch(() => setWalletQr(''));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [network, walletList]);
 
   if (!order) {
     return (
@@ -207,30 +226,37 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         <section className="mt-4 space-y-4 rounded-xl border border-akg-hairline bg-akg-card p-5">
           <div>
             <h4 className="mb-2 text-xs font-semibold text-akg-text">1 · Select network</h4>
-            <div className="grid grid-cols-3 gap-2">
-              {['USDT-TRC20', 'USDT-BEP20', 'USDT-ERC20'].map((n) => (
+            <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(3, Math.max(1, walletList.length))}, minmax(0, 1fr))` }}>
+              {walletList.map((w) => (
                 <button
-                  key={n}
-                  onClick={() => setNetwork(n)}
+                  key={w.id}
+                  onClick={() => setNetwork(w.label)}
                   className={cn(
-                    'h-10 rounded-lg border font-mono text-xs font-semibold transition-all cursor-pointer',
-                    network === n ? 'border-akg-accent bg-akg-accent/15 text-akg-accent' : 'border-akg-hairline bg-akg-raised text-akg-muted hover:text-akg-text'
+                    'h-10 truncate rounded-lg border font-mono text-xs font-semibold transition-all cursor-pointer',
+                    network === w.label ? 'border-akg-accent bg-akg-accent/15 text-akg-accent' : 'border-akg-hairline bg-akg-raised text-akg-muted hover:text-akg-text'
                   )}
                 >
-                  {n.replace('USDT-', '')}
+                  {w.label.replace(/^USDT[-_ ]?/, '')}
                 </button>
               ))}
             </div>
           </div>
           <div>
             <h4 className="mb-2 text-xs font-semibold text-akg-text">2 · Send exactly ${order.price}.00 USDT to</h4>
-            <button
-              onClick={() => copy(settings.wallets[network], 'wallet')}
-              className="flex w-full items-center justify-between gap-3 rounded-lg border border-akg-hairline bg-akg-raised px-3.5 py-3 text-left cursor-pointer"
-            >
-              <span className="min-w-0 break-all font-mono text-xs text-akg-accent">{settings.wallets[network]}</span>
-              {copied === 'wallet' ? <Check className="h-4 w-4 shrink-0 text-akg-green" /> : <Copy className="h-4 w-4 shrink-0 text-akg-muted" />}
-            </button>
+            <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center">
+              <button
+                onClick={() => copy(walletMap[network] || '', 'wallet')}
+                className="flex w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-akg-hairline bg-akg-raised px-3.5 py-3 text-left cursor-pointer"
+              >
+                <span className="min-w-0 break-all font-mono text-xs text-akg-accent">{walletMap[network] || 'Loading…'}</span>
+                {copied === 'wallet' ? <Check className="h-4 w-4 shrink-0 text-akg-green" /> : <Copy className="h-4 w-4 shrink-0 text-akg-muted" />}
+              </button>
+              {walletQr && (
+                <div className="self-center shrink-0 rounded-lg border border-akg-hairline bg-white p-2 sm:self-auto">
+                  <img src={walletQr} alt={`${network} deposit QR`} className="h-32 w-32 object-contain" />
+                </div>
+              )}
+            </div>
             <p className="mt-1.5 text-[11px] text-akg-muted">Send only USDT on {network}. Wrong-network transfers cannot be recovered.</p>
           </div>
           <div>

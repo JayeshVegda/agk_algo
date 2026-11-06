@@ -36,8 +36,9 @@ export function canReadAudience(user, audience) {
   return plan === 'vip';
 }
 
-export async function fetchMessages({ before } = {}) {
-  const filter = before ? 'created < "' + escapeFilter(before) + '"' : '';
+export async function fetchMessages({ beforeCreated, before } = {}) {
+  const cutoff = beforeCreated || before;
+  const filter = cutoff ? 'created < "' + escapeFilter(cutoff) + '"' : '';
   const res = await pb.collection('messages').getList(1, PAGE_SIZE, {
     filter,
     sort: '-created',
@@ -108,9 +109,9 @@ export async function deleteMessage(messageId) {
   await pb.collection('messages').delete(messageId);
 }
 
-export async function toggleReaction(messageId, emoji, existing) {
-  if (existing) {
-    await pb.collection('reactions').delete(existing.id);
+export async function toggleReaction({ messageId, emoji, existingId }) {
+  if (existingId) {
+    await pb.collection('reactions').delete(existingId);
     return null;
   }
   return pb.collection('reactions').create({ message: messageId, user: pb.authStore.record.id, emoji });

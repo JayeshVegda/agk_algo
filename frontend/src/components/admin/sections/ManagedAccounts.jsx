@@ -286,10 +286,10 @@ function ManagedDossier({ account, onClose }) {
           <div className="grid grid-cols-2 gap-2">
             {STAGES.map((a) => {
               const tone = {
-                sky: 'border-sky-400/30 text-sky-400 hover:bg-sky-400/10',
+                sky: 'border-sky-400/30 text-sky-600 dark:text-sky-400 hover:bg-sky-400/10',
                 green: 'border-akg-accent/30 text-akg-accent hover:bg-emerald-500/10',
-                amber: 'border-amber-400/30 text-amber-400 hover:bg-amber-400/10',
-                rose: 'border-rose-500/30 text-rose-400 hover:bg-rose-500/10',
+                amber: 'border-amber-400/30 text-amber-600 dark:text-amber-400 hover:bg-amber-400/10',
+                rose: 'border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10',
                 plain: 'border-[var(--akg-hairline)] text-akg-muted hover:bg-white/5',
               }[a.tone];
               return (
@@ -347,13 +347,13 @@ function ManagedDossier({ account, onClose }) {
                   <span className="flex items-center gap-3 font-data text-[11px]">
                     <span className="text-akg-silver">gross ${Number(st.gross_profit).toLocaleString()}</span>
                     <span className="text-akg-accent">trader ${Number(st.user_amount).toLocaleString()}</span>
-                    <span className="text-emerald-400">desk ${Number(st.desk_amount).toLocaleString()}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">desk ${Number(st.desk_amount).toLocaleString()}</span>
                     <button
                       onClick={async () => {
                         await pb.collection('managed_settlements').update(st.id, { status: st.status === 'paid' ? 'due' : 'paid' });
                         loadSettlements(account.id);
                       }}
-                      className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase ${st.status === 'paid' ? 'bg-emerald-500/15 text-akg-accent' : 'bg-amber-400/15 text-amber-400'}`}
+                      className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase ${st.status === 'paid' ? 'bg-emerald-500/15 text-akg-accent' : 'bg-amber-400/15 text-amber-600 dark:text-amber-400'}`}
                     >
                       {st.status}
                     </button>
@@ -410,7 +410,7 @@ function SettlementForm({ account, onSaved }) {
         <div className="flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-2 font-data text-[11px]">
           <span className="text-akg-muted">gross ${isNaN(gross) ? '-' : gross.toFixed(2)}</span>
           <span className="text-akg-accent">trader ${isNaN(gross) ? '-' : (gross * share / 100).toFixed(2)} ({share}%)</span>
-          <span className="text-emerald-400">desk ${isNaN(gross) ? '-' : (gross * (100 - share) / 100).toFixed(2)}</span>
+          <span className="text-emerald-600 dark:text-emerald-400">desk ${isNaN(gross) ? '-' : (gross * (100 - share) / 100).toFixed(2)}</span>
         </div>
       )}
       <button
