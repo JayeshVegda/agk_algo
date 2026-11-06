@@ -16,6 +16,7 @@ export default {
         akg: {
           bg: 'var(--akg-bg)',
           bgDeep: 'var(--akg-bg-deep)',
+          tint: 'var(--akg-bg-tint)',
           surface: 'var(--akg-bg-elevated)',
           surfaceElevated: 'var(--akg-bg-elevated-2)',
           card: 'var(--akg-bg-card)',
@@ -27,7 +28,10 @@ export default {
           borderSubtle: 'var(--akg-hairline)',
           green: 'var(--akg-accent)',
           greenDark: 'var(--akg-accent-deep)',
-          // Aliases to gracefully absorb old references into the clean emerald system
+          cyan: 'var(--akg-cyan)',
+          cta: 'var(--akg-cta-bg)',
+          ctaText: 'var(--akg-cta-text)',
+          // Backward-compat aliases
           gold: 'var(--akg-accent)',
           goldDeep: 'var(--akg-accent-deep)',
           goldLight: 'var(--akg-accent)',
@@ -62,11 +66,14 @@ export default {
       },
       boxShadow: {
         'subtle': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.08)',
+        'card': 'var(--akg-card-shadow)',
+        'card-hover': 'var(--akg-card-shadow-hover)',
         'glass': '0 8px 30px rgba(0, 0, 0, 0.12)',
+        'glow-emerald': '0 6px 24px -2px rgba(0, 216, 120, 0.4)',
+        'glow-cyan': '0 6px 24px -2px rgba(0, 180, 216, 0.35)',
       },
       transitionTimingFunction: {
-        'akg': 'cubic-bezier(0.22, 1, 0.36, 1)',
+        'akg': 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
       keyframes: {
         'ticker': {

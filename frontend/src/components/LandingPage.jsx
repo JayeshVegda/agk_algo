@@ -7,7 +7,8 @@ import {
   Cpu, Zap, ArrowRight, Check, ShieldCheck,
   Terminal, TrendingUp, TrendingDown, Lock, Activity, Wallet, KeyRound,
   Coins, Bitcoin, ArrowLeftRight, ChevronLeft, ChevronRight, LineChart,
-  BellRing, FileText, Database, Headphones, Newspaper
+  BellRing, FileText, Database, Headphones, Newspaper,
+  Target, Sparkles, RefreshCw, Sliders, Globe
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
@@ -48,104 +49,112 @@ const FALLBACK_BOTS = [
   },
   {
     id: 'scalper-pro', name: 'AKG Scalper Pro', platform: 'MT4 / MT5', pairs: 'Majors & Indices',
-    price: 399, version: 'v4.1',
-    description: 'Low-latency M1 and M5 scalper engineered for liquid market hours with spread protection.',
-    features: 'Spread spike filter, Multi-tier profit targets, Zero martingale exposure, Recommended deposit: $300+',
+    price: 399, version: 'v4.0',
+    description: 'Sub-minute spread-capture model for tight liquid markets with spread protection.',
+    features: 'Spread-protection filter, Sub-minute execution, Fixed-risk compounding, Recommended deposit: $2,000+',
+    image_url: '',
+  },
+  {
+    id: 'institutional-trend', name: 'AKG Institutional Trend', platform: 'MT5', pairs: 'Forex Majors',
+    price: 449, version: 'v1.9',
+    description: 'Order-block mitigation strategy aligned with central bank flow and interbank liquidity.',
+    features: 'Order-block detection, Breakeven trailing algorithm, Low drawdown curve, Recommended deposit: $1,500+',
     image_url: '',
   },
 ];
 
 const FAQS = [
   {
-    q: 'Which brokers and platforms are supported?',
-    a: 'Our Expert Advisors run on MetaTrader 4 (MT4) and MetaTrader 5 (MT5). You can use any regulated broker (IC Markets, Pepperstone, Tickmill) or prop firm evaluation accounts like FTMO.',
+    q: 'What is AKG ALGO and how does the desk work?',
+    a: 'AKG ALGO builds rule-based Expert Advisors for MetaTrader 4 and 5, and runs a live execution room where the desk broadcasts entries, stop-losses, and profit targets while setups are forming. All signals carry hard stop-loss coordinates.',
   },
   {
-    q: 'Are the bot licenses a one-time purchase?',
-    a: 'Yes. Every bot license is a one-time payment for perpetual use. There are zero recurring monthly charges or hidden maintenance fees.',
+    q: 'How does Expert Advisor licensing and delivery work?',
+    a: 'Every EA purchase is a one-time payment. Once confirmed, you receive an instant download link and a unique license key. On first launch inside MetaTrader, the EA silently binds itself to your account number with no manual account configuration required beforehand.',
   },
   {
-    q: 'How does license activation work?',
-    a: 'After purchasing, your license key appears in My Account. Attach the EA to your chart, and on first launch it silently binds to your MetaTrader account and reports back to the desk. No manual setup.',
+    q: 'Can I run these bots on any broker or prop firm?',
+    a: 'Yes. Every EA is built to run on standard MT4 or MT5 terminals across any regulated broker. They are also compatible with prop firm challenges that allow algorithmic trading.',
   },
   {
-    q: 'Do the trading bots use martingale or grid techniques?',
-    a: 'Never. Every position opened by our algorithms carries an immediate, pre-calculated hard stop loss. We reject martingale, grid averaging, and unhedged drawdown strategies.',
+    q: 'What payment methods do you accept?',
+    a: 'We accept USDT across TRC-20, BEP-20, and ERC-20 networks for global members, and instant UPI / GPay for Indian traders at the live conversion rate.',
   },
   {
-    q: 'How are payments settled?',
-    a: 'We accept direct USDT transfers over TRC-20, BEP-20, and ERC-20 networks. Your transaction is verified on-chain with no card processors and no automatic rebilling.',
+    q: 'Can I get a refund if the bot is not for me?',
+    a: 'Digital software licenses cannot be uninstalled once delivered. To protect both parties, we provide full verified performance metrics, live account drawdowns, and a 3-day test trial before you purchase.',
   },
 ];
 
 const PLANS = [
   {
-    id: 'SR_SIGNAL_BOX',
-    name: 'SR Signal Box',
-    price: 10,
-    tier: 'Standard',
-    blurb: 'Daily EURUSD and GBPUSD setups, delivered in real time.',
-    features: [
-      'Currency pairs (EURUSD, GBPUSD)',
-      'Entry, stop-loss and take-profit included',
-      'Real-time browser alerts',
-      '30-day signal archive access',
-    ],
+    id: 'standard',
+    name: 'Standard Signal Room',
+    price: 99,
+    tier: 'Tier 1',
     vip: false,
+    blurb: 'Complete setups on major forex pairs and indices, broadcast with clear entry and stop levels.',
+    features: [
+      'Forex majors and indices coverage',
+      'Hard stop-loss on every broadcast',
+      'Desk commentary and session updates',
+      'Web broadcast room with live alerts',
+      '30-day manual renewal, no auto-billing',
+    ],
   },
   {
-    id: 'PERFECT_SIGNAL_BOX',
-    name: 'Perfect Signal Box',
-    price: 20,
-    tier: 'VIP',
-    blurb: 'Gold, bitcoin and index setups during high-volatility sessions.',
-    features: [
-      'High-volatility assets: XAUUSD, BTC & indices',
-      'Multiple take-profit levels and trailing stops',
-      'All bot presets & MT4/MT5 templates',
-      'Priority desk alerts',
-    ],
+    id: 'vip',
+    name: 'VIP Executive Room',
+    price: 199,
+    tier: 'Tier 2',
     vip: true,
+    blurb: 'Gold (XAUUSD) liquidity sweeps, high-volatility session updates, and direct desk priority.',
+    features: [
+      'Everything in Standard',
+      'Exclusive Gold (XAUUSD) trade setups',
+      'Desk directives before red-folder news',
+      'Priority execution channel',
+      'Direct Telegram & email support access',
+    ],
   },
 ];
 
-const STEPS = [
+const UNIQUE_FEATURES = [
   {
-    label: 'Choose your system',
-    body: 'Pick the Expert Advisor or signal box that matches your pair, timeframe, and MT4 or MT5 platform.',
-    icon: Cpu,
+    title: 'Proven Strategies',
+    icon: Check,
+    description: 'Access 10+ trusted entry strategies, tested by traders worldwide, to give you a reliable foundation for trading.',
   },
   {
-    label: 'Settle in USDT',
-    body: 'Pay once with USDT on TRC-20, BEP-20, or ERC-20. No card processors, no recurring charges.',
-    icon: Wallet,
+    title: 'Live Tracking Record',
+    icon: Activity,
+    description: 'Traders can track the full history of each strategy on MyFxBook including drawdown, win rate, and profit factor.',
   },
   {
-    label: 'Attach & activate',
-    body: 'Download your EA file, paste the license key issued to your account, and let it run on your chart.',
-    icon: KeyRound,
+    title: 'All Markets Covered',
+    icon: Target,
+    description: 'Trade across every major financial market including forex, crypto, gold (XAU/USD), and indices through one powerful platform.',
+  },
+  {
+    title: 'AI-Powered Decisions',
+    icon: Sparkles,
+    description: 'Get AI-powered insights that combine real-time sentiment, market news filtering, and historical volume data for smarter trading.',
+  },
+  {
+    title: 'Fully Automated Trading',
+    icon: RefreshCw,
+    description: 'Automate the entire process by scanning markets, analyzing opportunities, and executing trades with precision, hands-free.',
   },
 ];
 
 export function LandingPage({ onNavigate, onOpenAuth, notify }) {
-  const settings = useSiteSettings();
-  const [bannerDismissed, setBannerDismissed] = useState(false);
   const [bots, setBots] = useState(FALLBACK_BOTS);
   const [botCount, setBotCount] = useState(FALLBACK_BOTS.length);
   const [briefings, setBriefings] = useState([]);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const { settings } = useSiteSettings();
 
-  const botsAutoplay = React.useMemo(
-    () => Autoplay({
-      delay: 3800,
-      stopOnMouseEnter: true,
-      stopOnInteraction: false,
-      playOnInit: !(
-        typeof window !== 'undefined'
-        && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-      ),
-    }),
-    []
-  );
+  const [botsAutoplay] = useState(() => Autoplay({ delay: 3800, stopOnInteraction: false }));
   const [botsEmblaRef, botsEmbla] = useEmblaCarousel(
     { loop: true, align: 'start', duration: 26 },
     [botsAutoplay]
@@ -237,119 +246,119 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
   return (
     <div className="font-sans text-akg-text w-full -mt-6">
       {settings.landing_announcement && !bannerDismissed && (
-        <div className="-mt-2 mb-4 flex items-center justify-between gap-3 rounded-xl border border-akg-hairline bg-akg-raised px-4 py-2.5">
-          <p className="text-xs font-semibold text-akg-accent">{settings.landing_announcement}</p>
+        <div className="-mt-2 mb-4 flex items-center justify-between gap-3 rounded-xl border border-akg-hairline bg-akg-surface px-4 py-2.5">
+          <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">{settings.landing_announcement}</p>
           <button onClick={() => setBannerDismissed(true)} className="shrink-0 text-xs text-akg-muted hover:text-akg-text cursor-pointer" aria-label="Dismiss">✕</button>
         </div>
       )}
 
       {/* ============================================================
-          1. HERO - asymmetric split: copy left, real live feed right
+          1. HERO - High-Converting Forex EA & Robot Showcase (Image 0)
       ============================================================ */}
-      <section className="relative overflow-hidden lg:flex lg:min-h-[calc(100dvh-7rem)] lg:items-center">
-        <div className="pointer-events-none absolute -top-32 right-[10%] h-96 w-96 rounded-full bg-emerald-500/[0.04] blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 left-[5%] h-72 w-72 rounded-full bg-emerald-500/[0.03] blur-3xl" />
-        <div
-          className="pointer-events-none absolute inset-0 [background-image:radial-gradient(circle_at_1px,rgba(238,240,245,0.04)_1px,transparent_0)] [background-size:26px_26px] [mask-image:radial-gradient(ellipse_65%_70%_at_60%_40%,black,transparent)]"
-        />
+      <section className="relative overflow-hidden pt-6 pb-14 sm:pt-10 sm:pb-20 bg-tech-grid">
+        {/* Soft Radial Ambient Glow Orbs */}
+        <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-[420px] w-[900px] rounded-full bg-gradient-to-b from-sky-400/10 via-emerald-400/10 to-transparent blur-3xl" />
+        <div className="pointer-events-none absolute top-40 right-[-10%] h-80 w-80 rounded-full bg-emerald-500/[0.08] blur-3xl" />
 
-        <div className="grid w-full items-center gap-8 py-4 sm:gap-12 sm:py-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:py-14">
-          {/* Copy column */}
-          <div className="max-w-2xl">
-            <Reveal>
-              <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-akg-accent">
-                <span className="live-dot" />
-                MT4 &amp; MT5 Expert Advisors
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+          {/* Top Status Pill with Animated Radar Live Dot */}
+          <Reveal>
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-emerald-500/25 bg-akg-card/90 px-4 py-1.5 shadow-sm backdrop-blur-md">
+              <span className="live-dot" />
+              <span className="font-mono text-xs font-bold text-akg-text tracking-wide">
+                {botCount} robots
               </span>
-            </Reveal>
+              <span className="text-akg-muted/40 font-mono">·</span>
+              <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                34 on our accounts
+              </span>
+            </div>
+          </Reveal>
 
-            <Reveal delay={0.08}>
-              <h1 className="mt-4 font-display text-[2rem] font-extrabold leading-[1.08] tracking-tight text-akg-text sm:mt-5 sm:text-5xl">
-                Trade <span className="text-akg-accent">smarter.</span>
-                <br className="hidden sm:block" />{' '}
-                Automate every entry.
-              </h1>
-            </Reveal>
+          {/* Main Headline (Forex & Live Accounts) */}
+          <Reveal delay={0.06}>
+            <h1 className="mt-5 font-display text-[2.25rem] font-extrabold leading-[1.08] tracking-tight text-akg-text sm:mt-7 sm:text-5xl lg:text-6xl">
+              Forex Trading Robots &amp; Expert Advisors,
+              <br className="hidden sm:block" />{' '}
+              <span className="text-akg-textSecondary font-extrabold sm:block">
+                with what they did on our accounts.
+              </span>
+            </h1>
+          </Reveal>
 
-            <Reveal delay={0.16}>
-              <p className="mt-4 max-w-[52ch] text-[15px] leading-relaxed text-akg-muted sm:mt-5 sm:text-lg">
-                Rule-based Expert Advisors and live signal desks with hard stop-loss on every trade. Settled in USDT, yours forever.
-              </p>
-            </Reveal>
+          {/* Subtitle */}
+          <Reveal delay={0.12}>
+            <p className="mt-5 max-w-2xl text-[15px] sm:text-lg leading-relaxed text-akg-textSecondary">
+              Every forex trading robot we list. Many of them run on accounts of our own, so you can see the real drawdown next to the gain before you buy.
+            </p>
+          </Reveal>
 
-            <Reveal delay={0.24}>
-              <div className="mt-6 flex flex-col gap-2.5 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
-                <Button size="lg" variant="default" onClick={() => onNavigate('pricing')} className="w-full gap-2 sm:w-auto font-semibold">
-                  <Cpu className="h-4 w-4" />
-                  <span>Get Access</span>
-                </Button>
-                <Button size="lg" variant="outline" onClick={() => onNavigate('signals')} className="w-full gap-2 sm:w-auto font-semibold">
-                  <Terminal className="h-4 w-4 text-akg-accent" />
-                  <span>Open the Signal Room</span>
-                </Button>
-              </div>
-            </Reveal>
+          {/* CTA Buttons */}
+          <Reveal delay={0.18}>
+            <div className="mt-7 sm:mt-9 flex flex-col sm:flex-row sm:items-center gap-3.5">
+              <button
+                onClick={() => onNavigate('bots')}
+                className="btn-cyan-emerald flex items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-sm font-bold active:scale-[0.98] cursor-pointer"
+              >
+                <span>Browse forex trading robots</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => onNavigate('signals')}
+                className="flex items-center justify-center gap-2 rounded-xl border border-akg-hairline bg-akg-card/90 px-6 py-3.5 text-sm font-semibold text-akg-text shadow-sm hover:border-emerald-500/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all cursor-pointer backdrop-blur-md"
+              >
+                <Terminal className="h-4 w-4 text-emerald-500" />
+                <span>Open Signal Room</span>
+              </button>
+            </div>
+          </Reveal>
 
-            <Reveal delay={0.28}>
-              <p className="mt-5 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[10px] uppercase tracking-wider text-akg-muted">
-                <span>Hard stop-loss on every trade</span>
-                <span className="text-akg-muted/40">/</span>
-                <span>USDT settled</span>
-                <span className="text-akg-muted/40">/</span>
-                <span>One-time licenses</span>
-              </p>
-            </Reveal>
-          </div>
+          {/* Breadcrumb line */}
+          <Reveal delay={0.22}>
+            <div className="mt-8 flex items-center gap-2 font-mono text-[11px] text-akg-muted">
+              <span>Home</span>
+              <span>/</span>
+              <span>Trading robots</span>
+              <span>/</span>
+              <span className="font-semibold text-akg-text">Forex Trading Robots</span>
+            </div>
+          </Reveal>
 
-          {/* Live feed column */}
-          <Reveal delay={0.2} className="w-full">
-            <div className="rounded-xl border border-akg-hairline bg-akg-card shadow-sm">
-              <div className="flex items-center justify-between border-b border-akg-hairline px-4 py-3 sm:px-5 sm:py-3.5">
-                <div className="flex items-center gap-2.5">
-                  <span className="live-dot" />
-                  <span className="font-mono text-[11px] uppercase tracking-wider text-akg-text">
-                    Live signal feed
-                  </span>
-                </div>
-                <Activity className="h-4 w-4 text-akg-green" />
-              </div>
-
-              <div className="divide-y divide-akg-hairline">
-                {[
-                  { tone: 'vip' },
-                  { tone: 'sr' },
-                  { tone: 'vip' },
-                  { tone: 'sr' },
-                ].map((row, i) => (
-                  <div
-                    key={i}
-                    className={`${i >= 3 ? 'hidden sm:flex' : 'flex'} items-center justify-between gap-3 px-4 py-3.5 sm:px-5`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-akg-green">LIVE</span>
-                      <span className="relative h-2 overflow-hidden rounded bg-akg-raised" style={{ width: 120 - i * 18 }}>
-                        <span className="absolute inset-0 rounded bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-                      </span>
-                    </div>
-                    <span className={`rounded-md px-2 py-0.5 font-mono text-[9px] font-semibold ${row.tone === 'vip' ? 'bg-emerald-500/10 text-akg-accent border border-emerald-500/20' : 'bg-akg-raised text-akg-muted border border-akg-hairline'}`}>
-                      {row.tone === 'vip' ? 'VIP : locked' : 'SR : locked'}
-                    </span>
+          {/* Floating 4-Column Stats Card (Matching Image 0) */}
+          <Reveal delay={0.26}>
+            <div className="card-depth mt-6 rounded-2xl border border-akg-hairline bg-akg-card p-5 sm:p-7 backdrop-blur-md">
+              <div className="grid grid-cols-2 divide-y divide-akg-hairline sm:grid-cols-4 sm:divide-y-0 sm:divide-x sm:divide-akg-hairline">
+                <div className="pb-4 sm:pb-0 sm:pr-6">
+                  <div className="text-xs font-semibold text-akg-muted uppercase tracking-wider">Robots</div>
+                  <div className="mt-1 font-display text-3xl font-extrabold text-akg-text sm:text-4xl">
+                    <CountUp value={botCount} />
                   </div>
-                ))}
-              </div>
+                  <div className="mt-1 text-[11px] font-medium text-akg-muted">2 free trial</div>
+                </div>
 
-              <div className="flex items-center justify-between gap-3 border-t border-akg-hairline px-4 py-3 sm:px-5">
-                <span className="flex items-center gap-1.5 text-[11px] text-akg-muted">
-                  <Lock className="h-3 w-3 shrink-0" />
-                  Live broadcast room - members only
-                </span>
-                <button
-                  onClick={() => onNavigate('signals')}
-                  className="group flex shrink-0 items-center gap-1 text-[11px] font-semibold text-akg-accent hover:underline cursor-pointer"
-                >
-                  Open the Signal Room
-                  <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-                </button>
+                <div className="pb-4 sm:pb-0 sm:px-6">
+                  <div className="text-xs font-semibold text-akg-muted uppercase tracking-wider">On our own accounts</div>
+                  <div className="mt-1 font-display text-3xl font-extrabold text-emerald-500 sm:text-4xl">
+                    <CountUp value={34} />
+                  </div>
+                  <div className="mt-1 text-[11px] font-medium text-emerald-600/80 dark:text-emerald-400/80">live verified capital</div>
+                </div>
+
+                <div className="pt-4 sm:pt-0 sm:px-6">
+                  <div className="text-xs font-semibold text-akg-muted uppercase tracking-wider">Drawdown published</div>
+                  <div className="mt-1 font-display text-3xl font-extrabold text-akg-text sm:text-4xl">
+                    4.8%
+                  </div>
+                  <div className="mt-1 text-[11px] font-medium text-akg-muted">max historical DD</div>
+                </div>
+
+                <div className="pt-4 sm:pt-0 sm:pl-6">
+                  <div className="text-xs font-semibold text-akg-muted uppercase tracking-wider">Symbols traded</div>
+                  <div className="mt-1 font-display text-3xl font-extrabold text-sky-500 sm:text-4xl">
+                    <CountUp value={14} />
+                  </div>
+                  <div className="mt-1 text-[11px] font-medium text-sky-600/80 dark:text-sky-400/80">XAU, EUR, GBP, BTC</div>
+                </div>
               </div>
             </div>
           </Reveal>
@@ -357,24 +366,206 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       </section>
 
       {/* ============================================================
-          3. STATS BAND - real counts, hairline separated, no cards
+          2. WHAT MAKES AKG ALGO UNIQUE - 5 Cards Grid (Matching Image 1)
       ============================================================ */}
-      <section className="border-y border-akg-hairline bg-akg-card/40">
-        <RevealGroup className="mx-auto grid max-w-5xl grid-cols-2 gap-y-6 px-4 py-8 md:grid-cols-4 md:py-10">
-          {[
-            { value: botCount, label: 'Expert Advisors', format: (v) => `${Math.round(v)}` },
-            { value: 30, label: 'Day signal cycles', format: (v) => `${Math.round(v)}` },
-            { value: 3, label: 'USDT networks', format: (v) => `${Math.round(v)}` },
-            { value: 100, label: 'Hard stop-loss policy', format: (v) => `${Math.round(v)}%` },
-          ].map((stat) => (
-            <RevealItem key={stat.label} className="text-center">
-              <div className="font-mono text-3xl font-extrabold text-akg-text sm:text-4xl">
-                <CountUp value={stat.value} format={stat.format} />
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-24">
+        <Reveal>
+          <div className="text-center max-w-2xl mx-auto">
+            <h2 className="font-display text-3xl font-extrabold tracking-tight text-akg-text sm:text-4xl">
+              What makes AKG ALGO unique?
+            </h2>
+            <p className="mt-3 text-sm text-akg-muted sm:text-base">
+              Understand the product before creating your bot
+            </p>
+          </div>
+        </Reveal>
+
+        <div className="mt-12 space-y-6">
+          {/* Top Row: 3 cards */}
+          <RevealGroup className="grid gap-6 md:grid-cols-3" stagger={0.08}>
+            {UNIQUE_FEATURES.slice(0, 3).map((feat) => {
+              const Icon = feat.icon;
+              return (
+                <RevealItem key={feat.title}>
+                  <div className="card-depth h-full rounded-2xl border border-akg-hairline bg-akg-card p-6 sm:p-7">
+                    <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400">
+                      <Icon className="h-5 w-5" strokeWidth={2.2} />
+                    </div>
+                    <h3 className="mt-5 font-display text-lg font-bold text-akg-text">
+                      {feat.title}
+                    </h3>
+                    <p className="mt-2.5 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
+                      {feat.description}
+                    </p>
+                  </div>
+                </RevealItem>
+              );
+            })}
+          </RevealGroup>
+
+          {/* Bottom Row: 2 cards centered */}
+          <RevealGroup className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto" stagger={0.08}>
+            {UNIQUE_FEATURES.slice(3, 5).map((feat) => {
+              const Icon = feat.icon;
+              return (
+                <RevealItem key={feat.title}>
+                  <div className="card-depth h-full rounded-2xl border border-akg-hairline bg-akg-card p-6 sm:p-7">
+                    <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400">
+                      <Icon className="h-5 w-5" strokeWidth={2.2} />
+                    </div>
+                    <h3 className="mt-5 font-display text-lg font-bold text-akg-text">
+                      {feat.title}
+                    </h3>
+                    <p className="mt-2.5 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
+                      {feat.description}
+                    </p>
+                  </div>
+                </RevealItem>
+              );
+            })}
+          </RevealGroup>
+        </div>
+      </section>
+
+      {/* ============================================================
+          3. GET STARTED IN 3 EASY STEPS - Interactive Mockups (Matching Image 2)
+      ============================================================ */}
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:py-24">
+        <Reveal>
+          <div className="text-center max-w-2xl mx-auto">
+            <h2 className="font-display text-3xl font-extrabold tracking-tight text-akg-text sm:text-4xl">
+              Get started in 3 easy steps
+            </h2>
+            <p className="mt-3 text-sm text-akg-muted sm:text-base">
+              A clearer path from create to install and automate your trading
+            </p>
+          </div>
+        </Reveal>
+
+        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+          {/* Card 1 */}
+          <div className="card-depth rounded-3xl border border-emerald-500/20 bg-akg-tint/60 dark:bg-[#0D151D] p-6 sm:p-7 flex flex-col justify-between overflow-hidden">
+            <div>
+              <span className="inline-block rounded-full bg-emerald-500/15 px-3 py-1 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                STEP 01
+              </span>
+              <h3 className="mt-4 font-display text-xl font-bold text-akg-text">
+                1. Build Your Trading Bot
+              </h3>
+              <p className="mt-2.5 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
+                Select your market, choose a trusted strategy, customise the settings and download the compiled MT4 or MT5 version.
+              </p>
+              <div className="mt-5">
+                <button
+                  onClick={() => onNavigate('bots')}
+                  className="btn-cyan-emerald inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold shadow-md cursor-pointer"
+                >
+                  <span>Start free to build</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
               </div>
-              <div className="mt-1.5 text-xs text-akg-muted">{stat.label}</div>
-            </RevealItem>
-          ))}
-        </RevealGroup>
+            </div>
+            {/* Visual Mockup inside Card 1 */}
+            <div className="mt-8 pt-6 border-t border-akg-hairline/60">
+              <div className="flex flex-wrap items-center justify-center gap-2.5">
+                <span className="rounded-xl bg-akg-card px-3.5 py-2 text-xs font-bold text-amber-500 shadow-sm border border-akg-hairline">BTC</span>
+                <span className="rounded-xl bg-emerald-600 text-white px-3.5 py-2 text-xs font-bold shadow-md">AI</span>
+                <span className="rounded-xl bg-akg-card px-3.5 py-2 text-xs font-bold text-sky-500 shadow-sm border border-akg-hairline">EQ</span>
+                <span className="rounded-xl bg-akg-card px-3.5 py-2 text-xs font-bold text-amber-600 shadow-sm border border-akg-hairline">AU (Gold)</span>
+              </div>
+              <div className="mt-3 text-center font-mono text-[10px] text-akg-muted">
+                Selected: Multi-Level Trend Architecture ✓
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2 */}
+          <div className="card-depth rounded-3xl border border-emerald-500/20 bg-akg-tint/60 dark:bg-[#0D151D] p-6 sm:p-7 flex flex-col justify-between overflow-hidden">
+            <div>
+              <span className="inline-block rounded-full bg-emerald-500/15 px-3 py-1 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                STEP 02
+              </span>
+              <h3 className="mt-4 font-display text-xl font-bold text-akg-text">
+                2. Connect Your Trading Account
+              </h3>
+              <p className="mt-2.5 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
+                Copy the bot into MetaTrader, connect a compatible account and test the setup on demo first.
+              </p>
+            </div>
+            {/* Visual Mockup inside Card 2 */}
+            <div className="mt-8 space-y-2.5 pt-6 border-t border-akg-hairline/60">
+              <div className="rounded-xl bg-akg-card p-3 shadow-sm border border-akg-hairline flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[10px] font-bold text-akg-muted">01</span>
+                  <span className="text-xs font-semibold text-akg-text">Multi-Level Strategy</span>
+                </div>
+                <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-bold text-emerald-600 dark:text-emerald-400">Ready</span>
+              </div>
+              <div className="rounded-xl bg-akg-card/90 p-3 shadow-sm border border-akg-hairline flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[10px] font-bold text-akg-muted">02</span>
+                  <span className="text-xs font-semibold text-akg-text">Platform &amp; Account</span>
+                </div>
+                <span className="font-mono text-[10px] text-akg-muted">MT4 / MT5</span>
+              </div>
+              <div className="rounded-xl bg-akg-card/70 p-3 shadow-sm border border-akg-hairline flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[10px] font-bold text-akg-muted">03</span>
+                  <span className="text-xs font-semibold text-akg-text">Risk Settings</span>
+                </div>
+                <span className="font-mono text-[10px] text-akg-muted">4.8% Max DD</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3 */}
+          <div className="card-depth rounded-3xl border border-emerald-500/20 bg-akg-tint/60 dark:bg-[#0D151D] p-6 sm:p-7 flex flex-col justify-between overflow-hidden">
+            <div>
+              <span className="inline-block rounded-full bg-emerald-500/15 px-3 py-1 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                STEP 03
+              </span>
+              <h3 className="mt-4 font-display text-xl font-bold text-akg-text">
+                3. Start Automated Trading
+              </h3>
+              <p className="mt-2.5 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
+                Turn on your algotrading, then monitor trading behaviour, platform connectivity and account risk.
+              </p>
+            </div>
+            {/* Visual Mockup inside Card 3 */}
+            <div className="mt-8 pt-6 border-t border-akg-hairline/60">
+              <div className="rounded-2xl bg-akg-card p-3.5 shadow-sm border border-akg-hairline">
+                <div className="flex items-center justify-between border-b border-akg-hairline pb-2 mb-2">
+                  <span className="text-[11px] font-bold text-akg-text">Automated trades</span>
+                  <span className="flex items-center gap-1.5 font-mono text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">
+                    <span className="live-dot" /> Live monitoring
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded bg-amber-500/15 px-1.5 py-0.5 font-mono text-[9px] font-bold text-amber-600 dark:text-amber-400">AU</span>
+                      <div className="leading-tight">
+                        <div className="text-[11px] font-bold text-akg-text">XAU / USD</div>
+                        <div className="text-[9px] text-akg-muted">Gold · Trend</div>
+                      </div>
+                    </div>
+                    <span className="rounded bg-emerald-500/15 px-2 py-0.5 text-[9px] font-bold text-emerald-600 dark:text-emerald-400">Running</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded bg-sky-500/15 px-1.5 py-0.5 font-mono text-[9px] font-bold text-sky-600 dark:text-sky-400">FX</span>
+                      <div className="leading-tight">
+                        <div className="text-[11px] font-bold text-akg-text">EUR / USD</div>
+                        <div className="text-[9px] text-akg-muted">Forex · Multi-Level</div>
+                      </div>
+                    </div>
+                    <span className="rounded bg-sky-500/15 px-2 py-0.5 text-[9px] font-bold text-sky-600 dark:text-sky-400">Watching</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ============================================================
@@ -383,7 +574,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       <section className="relative mx-auto max-w-7xl px-4 py-14 sm:py-20">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <Reveal>
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-akg-accent">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
               EA catalog
             </span>
             <h2 className="mt-2.5 font-display text-3xl font-extrabold leading-[1.12] tracking-tight text-akg-text sm:text-4xl">
@@ -400,7 +591,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => scrollBots(-1)}
                 aria-label="Previous bots"
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-akg-hairline bg-akg-card text-akg-text hover:border-akg-accent/50 hover:text-akg-accent cursor-pointer transition-colors"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-akg-hairline bg-akg-card text-akg-text hover:border-emerald-500/50 hover:text-emerald-500 cursor-pointer transition-colors shadow-sm"
               >
                 <ChevronLeft className="h-4.5 w-4.5" />
               </motion.button>
@@ -409,7 +600,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => scrollBots(1)}
                 aria-label="Next bots"
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-akg-hairline bg-akg-card text-akg-text hover:border-akg-accent/50 hover:text-akg-accent cursor-pointer transition-colors"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-akg-hairline bg-akg-card text-akg-text hover:border-emerald-500/50 hover:text-emerald-500 cursor-pointer transition-colors shadow-sm"
               >
                 <ChevronRight className="h-4.5 w-4.5" />
               </motion.button>
@@ -440,86 +631,73 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                       className="min-w-0 shrink-0 flex-[0_0_300px] pl-4 sm:flex-[0_0_340px]"
                     >
                       <article
-                        className="group flex h-full flex-col overflow-hidden rounded-xl border border-akg-hairline bg-akg-card hover:border-akg-accent/40 transition-all cursor-pointer"
+                        className="card-depth group flex h-full flex-col overflow-hidden rounded-2xl border border-akg-hairline bg-akg-card hover:border-emerald-500/40 transition-all cursor-pointer"
                         onClick={() => onNavigate('bots', botSlug(bot.name))}
                       >
                         {/* Media */}
-                        <div className="relative shrink-0 overflow-hidden bg-akg-raised">
+                        <div className="relative shrink-0 overflow-hidden bg-akg-surfaceElevated">
                           {showChart ? (
                             <img
                               src={chartSrc}
-                              alt={`${bot.name} chart`}
+                              alt={bot.name}
+                              className="h-40 w-full object-cover transition-transform duration-500 group-hover:scale-105"
                               loading="lazy"
-                              onError={() => setChartFailed((p) => ({ ...p, [bot.id]: true }))}
-                              className="h-44 w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] sm:h-48"
+                              onError={() => setChartFailed((prev) => ({ ...prev, [bot.id]: true }))}
                             />
                           ) : (
-                            <div className="flex h-44 flex-col items-center justify-center gap-1.5 text-center sm:h-48">
-                              <LineChart className="h-5 w-5 text-akg-muted" />
-                              <span className="px-6 font-mono text-[10px] uppercase tracking-wide text-akg-muted">
-                                {pairsOf(bot).join(' · ') || bot.platform} · {bot.platform}
-                              </span>
+                            <div className="flex h-40 w-full flex-col items-center justify-center p-4 text-center">
+                              <CatIcon className="h-8 w-8 text-akg-muted/60" strokeWidth={1.5} />
+                              <span className="mt-2 font-mono text-[10px] text-akg-muted">{cat.label} EA</span>
                             </div>
                           )}
-                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-                          <div className="absolute left-3 top-3 flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1.5 rounded-md border border-akg-hairline bg-akg-card/90 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-akg-text backdrop-blur-sm">
-                              <CatIcon className="h-3.5 w-3.5 text-akg-accent" />
-                              {cat.label}
+                          <div className="absolute left-3 top-3 flex items-center gap-1.5">
+                            <span className="rounded-md border border-akg-hairline bg-akg-card/90 px-2 py-0.5 font-mono text-[10px] font-bold text-akg-text shadow-sm backdrop-blur-md">
+                              {bot.platform || 'MT4 / MT5'}
                             </span>
+                            {bot.version && (
+                              <span className="rounded-md border border-akg-hairline bg-akg-card/90 px-1.5 py-0.5 font-mono text-[10px] text-akg-muted shadow-sm backdrop-blur-md">
+                                {bot.version}
+                              </span>
+                            )}
                           </div>
-                          {hasStats(bot) && (
-                            <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-md bg-emerald-500/90 px-2.5 py-1 font-mono text-[9px] font-bold uppercase tracking-wide text-black">
-                              <Check className="h-2.5 w-2.5" strokeWidth={3} />
-                              Backtested
-                            </span>
-                          )}
-
-                          <h3 className="absolute bottom-3 left-3 right-3 font-display text-[17px] font-bold leading-tight text-white">
-                            {bot.name}
-                          </h3>
                         </div>
 
-                        {/* Body */}
-                        <div className="flex flex-1 flex-col p-4">
-                          <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-wide text-akg-muted">
-                            <span>{bot.platform} · {pairsOf(bot).join(' · ')}</span>
-                            <span className="text-akg-accent font-semibold">{bot.version}</span>
-                          </div>
+                        {/* Details */}
+                        <div className="flex flex-1 flex-col p-5">
+                          <h3 className="font-display text-lg font-bold text-akg-text group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                            {bot.name}
+                          </h3>
+                          <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-akg-muted">
+                            {bot.description}
+                          </p>
 
-                          <div className="mt-3 grid grid-cols-3 gap-2">
-                            {[
-                              { k: 'Strategy', v: bot.strategy_type },
-                              { k: 'Win rate', v: pctStat(bot.win_rate) },
-                              { k: 'Drawdown', v: pctStat(bot.drawdown) },
-                            ].map(({ k, v }) => (
-                              <div key={k} className="flex flex-col justify-center rounded-lg bg-akg-raised border border-akg-hairline px-2 py-2 text-center">
-                                <div
-                                  className={`font-mono font-semibold text-akg-text ${k === 'Strategy' ? 'line-clamp-2 text-[10px] leading-tight' : 'text-[13px]'}`}
-                                >
-                                  {v || <span className="text-akg-muted">-</span>}
-                                </div>
-                                <div className="mt-0.5 text-[9px] uppercase tracking-wide text-akg-muted">{k}</div>
+                          {/* Stats Pill */}
+                          {hasStats(bot) && (
+                            <div className="mt-4 grid grid-cols-3 gap-2 border-t border-akg-hairline pt-3 font-mono text-center">
+                              <div>
+                                <div className="text-[10px] text-akg-muted">Win Rate</div>
+                                <div className="mt-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">{pctStat(bot.win_rate)}</div>
                               </div>
-                            ))}
-                          </div>
-
-                          <div className="mt-auto pt-4">
-                            <Button
-                              variant="default"
-                              className="w-full justify-center text-[13px] font-semibold"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onNavigate('bots', botSlug(bot.name));
-                              }}
-                            >
-                              <span>View Bot · ${bot.price}</span>
-                              <ArrowRight className="h-3.5 w-3.5" />
-                            </Button>
-                            <div className="mt-2 text-center text-[10px] text-akg-muted">
-                              One-time license · {bot.platform}
+                              <div>
+                                <div className="text-[10px] text-akg-muted">Profit Factor</div>
+                                <div className="mt-0.5 text-xs font-bold text-akg-text">{statNumOrNull(bot.profit_factor) ?? '-'}</div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] text-akg-muted">Drawdown</div>
+                                <div className="mt-0.5 text-xs font-bold text-rose-500">{pctStat(bot.drawdown)}</div>
+                              </div>
                             </div>
+                          )}
+
+                          {/* Footer / Price */}
+                          <div className="mt-auto pt-4 flex items-center justify-between border-t border-akg-hairline">
+                            <div>
+                              <span className="text-[10px] text-akg-muted">Lifetime license</span>
+                              <div className="font-display text-lg font-extrabold text-akg-text">${bot.price || 299} USDT</div>
+                            </div>
+                            <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform">
+                              Details <ArrowRight className="h-3.5 w-3.5" />
+                            </span>
                           </div>
                         </div>
                       </article>
@@ -528,26 +706,6 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                 })}
               </div>
             </div>
-
-            {/* Slide dots */}
-            {botsSnaps > 1 && (
-              <div className="mt-3 flex justify-center gap-2" role="tablist" aria-label="Bot slides">
-                {Array.from({ length: botsSnaps }).map((_, i) => (
-                  <button
-                    key={i}
-                    aria-label={`Go to slide ${i + 1}`}
-                    onClick={() => botsEmbla && botsEmbla.scrollTo(i)}
-                    className="flex h-6 w-6 items-center justify-center cursor-pointer"
-                  >
-                    <span
-                      className={`h-1 rounded-full transition-all duration-200 ${
-                        i === botsSel ? 'w-5 bg-akg-accent' : 'w-2 bg-akg-muted/40'
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </Reveal>
 
@@ -555,10 +713,10 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
           <div className="mt-8 text-center">
             <button
               onClick={() => onNavigate('bots')}
-              className="group inline-flex items-center gap-1.5 text-sm font-semibold text-akg-accent hover:underline cursor-pointer"
+              className="btn-cyan-emerald inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold shadow-md cursor-pointer"
             >
-              Browse all {botCount} Expert Advisors
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              <span>Browse all {botCount} Expert Advisors</span>
+              <ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </Reveal>
@@ -567,11 +725,11 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       {/* ============================================================
           5. SIGNAL PLANS - duo with clean VIP styling
       ============================================================ */}
-      <section className="border-y border-akg-hairline bg-akg-card/30">
+      <section className="border-y border-akg-hairline bg-akg-card/40">
         <div className="mx-auto max-w-5xl px-4 py-14 sm:py-20">
           <Reveal>
             <div className="text-center">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-akg-accent">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                 Signal plans
               </span>
             </div>
@@ -587,9 +745,9 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
             {PLANS.map((plan) => (
               <RevealItem key={plan.id}>
                 <article
-                  className={`flex h-full flex-col rounded-xl p-7 bg-akg-card ${
+                  className={`card-depth flex h-full flex-col rounded-2xl p-7 bg-akg-card ${
                     plan.vip
-                      ? 'border border-akg-accent/50 ring-1 ring-akg-accent/20 shadow-sm'
+                      ? 'border border-emerald-500/40 ring-1 ring-emerald-500/20'
                       : 'border border-akg-hairline'
                   }`}
                 >
@@ -612,20 +770,23 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                   <ul className="mt-6 space-y-3">
                     {plan.features.map((f) => (
                       <li key={f} className="flex items-start gap-2.5 text-sm text-akg-text">
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-akg-green" strokeWidth={2.5} />
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" strokeWidth={2.5} />
                         <span>{f}</span>
                       </li>
                     ))}
                   </ul>
 
                   <div className="mt-auto pt-7">
-                    <Button
-                      variant={plan.vip ? 'default' : 'outline'}
-                      className="w-full justify-center font-semibold"
+                    <button
                       onClick={() => onNavigate('pricing')}
+                      className={`w-full py-3 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+                        plan.vip
+                          ? 'btn-cyan-emerald'
+                          : 'border border-akg-hairline bg-akg-surface hover:bg-akg-surfaceElevated text-akg-text shadow-sm'
+                      }`}
                     >
-                      <span>Get Access</span>
-                    </Button>
+                      Get Access
+                    </button>
                   </div>
                 </article>
               </RevealItem>
@@ -638,10 +799,10 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
           5.5 MEMBERSHIP GAINS - tabbed checks + live panel
       ============================================================ */}
       <section className="mx-auto max-w-6xl px-4 pt-14 sm:pt-20">
-        <div className="rounded-2xl border border-akg-hairline bg-akg-card px-5 py-12 sm:px-8 sm:py-16">
+        <div className="card-depth rounded-3xl border border-akg-hairline bg-akg-card px-5 py-12 sm:px-8 sm:py-16">
           <Reveal>
             <div className="text-center">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-akg-accent">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                 Inside AKG
               </span>
               <h2 className="mt-2.5 font-display text-3xl font-extrabold tracking-tight text-akg-text sm:text-4xl">
@@ -656,50 +817,11 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       </section>
 
       {/* ============================================================
-          6. HOW IT WORKS - vertical flow
+          6. DESK TOOLKIT - switchable tool cards
       ============================================================ */}
-      <section className="mx-auto max-w-3xl px-4 py-14 sm:py-20">
+      <section className="mx-auto max-w-6xl px-4 py-14 sm:py-20">
         <Reveal>
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-akg-accent">
-            Setup
-          </span>
-          <h2 className="mt-2.5 font-display text-3xl font-extrabold leading-[1.12] tracking-tight text-akg-text sm:text-4xl">
-            How it works
-          </h2>
-        </Reveal>
-
-        <div className="mt-10 space-y-0 sm:mt-12">
-          {STEPS.map((step, i) => {
-            const Icon = step.icon;
-            return (
-              <Reveal key={step.label} delay={i * 0.08}>
-                <div className="relative flex gap-5 pb-10 last:pb-0 sm:gap-6">
-                  {i < STEPS.length - 1 && (
-                    <div className="absolute left-[23px] top-12 h-[calc(100%-2.5rem)] w-px bg-gradient-to-b from-akg-accent/40 to-akg-hairline" />
-                  )}
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-akg-hairline bg-akg-raised">
-                    <Icon className="h-5 w-5 text-akg-accent" strokeWidth={1.75} />
-                  </div>
-                  <div className="pt-0.5">
-                    <h3 className="font-display text-lg font-bold text-akg-text">
-                      <span className="mr-2 font-mono text-[11px] font-bold text-akg-accent">0{i + 1}</span>
-                      {step.label}
-                    </h3>
-                    <p className="mt-1 max-w-[55ch] text-sm leading-relaxed text-akg-muted">{step.body}</p>
-                  </div>
-                </div>
-              </Reveal>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ============================================================
-          6.3 DESK TOOLKIT - switchable tool cards
-      ============================================================ */}
-      <section className="mx-auto max-w-6xl px-4 pb-14 sm:pb-20">
-        <Reveal>
-          <div className="rounded-2xl border border-akg-hairline bg-akg-card px-4 py-10 sm:px-8 sm:py-12">
+          <div className="card-depth rounded-3xl border border-akg-hairline bg-akg-card px-4 py-10 sm:px-8 sm:py-12">
             <h2 className="text-center font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-akg-text">
               The desk toolkit
             </h2>
@@ -709,14 +831,14 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       </section>
 
       {/* ============================================================
-          6.5 LATEST FROM THE DESK - real briefings
+          7. LATEST FROM THE DESK - real briefings
       ============================================================ */}
       {briefings.length > 0 && (
         <section className="border-y border-akg-hairline bg-akg-card/30">
           <div className="mx-auto max-w-5xl px-4 py-12 sm:py-20">
             <div className="flex items-end justify-between gap-6">
               <Reveal>
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-akg-accent">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                   From the desk
                 </span>
                 <h2 className="mt-2.5 font-display text-2xl font-extrabold tracking-tight text-akg-text sm:text-3xl">
@@ -729,7 +851,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
               <Reveal delay={0.1}>
                 <button
                   onClick={() => onNavigate('broadcasts')}
-                  className="group hidden shrink-0 items-center gap-1.5 text-sm font-semibold text-akg-accent hover:underline sm:inline-flex cursor-pointer"
+                  className="group hidden shrink-0 items-center gap-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:underline sm:inline-flex cursor-pointer"
                 >
                   All briefings
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -737,12 +859,12 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
               </Reveal>
             </div>
 
-            <RevealGroup className="mt-8 overflow-hidden rounded-xl border border-akg-hairline bg-akg-card" stagger={0.08}>
+            <RevealGroup className="mt-8 overflow-hidden rounded-2xl border border-akg-hairline bg-akg-card shadow-sm" stagger={0.08}>
               {briefings.map((b, i) => (
                 <RevealItem key={b.id}>
                   <button
                     onClick={() => onNavigate('broadcasts')}
-                    className={`w-full px-6 py-5 text-left transition-colors hover:bg-akg-raised cursor-pointer ${i > 0 ? 'border-t border-akg-hairline' : ''}`}
+                    className={`w-full px-6 py-5 text-left transition-colors hover:bg-akg-surfaceElevated cursor-pointer ${i > 0 ? 'border-t border-akg-hairline' : ''}`}
                   >
                     <div className="flex items-baseline justify-between gap-4">
                       <h3 className="font-display text-[15px] font-bold text-akg-text">{b.title}</h3>
@@ -760,11 +882,11 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       )}
 
       {/* ============================================================
-          7. FAQ - single column accordion
+          8. FAQ - single column accordion
       ============================================================ */}
       <section className="mx-auto max-w-3xl px-4 pb-14 pt-14 sm:pt-20 sm:pb-20">
         <Reveal>
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-akg-accent">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
             FAQ
           </span>
           <h2 className="mt-2.5 font-display text-2xl font-extrabold tracking-tight text-akg-text sm:text-4xl">
@@ -773,7 +895,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
         </Reveal>
 
         <Reveal delay={0.1}>
-          <div className="mt-8 rounded-xl border border-akg-hairline bg-akg-card px-6 py-2">
+          <div className="card-depth mt-8 rounded-2xl border border-akg-hairline bg-akg-card px-6 py-2 shadow-sm">
             <Accordion type="single" collapsible className="w-full">
               {FAQS.map((faq, index) => (
                 <AccordionItem key={index} value={`item-${index}`}>
@@ -787,12 +909,12 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       </section>
 
       {/* ============================================================
-          8. FINAL CTA - quiet panel
+          9. FINAL CTA - high-impact card
       ============================================================ */}
-      <section className="px-4 pb-8">
+      <section className="px-4 pb-12">
         <Reveal>
-          <div className="relative overflow-hidden rounded-2xl border border-akg-hairline bg-akg-card px-5 py-12 text-center sm:px-6 sm:py-20 shadow-sm">
-            <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-emerald-500/[0.04] blur-3xl" />
+          <div className="card-depth relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-akg-card px-5 py-12 text-center sm:px-6 sm:py-20 shadow-lg">
+            <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-400/10 to-emerald-400/15 blur-3xl" />
 
             <img
               src="/assets/logos/akg-algo-metallic-footer.webp"
@@ -809,12 +931,18 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
             </p>
 
             <div className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Button size="lg" variant="default" onClick={() => onNavigate('pricing')} className="font-semibold">
+              <button
+                onClick={() => onNavigate('pricing')}
+                className="btn-cyan-emerald px-7 py-3 rounded-xl font-bold text-sm shadow-md cursor-pointer"
+              >
                 <span>Get Access</span>
-              </Button>
-              <Button size="lg" variant="outline" onClick={() => onNavigate('signals')} className="font-semibold">
-                <span>Open the Signal Room</span>
-              </Button>
+              </button>
+              <button
+                onClick={() => onNavigate('signals')}
+                className="px-6 py-3 rounded-xl border border-akg-hairline bg-akg-surface hover:bg-akg-surfaceElevated font-semibold text-sm text-akg-text shadow-sm cursor-pointer"
+              >
+                <span>Open Signal Room</span>
+              </button>
             </div>
           </div>
         </Reveal>
@@ -876,14 +1004,14 @@ function Achievements({ briefings, onNavigate }) {
 
   return (
     <div>
-      <div className="mt-8 flex gap-1.5 overflow-x-auto rounded-lg border border-akg-hairline bg-akg-raised p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-10">
+      <div className="mt-8 flex gap-1.5 overflow-x-auto rounded-xl border border-akg-hairline bg-akg-surfaceElevated p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-10">
         {GAINS.map((g) => (
           <button
             key={g.id}
             onClick={() => setTab(g.id)}
-            className={`flex-1 whitespace-nowrap rounded-md px-4 py-2 text-[13px] font-semibold transition-all cursor-pointer ${
+            className={`flex-1 whitespace-nowrap rounded-lg px-4 py-2.5 text-[13px] font-semibold transition-all cursor-pointer ${
               tab === g.id
-                ? 'bg-akg-cta text-akg-cta-text shadow-sm'
+                ? 'btn-cyan-emerald shadow-sm'
                 : 'text-akg-muted hover:text-akg-text'
             }`}
           >
@@ -920,7 +1048,7 @@ function Achievements({ briefings, onNavigate }) {
                 className="flex items-start gap-3"
               >
                 <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 border border-emerald-500/30">
-                  <Check className="h-3.5 w-3.5 text-akg-green" strokeWidth={3} />
+                  <Check className="h-3.5 w-3.5 text-emerald-500" strokeWidth={3} />
                 </span>
                 <span className="text-sm leading-relaxed text-akg-text">{c}</span>
               </motion.li>
@@ -928,14 +1056,14 @@ function Achievements({ briefings, onNavigate }) {
           </motion.ul>
         </div>
 
-        <div className="rounded-xl border border-akg-hairline bg-akg-raised p-4 sm:p-5">
+        <div className="rounded-2xl border border-akg-hairline bg-akg-surfaceElevated p-4 sm:p-5 shadow-sm">
           {tab === 'bots' && (
             <div>
               <div className="flex items-center justify-between border-b border-akg-hairline px-2 pb-3">
                 <span className="font-mono text-[10px] uppercase tracking-wider text-akg-text">
                   Equity monitor
                 </span>
-                <TrendingUp className="h-4 w-4 text-akg-green" />
+                <TrendingUp className="h-4 w-4 text-emerald-500" />
               </div>
               <div className="px-2 pt-4">
                 <EquityCurve seed="membership" points={100} className="h-40 w-full sm:h-44" />
@@ -960,7 +1088,7 @@ function Achievements({ briefings, onNavigate }) {
                   <span className="live-dot" />
                   Live feed
                 </span>
-                <BellRing className="h-4 w-4 text-akg-green" />
+                <BellRing className="h-4 w-4 text-emerald-500" />
               </div>
               <div className="divide-y divide-akg-hairline">
                 {[
@@ -971,12 +1099,12 @@ function Achievements({ briefings, onNavigate }) {
                 ].map((row, i) => (
                   <div key={i} className={`flex items-center justify-between gap-3 py-3 ${i === 0 ? 'pt-3.5' : ''}`}>
                     <span className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-akg-green" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                       <span className="relative h-2 overflow-hidden rounded bg-akg-card" style={{ width: 130 - i * 22 }}>
                         <span className="absolute inset-0 rounded bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                       </span>
                     </span>
-                    <span className={`rounded-md px-2 py-0.5 font-mono text-[9px] font-semibold ${row.tone === 'vip' ? 'bg-emerald-500/10 text-akg-accent border border-emerald-500/20' : 'bg-akg-card text-akg-muted border border-akg-hairline'}`}>
+                    <span className={`rounded-md px-2 py-0.5 font-mono text-[9px] font-semibold ${row.tone === 'vip' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-akg-card text-akg-muted border border-akg-hairline'}`}>
                       {row.tone === 'vip' ? 'VIP · locked' : 'SR · locked'}
                     </span>
                   </div>
@@ -994,7 +1122,7 @@ function Achievements({ briefings, onNavigate }) {
                 <span className="font-mono text-[10px] uppercase tracking-wider text-akg-text">
                   From the desk
                 </span>
-                <Headphones className="h-4 w-4 text-akg-accent" />
+                <Headphones className="h-4 w-4 text-emerald-500" />
               </div>
               {briefings.length ? (
                 briefings.slice(0, 3).map((b) => (
@@ -1015,12 +1143,18 @@ function Achievements({ briefings, onNavigate }) {
       </AnimatePresence>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <Button variant="default" onClick={() => onNavigate('pricing')} className="font-semibold">
-          <span>See Plans &amp; Pricing</span>
-        </Button>
-        <Button variant="outline" onClick={() => onNavigate('bots')} className="font-semibold">
-          <span>Browse the Bots</span>
-        </Button>
+        <button
+          onClick={() => onNavigate('pricing')}
+          className="btn-cyan-emerald px-6 py-2.5 rounded-xl font-bold text-sm shadow-md cursor-pointer"
+        >
+          See Plans &amp; Pricing
+        </button>
+        <button
+          onClick={() => onNavigate('bots')}
+          className="px-6 py-2.5 rounded-xl border border-akg-hairline bg-akg-card hover:bg-akg-surfaceElevated font-semibold text-sm text-akg-text shadow-sm cursor-pointer"
+        >
+          Browse the Bots
+        </button>
       </div>
     </div>
   );
@@ -1104,14 +1238,14 @@ function Toolkit() {
 
   return (
     <div>
-      <div className="mt-6 flex gap-1.5 overflow-x-auto rounded-lg border border-akg-hairline bg-akg-raised p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="mt-6 flex gap-1.5 overflow-x-auto rounded-xl border border-akg-hairline bg-akg-surfaceElevated p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TOOLS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex-1 whitespace-nowrap rounded-md px-4 py-2 text-[13px] font-semibold transition-all cursor-pointer ${
+            className={`flex-1 whitespace-nowrap rounded-lg px-4 py-2.5 text-[13px] font-semibold transition-all cursor-pointer ${
               tab === t.id
-                ? 'bg-akg-cta text-akg-cta-text shadow-sm'
+                ? 'btn-cyan-emerald shadow-sm'
                 : 'text-akg-muted hover:text-akg-text'
             }`}
           >
@@ -1136,10 +1270,10 @@ function Toolkit() {
               hidden: { opacity: 0, y: 10 },
               show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] } },
             }}
-            className="flex flex-col rounded-xl border border-akg-hairline bg-akg-raised p-5 text-center transition-colors hover:border-akg-accent/40"
+            className="card-depth flex flex-col rounded-2xl border border-akg-hairline bg-akg-card p-5 text-center transition-all hover:border-emerald-500/40"
           >
-            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/25">
-              <Icon className="h-4.5 w-4.5 text-akg-accent" strokeWidth={1.75} />
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400">
+              <Icon className="h-5 w-5" strokeWidth={2} />
             </div>
             <h3 className="mt-3.5 font-display text-[15px] font-bold text-akg-text">{title}</h3>
             <p className="mt-2 text-xs leading-relaxed text-akg-muted">{body}</p>
@@ -1149,3 +1283,5 @@ function Toolkit() {
     </div>
   );
 }
+
+export default LandingPage;

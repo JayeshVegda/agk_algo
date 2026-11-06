@@ -3,34 +3,42 @@
 @tailwind utilities;
 
 /* 
- * AKG ALGO Design System - Ink Ramp + Terminal Emerald
- * Built following heydamir/unslop rules: quiet chrome, rich moments, dual-mode (Dark & Light).
+ * AKG ALGO Design System - Forex Algorithmic Terminal & EA Store
+ * Rich tactile depth, technical blueprint grid, soft mint-ice light mode,
+ * oceanic obsidian dark mode, and electric cyan to emerald gradients.
  */
 
 :root {
   color-scheme: light;
   
-  /* Ink Ramp - Light Mode */
-  --akg-bg: #F5F7FA;
-  --akg-bg-deep: #ECEFF4;
+  /* Light Mode - Mint-Ice Tech Slate (Soft on eyes, NOT stark sterile white) */
+  --akg-bg: #F1F5F3;
+  --akg-bg-deep: #E6EFEA;
   --akg-bg-card: #FFFFFF;
+  --akg-bg-tint: #EAF3EE;
   --akg-bg-elevated: #FFFFFF;
-  --akg-bg-elevated-2: #ECEFF4;
-  --akg-text: #111827;
-  --akg-text-secondary: #4B5565;
-  --akg-text-muted: #6B7487;
-  --akg-hairline: rgba(17, 24, 39, 0.08);
-  --akg-border: rgba(17, 24, 39, 0.08);
+  --akg-bg-elevated-2: #E8F2EC;
+  --akg-text: #0F172A;
+  --akg-text-secondary: #334155;
+  --akg-text-muted: #64748B;
+  --akg-hairline: rgba(15, 23, 42, 0.08);
+  --akg-border: rgba(0, 180, 216, 0.14);
 
-  /* Signature Green Accent - Light Mode */
+  /* Signature Accents - Electric Cyan & Terminal Emerald */
   --akg-accent: #059669;
   --akg-accent-deep: #064E3B;
-  --akg-accent-soft: rgba(5, 150, 105, 0.08);
-  --akg-accent-border: rgba(5, 150, 105, 0.22);
-  --akg-cta-bg: #064E3B;
+  --akg-accent-soft: rgba(0, 168, 107, 0.10);
+  --akg-accent-border: rgba(0, 168, 107, 0.24);
+  --akg-cyan: #00B4D8;
+  --akg-cyan-soft: rgba(0, 180, 216, 0.10);
+  --akg-cta-bg: linear-gradient(135deg, #00B4D8 0%, #00D878 100%);
   --akg-cta-text: #FFFFFF;
 
-  /* Semantic */
+  /* Card Shadows with Multi-Layered Ambient Depth */
+  --akg-card-shadow: 0 4px 20px -4px rgba(0, 180, 216, 0.07), 0 2px 8px -2px rgba(15, 23, 42, 0.04);
+  --akg-card-shadow-hover: 0 14px 34px -6px rgba(0, 180, 216, 0.16), 0 4px 12px -2px rgba(15, 23, 42, 0.05);
+
+  /* Semantic Colors */
   --akg-positive: #16A34A;
   --akg-negative: #DC2626;
 
@@ -39,33 +47,40 @@
   --akg-font-display: 'Plus Jakarta Sans', 'Inter', sans-serif;
   --akg-font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --akg-font-serif: 'Source Serif 4', 'Iowan Old Style', Georgia, serif;
-  --akg-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --akg-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dark {
   color-scheme: dark;
 
-  /* Ink Ramp - Dark Mode */
-  --akg-bg: #0B0D14;
-  --akg-bg-deep: #07080D;
-  --akg-bg-card: #11141C;
-  --akg-bg-elevated: #11141C;
-  --akg-bg-elevated-2: #1A1E28;
-  --akg-text: #EEF0F5;
-  --akg-text-secondary: #A3A9B8;
-  --akg-text-muted: #7A8296;
-  --akg-hairline: rgba(238, 240, 245, 0.08);
-  --akg-border: rgba(238, 240, 245, 0.08);
+  /* Dark Mode - Oceanic Obsidian Terminal with Ambient Glow */
+  --akg-bg: #070B0E;
+  --akg-bg-deep: #04070A;
+  --akg-bg-card: #0E141B;
+  --akg-bg-tint: #121C26;
+  --akg-bg-elevated: #111A23;
+  --akg-bg-elevated-2: #16222E;
+  --akg-text: #F8FAFC;
+  --akg-text-secondary: #94A3B8;
+  --akg-text-muted: #64748B;
+  --akg-hairline: rgba(255, 255, 255, 0.09);
+  --akg-border: rgba(0, 216, 120, 0.18);
 
-  /* Signature Green Accent - Dark Mode */
+  /* Signature Accents - Terminal Emerald & Cyan Glow */
   --akg-accent: #00D878;
   --akg-accent-deep: #00A35B;
   --akg-accent-soft: rgba(0, 216, 120, 0.12);
-  --akg-accent-border: rgba(0, 216, 120, 0.24);
-  --akg-cta-bg: #00D878;
-  --akg-cta-text: #07080D;
+  --akg-accent-border: rgba(0, 216, 120, 0.32);
+  --akg-cyan: #38BDF8;
+  --akg-cyan-soft: rgba(56, 189, 248, 0.12);
+  --akg-cta-bg: linear-gradient(135deg, #00B4D8 0%, #00D878 100%);
+  --akg-cta-text: #06090E;
 
-  /* Semantic */
+  /* Card Shadows with Glass Depth & Colored Glow */
+  --akg-card-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --akg-card-shadow-hover: 0 16px 42px -6px rgba(0, 216, 120, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+
+  /* Semantic Colors */
   --akg-positive: #4CC38A;
   --akg-negative: #E5484D;
 }
@@ -78,7 +93,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 150ms var(--akg-ease), color 150ms var(--akg-ease);
+  transition: background-color 200ms var(--akg-ease), color 200ms var(--akg-ease);
 }
 
 /* Financial Tabular Numbers */
@@ -102,7 +117,8 @@ body {
 .akg-surface {
   background: var(--akg-bg-elevated);
   border: 1px solid var(--akg-hairline);
-  border-radius: 12px;
+  box-shadow: var(--akg-card-shadow);
+  border-radius: 16px;
 }
 
 .akg-header-logo {
@@ -111,29 +127,69 @@ body {
   width: auto;
 }
 
-/* Solid text replaces old metallic gradient slop */
-.text-metallic {
-  color: var(--akg-text);
+/* High-Impact Gradient CTA Button (Matching Image 0) */
+.btn-cyan-emerald {
+  background: linear-gradient(135deg, #00B4D8 0%, #00D878 100%);
+  color: #FFFFFF !important;
+  box-shadow: 0 6px 20px -2px rgba(0, 180, 216, 0.35), 0 2px 6px rgba(0, 216, 120, 0.25);
+  transition: all 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dark .btn-cyan-emerald {
+  color: #06090E !important;
+  box-shadow: 0 6px 22px -2px rgba(0, 216, 120, 0.35);
+}
+.btn-cyan-emerald:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px -2px rgba(0, 216, 120, 0.5), 0 4px 10px rgba(0, 180, 216, 0.35);
+}
+.btn-cyan-emerald:active {
+  transform: translateY(0);
 }
 
-.text-metallic-silver {
-  color: var(--akg-text-secondary);
+/* Technical Blueprint Grid Pattern */
+.bg-tech-grid {
+  background-image: 
+    linear-gradient(to right, rgba(0, 180, 216, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 180, 216, 0.06) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+.dark .bg-tech-grid {
+  background-image: 
+    linear-gradient(to right, rgba(0, 216, 120, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 216, 120, 0.05) 1px, transparent 1px);
+  background-size: 36px 36px;
 }
 
-/* Frosted glass panel: quiet hairline + subtle neutral surface */
+/* Tactile Depth Card with Smooth Hover Lift */
+.card-depth {
+  background-color: var(--akg-bg-card);
+  border: 1px solid var(--akg-hairline);
+  box-shadow: var(--akg-card-shadow);
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 240ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 240ms ease;
+}
+.card-depth:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--akg-card-shadow-hover);
+  border-color: rgba(0, 216, 120, 0.35);
+}
+
+/* Frosted glass surface */
 .surface-glass {
   background: var(--akg-bg-elevated);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
   border: 1px solid var(--akg-hairline);
+  box-shadow: var(--akg-card-shadow);
 }
 
-@supports (backdrop-filter: blur(16px)) {
+@supports (backdrop-filter: blur(18px)) {
   .surface-glass {
-    background: rgba(17, 20, 28, 0.78);
+    background: rgba(14, 20, 27, 0.78);
   }
   :root:not(.dark) .surface-glass {
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.88);
   }
 }
 
@@ -145,12 +201,12 @@ body {
   }
 }
 
-/* Hairline divider: quiet rule */
+/* Hairline divider */
 .hairline {
   border-color: var(--akg-hairline);
 }
 
-/* Terminal data text */
+/* Typography styles */
 .font-body {
   font-family: var(--akg-font);
 }
@@ -166,14 +222,28 @@ body {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
 
-/* Quiet status dot (unslop: no infinite ping loop) */
+/* Live status indicator with subtle animated radar pulse */
 .live-dot {
   position: relative;
   display: inline-block;
   width: 8px;
   height: 8px;
   border-radius: 9999px;
-  background: var(--akg-accent);
+  background-color: #00D878;
+}
+
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  background-color: rgba(0, 216, 120, 0.45);
+  animation: live-pulse-ring 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes live-pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.9; }
+  80%, 100% { transform: scale(2.2); opacity: 0; }
 }
 
 /* Ticker tape: clean steady rate */
@@ -214,22 +284,31 @@ body {
   outline-offset: 2px;
 }
 
-/* Quiet Bot Card (unslop: clean hairline, 12px radius, no glowing blur) */
+/* Bot Card with tactile elevation */
 .bot-card {
   position: relative;
   border: 1px solid var(--akg-hairline);
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--akg-bg-card);
-  transition: border-color 160ms var(--akg-ease), transform 160ms var(--akg-ease);
+  box-shadow: var(--akg-card-shadow);
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 240ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 240ms ease;
 }
 .bot-card:hover {
-  border-color: var(--akg-accent-border);
-  transform: translateY(-2px);
+  border-color: rgba(0, 216, 120, 0.35);
+  box-shadow: var(--akg-card-shadow-hover);
+  transform: translateY(-3px);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bot-card {
+  .bot-card,
+  .card-depth,
+  .btn-cyan-emerald {
     transform: none !important;
+  }
+  .live-dot::after {
+    animation: none !important;
   }
   .ticker-track {
     animation: none !important;
