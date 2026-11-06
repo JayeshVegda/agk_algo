@@ -34,9 +34,9 @@
   --akg-cta-bg: linear-gradient(135deg, #00B4D8 0%, #00D878 100%);
   --akg-cta-text: #FFFFFF;
 
-  /* Card Shadows with Multi-Layered Ambient Depth */
-  --akg-card-shadow: 0 4px 20px -4px rgba(0, 180, 216, 0.07), 0 2px 8px -2px rgba(15, 23, 42, 0.04);
-  --akg-card-shadow-hover: 0 14px 34px -6px rgba(0, 180, 216, 0.16), 0 4px 12px -2px rgba(15, 23, 42, 0.05);
+  /* Card Shadows with Multi-Layered Physical Depth & Natural Ambient Falloff */
+  --akg-card-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 6px 16px -2px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --akg-card-shadow-hover: 0 16px 36px -6px rgba(15, 23, 42, 0.10), 0 6px 16px -2px rgba(16, 185, 129, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
 
   /* Semantic Colors */
   --akg-positive: #16A34A;
@@ -77,8 +77,8 @@
   --akg-cta-text: #06090E;
 
   /* Card Shadows with Glass Depth & Colored Glow */
-  --akg-card-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.07);
-  --akg-card-shadow-hover: 0 16px 42px -6px rgba(0, 216, 120, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --akg-card-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --akg-card-shadow-hover: 0 18px 44px -4px rgba(0, 0, 0, 0.75), 0 0 24px -2px rgba(16, 185, 129, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 
   /* Semantic Colors */
   --akg-positive: #4CC38A;
@@ -127,23 +127,48 @@ body {
   width: auto;
 }
 
-/* High-Impact Gradient CTA Button (Matching Image 0) */
+/* High-Impact Gradient CTA Button (Tactile micro-bevel with soft cyan-emerald glow) */
 .btn-cyan-emerald {
-  background: linear-gradient(135deg, #00B4D8 0%, #00D878 100%);
+  background: linear-gradient(135deg, #059669 0%, #10B981 50%, #06B6D4 100%);
   color: #FFFFFF !important;
-  box-shadow: 0 6px 20px -2px rgba(0, 180, 216, 0.35), 0 2px 6px rgba(0, 216, 120, 0.25);
-  transition: all 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px -2px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .dark .btn-cyan-emerald {
-  color: #06090E !important;
-  box-shadow: 0 6px 22px -2px rgba(0, 216, 120, 0.35);
+  background: linear-gradient(135deg, #059669 0%, #10B981 50%, #06B6D4 100%);
+  color: #FFFFFF !important;
+  box-shadow: 0 6px 20px -2px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .btn-cyan-emerald:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px -2px rgba(0, 216, 120, 0.5), 0 4px 10px rgba(0, 180, 216, 0.35);
+  box-shadow: 0 8px 24px -2px rgba(16, 185, 129, 0.55), 0 2px 8px rgba(6, 182, 212, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 .btn-cyan-emerald:active {
   transform: translateY(0);
+}
+
+/* Tasteful Headline Gradient Sheen (Unslop: subtle emerald to cyan, never garish purple) */
+.text-gradient-emerald {
+  background: linear-gradient(135deg, #059669 0%, #10B981 40%, #06B6D4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.dark .text-gradient-emerald {
+  background: linear-gradient(135deg, #10B981 0%, #34D399 50%, #38BDF8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Subtle Gradient Eyebrow Badge */
+.badge-gradient {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.08) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  box-shadow: 0 2px 6px -1px rgba(16, 185, 129, 0.08);
+}
+.dark .badge-gradient {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(56, 189, 248, 0.10) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.30);
+  box-shadow: 0 2px 10px -2px rgba(16, 185, 129, 0.20);
 }
 
 /* Technical Blueprint Grid Pattern */
