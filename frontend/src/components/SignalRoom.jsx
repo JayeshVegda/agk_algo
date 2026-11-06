@@ -692,7 +692,7 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
           {newCount > 0 && (
             <button
               onClick={() => { tailRef.current.scrollIntoView({ block: 'end' }); setNewCount(0); }}
-              className="sticky bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-md bg-[#064E3B] text-white dark:bg-[#00D878] dark:text-[#07080D] px-3.5 py-1.5 font-mono text-[10px] font-medium shadow-md cursor-pointer"
+              className="sticky bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400 px-3.5 py-1.5 font-mono text-[10px] font-semibold shadow-md cursor-pointer transition-colors"
             >
               {newCount} new
             </button>
@@ -722,7 +722,7 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
                     onClick={() => {
                       updateMessageBody(contentById[editing.id] && contentById[editing.id].id, editing.__body).then(() => setEditing(null)).catch(() => {});
                     }}
-                    className="rounded-md bg-[#064E3B] text-white dark:bg-[#00D878] dark:text-[#07080D] px-3 py-1 font-mono text-[10px] font-medium cursor-pointer"
+                    className="rounded-md bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400 px-3 py-1 font-mono text-[10px] font-semibold cursor-pointer transition-colors"
                   >
                     Save edit
                   </button>
@@ -739,9 +739,9 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
                     type="button"
                     onClick={() => { setAudience(k); localStorage.setItem('akg_room_audience', k); }}
                     className={cn(
-                      'rounded-md px-2.5 py-0.5 font-mono text-[10px] font-medium transition-colors cursor-pointer',
+                      'rounded-md px-2.5 py-0.5 font-mono text-[10px] font-semibold transition-colors cursor-pointer',
                       audience === k 
-                        ? 'bg-[#064E3B] text-white dark:bg-[#00D878] dark:text-[#07080D]' 
+                        ? 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400' 
                         : 'border border-akg-hairline text-akg-muted hover:text-akg-text',
                     )}
                   >
@@ -776,7 +776,7 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
               <button
                 onClick={send}
                 disabled={sending || (!draft.trim() && files.length === 0)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#064E3B] text-white dark:bg-[#00D878] dark:text-[#07080D] transition-opacity disabled:opacity-40 cursor-pointer"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400 transition-opacity disabled:opacity-40 cursor-pointer"
                 title="Send broadcast"
               >
                 {files.length > 0 ? <Paperclip className="h-4 w-4" /> : <Send className="h-4 w-4" />}
@@ -807,7 +807,7 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
             )}
             <button
               onClick={user ? onOpenPricing : onOpenAuth}
-              className="w-full sm:w-auto text-center shrink-0 rounded-lg bg-[#064E3B] text-white dark:bg-[#00D878] dark:text-[#07080D] px-3.5 py-1.5 font-mono text-[10px] font-medium cursor-pointer"
+              className="w-full sm:w-auto text-center shrink-0 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400 px-3.5 py-1.5 font-mono text-[10px] font-semibold cursor-pointer shadow-xs transition-colors"
             >
               {!user ? 'Sign in' : String(user.plan || '').toUpperCase().includes('SR') && subActive(user) ? 'Upgrade to Perfect Box' : 'Subscribe'}
             </button>

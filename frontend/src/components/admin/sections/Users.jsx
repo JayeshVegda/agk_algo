@@ -277,7 +277,7 @@ export default function Users() {
         head: 'w-[230px]',
         cell: (u) => (
           <div className="min-w-0">
-            <div className="truncate text-xs font-semibold text-white">{u.name || (u.email || '').split('@')[0]}</div>
+            <div className="truncate text-xs font-semibold text-slate-900 dark:text-white">{u.name || (u.email || '').split('@')[0]}</div>
             <div className="truncate font-data text-[10px] text-akg-muted">{u.email}</div>
           </div>
         ),
@@ -292,7 +292,7 @@ export default function Users() {
           const buys = sig ? `SR ×${sig.SR_SIGNAL_BOX} · VIP ×${sig.PERFECT_SIGNAL_BOX}` : sigOf.has(keyOf(u.email)) ? '' : 'no purchases';
           return (
             <div className="min-w-0">
-              <div className="whitespace-nowrap text-[11px] font-semibold text-akg-silver">{PLAN_LABELS[u.plan] || u.plan || 'None'}</div>
+              <div className="whitespace-nowrap text-[11px] font-semibold text-slate-900 dark:text-akg-silver">{PLAN_LABELS[u.plan] || u.plan || 'None'}</div>
               {tab === 'signal' && buys && <div className="font-data text-[10px] text-akg-muted">{buys}</div>}
             </div>
           );
@@ -310,10 +310,10 @@ export default function Users() {
           return (
             <div className="flex min-w-0 flex-wrap items-center gap-1">
               {r.licenses.slice(0, 2).map((l) => (
-                <span key={l.id} className="rounded bg-white/[0.06] px-1.5 py-px font-data text-[9px] text-akg-silver">{l.name}</span>
+                <span key={l.id} className="rounded border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.06] px-1.5 py-px font-data text-[9px] text-slate-800 dark:text-akg-silver">{l.name}</span>
               ))}
               {r.licenses.length > 2 && <span className="font-data text-[9px] text-akg-muted">+{r.licenses.length - 2}</span>}
-              {!r.licenses.length && <span className="text-[10px] text-amber-300">awaiting desk</span>}
+              {!r.licenses.length && <span className="text-[10px] font-semibold text-amber-800 dark:text-amber-300">awaiting desk</span>}
             </div>
           );
         },
@@ -337,7 +337,7 @@ export default function Users() {
         head: 'w-[90px]',
         cell: (u) => {
           const total = (sigOf.get(keyOf(u.email))?.spend || 0) + (botsOf.get(keyOf(u.email))?.spend || 0);
-          return <span className="whitespace-nowrap font-data text-xs font-bold tabular-nums text-white">{total ? `$${total}` : '-'}</span>;
+          return <span className="whitespace-nowrap font-data text-xs font-bold tabular-nums text-slate-900 dark:text-white">{total ? `$${total}` : '-'}</span>;
         },
       },
       {
@@ -378,7 +378,7 @@ export default function Users() {
         actions={tab !== 'managed' && (
           <button
             onClick={() => exportCsv({ tab, rows: sorted, sigOf, botsOf })}
-            className="flex h-9 items-center gap-2 rounded-lg border border-white/15 px-4 text-xs font-bold text-akg-silver transition-colors hover:border-akg-accent/40 hover:text-akg-accent"
+            className="flex h-9 items-center gap-2 rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-akg-raised px-4 text-xs font-bold text-slate-800 dark:text-akg-silver shadow-xs transition-colors hover:border-emerald-500/40 hover:text-emerald-600 dark:hover:text-akg-accent cursor-pointer"
           >
             <Download className="h-3.5 w-3.5" /> Export CSV
           </button>
@@ -401,7 +401,7 @@ export default function Users() {
             name="botFilter"
             value={botFilter}
             onChange={(e) => { replaceParams({ f: e.target.value, page: '', id: '' }); setCursor(0); }}
-            className="h-9 rounded-lg border border-[var(--akg-hairline)] bg-akg-card px-3 text-xs font-semibold text-akg-silver focus:border-akg-accent/60 focus:outline-none"
+            className="h-9 rounded-lg border border-slate-300 dark:border-[var(--akg-hairline)] bg-white dark:bg-akg-card px-3 text-xs font-semibold text-slate-800 dark:text-akg-silver focus:border-emerald-500 focus:outline-none"
           >
             <option value="">All systems</option>
             {botNames.map((name) => (
@@ -438,9 +438,9 @@ export default function Users() {
         mobileCard={(u) => (
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <div className="truncate text-xs font-semibold text-white">{u.name || (u.email || '').split('@')[0]}</div>
+              <div className="truncate text-xs font-semibold text-slate-900 dark:text-white">{u.name || (u.email || '').split('@')[0]}</div>
               <div className="mt-0.5 flex items-center gap-2 font-data text-[10px] text-akg-muted">
-                <span className="text-akg-silver">{PLAN_LABELS[u.plan] || u.plan || 'No plan'}</span>
+                <span className="text-slate-800 dark:text-akg-silver font-medium">{PLAN_LABELS[u.plan] || u.plan || 'No plan'}</span>
                 {tab === 'bot' && botsOf.get(keyOf(u.email))
                   ? <span>· {botsOf.get(keyOf(u.email)).licenses.length} lic</span>
                   : sigOf.get(keyOf(u.email)) ? <span>· ${sigOf.get(keyOf(u.email)).spend}</span> : null}
@@ -480,7 +480,7 @@ export default function Users() {
               </button>
               <button
                 onClick={() => setEditing(dossierUser)}
-                className="flex h-10 items-center gap-1.5 rounded-lg border border-white/15 px-4 text-xs font-semibold text-akg-silver hover:bg-white/5 transition-colors"
+                className="flex h-10 items-center gap-1.5 rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-akg-card px-4 text-xs font-semibold text-slate-800 dark:text-akg-silver hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
               >
                 <Pencil className="h-3.5 w-3.5" /> Edit Access
               </button>
@@ -517,10 +517,10 @@ function TraderDossier({ user, payments, bots, botsOf, sigOf }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between rounded-xl border border-white/[0.07] bg-[#0A0D13] px-4 py-3">
+      <div className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/[0.07] bg-slate-50 dark:bg-akg-raised px-4 py-3">
         <span className="text-xs text-akg-muted">Current access</span>
         <div className="flex items-center gap-2.5">
-          <span className="text-sm font-bold text-white">
+          <span className="text-sm font-bold text-slate-900 dark:text-white">
             {PLAN_LABELS[user.plan] || user.plan || 'None'}
             {sig ? <span className="ml-2 font-data text-[10px] font-normal text-akg-muted">${sig.spend} lifetime</span> : null}
           </span>
@@ -552,15 +552,15 @@ function TraderDossier({ user, payments, bots, botsOf, sigOf }) {
           <Receipt className="h-3.5 w-3.5" /> Payment history ({history.length})
         </h3>
         {history.length === 0 ? (
-          <p className="rounded-xl border border-white/[0.07] bg-[#0A0D13] px-4 py-5 text-center text-xs text-akg-muted">
+          <p className="rounded-xl border border-slate-200 dark:border-white/[0.07] bg-slate-50 dark:bg-akg-raised px-4 py-5 text-center text-xs text-akg-muted">
             No payments from this trader yet.
           </p>
         ) : (
-          <div className="divide-y divide-white/[0.05] overflow-hidden rounded-xl border border-white/[0.07] bg-[#0A0D13]">
+          <div className="divide-y divide-slate-200 dark:divide-white/[0.05] overflow-hidden rounded-xl border border-slate-200 dark:border-white/[0.07] bg-slate-50 dark:bg-akg-raised">
             {history.map((p) => (
               <div key={p.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
                 <div className="min-w-0">
-                  <div className="truncate text-xs font-semibold text-white">
+                  <div className="truncate text-xs font-semibold text-slate-900 dark:text-white">
                     {String(p.plan || '').startsWith('BOT:')
                       ? p.plan.replace('BOT:', 'EA:').trim()
                       : PLAN_LABELS[p.plan] || p.plan}
@@ -570,7 +570,7 @@ function TraderDossier({ user, payments, bots, botsOf, sigOf }) {
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <span className="font-data text-xs font-bold text-white">${p.amount}</span>
+                  <span className="font-data text-xs font-bold text-slate-900 dark:text-white">${p.amount}</span>
                   <StatusDot status={p.status} pulse={false} />
                 </div>
               </div>
@@ -585,17 +585,17 @@ function TraderDossier({ user, payments, bots, botsOf, sigOf }) {
 function LicenseRow({ lic, bot }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="rounded-xl border border-white/[0.07] bg-[#0A0D13] px-3.5 py-3">
+    <div className="rounded-xl border border-slate-200 dark:border-white/[0.07] bg-slate-50 dark:bg-akg-raised px-3.5 py-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-xs font-bold text-white">{lic.name || 'EA'}</span>
+        <span className="truncate text-xs font-bold text-slate-900 dark:text-white">{lic.name || 'EA'}</span>
         <span className="shrink-0 font-data text-[10px] text-akg-muted">{lic.platform} · #{lic.acct}</span>
       </div>
       <div className="mt-1 font-data text-[10px] text-akg-muted">
         issued {fmtDate(new Date(lic.ts).toISOString())}
         {bot ? ` · ${bot.version || ''}` : ''}
       </div>
-      <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-1.5">
-        <span className="truncate font-data text-[11px] font-bold tracking-wide text-akg-gold">{lic.key || 'pending'}</span>
+      <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.03] px-2.5 py-1.5">
+        <span className="truncate font-data text-[11px] font-bold tracking-wide text-emerald-700 dark:text-akg-accent">{lic.key || 'pending'}</span>
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -603,7 +603,7 @@ function LicenseRow({ lic, bot }) {
             setCopied(true);
             setTimeout(() => setCopied(false), 1500);
           }}
-          className="shrink-0 rounded p-1 text-akg-muted transition-colors hover:text-white"
+          className="shrink-0 rounded p-1 text-akg-muted transition-colors hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
           title="Copy license key"
         >
           {copied ? <Check className="h-3 w-3 text-akg-green" /> : <Copy className="h-3 w-3" />}
@@ -614,7 +614,7 @@ function LicenseRow({ lic, bot }) {
           href={bot.download_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-1.5 inline-block text-[10px] font-semibold text-sky-300 hover:underline"
+          className="mt-1.5 inline-block text-[10px] font-semibold text-sky-600 dark:text-sky-300 hover:underline"
         >
           Drive package ↗
         </a>
@@ -624,10 +624,10 @@ function LicenseRow({ lic, bot }) {
 }
 
 function ExpiryBadge({ days }) {
-  if (days === null) return <span className="rounded-full bg-white/[0.06] px-2 py-0.5 font-data text-[10px] text-akg-muted">no cycle</span>;
-  if (days === -1) return <span className="rounded-full bg-rose-500/15 px-2 py-0.5 font-data text-[10px] font-bold text-rose-300">expired</span>;
-  if (days <= 3) return <span className="rounded-full bg-amber-400/15 px-2 py-0.5 font-data text-[10px] font-bold text-amber-300">{days}d left</span>;
-  return <span className="rounded-full bg-akg-green/15 px-2 py-0.5 font-data text-[10px] font-bold text-akg-green">{days}d left</span>;
+  if (days === null) return <span className="rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.06] px-2 py-0.5 font-data text-[10px] text-slate-700 dark:text-akg-muted">no cycle</span>;
+  if (days === -1) return <span className="rounded-full border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/15 px-2 py-0.5 font-data text-[10px] font-bold text-rose-800 dark:text-rose-300">expired</span>;
+  if (days <= 3) return <span className="rounded-full border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-400/15 px-2 py-0.5 font-data text-[10px] font-bold text-amber-900 dark:text-amber-300">{days}d left</span>;
+  return <span className="rounded-full border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-akg-green/15 px-2 py-0.5 font-data text-[10px] font-bold text-emerald-800 dark:text-akg-green">{days}d left</span>;
 }
 
 function EditAccessSheet({ user, onClose, onSave }) {

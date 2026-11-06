@@ -147,6 +147,24 @@ body {
   transform: translateY(0);
 }
 
+/* Bulletproof Global CTA & Surface Utilities */
+.bg-akg-cta {
+  background: var(--akg-cta-bg) !important;
+  color: var(--akg-cta-text) !important;
+}
+.bg-akg-raised {
+  background-color: var(--akg-bg-elevated) !important;
+}
+.bg-akg-card {
+  background-color: var(--akg-bg-card) !important;
+}
+.text-akg-text {
+  color: var(--akg-text) !important;
+}
+.text-akg-silver {
+  color: var(--akg-text) !important;
+}
+
 /* Tasteful Headline Gradient Sheen (Unslop: subtle emerald to cyan, never garish purple) */
 .text-gradient-emerald {
   background: linear-gradient(135deg, #059669 0%, #10B981 40%, #06B6D4 100%);

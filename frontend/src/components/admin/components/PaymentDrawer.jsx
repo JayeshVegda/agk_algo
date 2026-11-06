@@ -96,7 +96,7 @@ export default function PaymentDrawer({ payment, loading = false, onClose, onRej
                 </button>
                 <button
                   onClick={() => setConfirmingDelete(true)}
-                  className="h-10 rounded-lg border border-white/15 px-4 text-sm font-semibold text-akg-muted hover:border-rose-500/40 hover:text-rose-300 transition-colors"
+                  className="h-10 rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-transparent px-4 text-sm font-semibold text-slate-700 dark:text-akg-muted hover:border-rose-500/40 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer"
                 >
                   Delete
                 </button>
@@ -156,7 +156,7 @@ export default function PaymentDrawer({ payment, loading = false, onClose, onRej
                   <div key={h.id} className={cn('flex items-center justify-between gap-3 px-3.5 py-2', h.id === p.id && 'bg-emerald-500/10')}>
                     <span className="flex min-w-0 items-center gap-2">
                       <span className="font-data text-[10px] text-akg-muted">{fmtDateTime(h.created)}</span>
-                      <span className="truncate text-[11px] text-akg-silver">{planShort(h.plan)}</span>
+                      <span className="truncate text-[11px] font-semibold text-slate-800 dark:text-akg-silver">{planShort(h.plan)}</span>
                     </span>
                     <span className="flex shrink-0 items-center gap-2">
                       <span className="font-data text-[11px] font-bold text-[var(--akg-text)]">${h.amount}</span>

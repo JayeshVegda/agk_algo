@@ -165,7 +165,7 @@ export default function DataTable({
                   <tr
                     data-ri={i}
                     className={cn(
-                      'border-b border-[var(--akg-hairline)] transition-colors hover:bg-white/[0.03]',
+                      'border-b border-[var(--akg-hairline)] transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.03]',
                       isCursor && 'bg-emerald-500/10',
                       rowClass?.(r) || '',
                     )}
@@ -187,7 +187,7 @@ export default function DataTable({
                         key={c.key}
                         className={cn(
                           cellPad,
-                          'align-middle text-xs text-akg-silver',
+                          'align-middle text-xs text-slate-800 dark:text-akg-silver font-medium',
                           c.align === 'right' && 'text-right',
                           c.align === 'center' && 'text-center',
                           c.cellClass,
@@ -201,7 +201,7 @@ export default function DataTable({
                   </tr>
                   {expanded === k && renderExpanded && (
                     <tr>
-                      <td colSpan={columns.length + (selectable ? 1 : 0)} className="bg-black/25 px-4 py-3">
+                      <td colSpan={columns.length + (selectable ? 1 : 0)} className="bg-slate-50/90 dark:bg-black/25 px-4 py-3 border-y border-slate-200/80 dark:border-white/10">
                         {renderExpanded(r)}
                       </td>
                     </tr>
@@ -231,7 +231,7 @@ export default function DataTable({
                 {mobileCard(r)}
               </div>
               {expanded === rowKey(r) && renderExpanded && (
-                <div className="border-b border-[var(--akg-hairline)] bg-black/25 px-3.5 py-3">{renderExpanded(r)}</div>
+                <div className="border-b border-[var(--akg-hairline)] bg-slate-50/90 dark:bg-black/25 px-3.5 py-3">{renderExpanded(r)}</div>
               )}
             </div>
           ))}
@@ -262,7 +262,7 @@ export default function DataTable({
               <button
                 onClick={() => setPageIndex(Math.max(1, pageIndex - 1))}
                 disabled={pageIndex <= 1}
-                className="rounded-lg border border-white/10 p-1 text-akg-muted disabled:opacity-30 hover:text-white"
+                className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent p-1 text-akg-muted disabled:opacity-30 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 aria-label="Previous page"
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
@@ -275,7 +275,7 @@ export default function DataTable({
               <button
                 onClick={() => setPageIndex(Math.min(pages, pageIndex + 1))}
                 disabled={pageIndex >= pages}
-                className="rounded-lg border border-white/10 p-1 text-akg-muted disabled:opacity-30 hover:text-white"
+                className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-transparent p-1 text-akg-muted disabled:opacity-30 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 aria-label="Next page"
               >
                 <ChevronRight className="h-3.5 w-3.5" />

@@ -151,7 +151,7 @@ export default function Payments() {
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate text-xs font-semibold text-[var(--akg-text)]">{p.user_email || '-'}</span>
           {p.status === 'pending' && purchaseLabel(priorMap[p.user_email] || 0) && (
-            <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-px font-data text-[9px] font-semibold text-akg-muted">{purchaseLabel(priorMap[p.user_email] || 0)} purchase</span>
+            <span className="shrink-0 rounded border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.06] px-1.5 py-px font-data text-[9px] font-semibold text-slate-700 dark:text-akg-muted">{purchaseLabel(priorMap[p.user_email] || 0)} purchase</span>
           )}
         </span>
       ),
@@ -160,14 +160,14 @@ export default function Payments() {
       key: 'system',
       sortKey: 'system',
       label: 'System',
-      cell: (p) => <span className="whitespace-nowrap text-[11px] text-akg-silver">{planShort(p.plan)}</span>,
+      cell: (p) => <span className="whitespace-nowrap text-[11px] font-semibold text-slate-800 dark:text-akg-silver">{planShort(p.plan)}</span>,
     },
     {
       key: 'method',
       label: 'Method',
       cell: (p) => (
         <span className={cn('inline-block whitespace-nowrap rounded px-1.5 py-px font-data text-[9px] font-bold',
-          p.method === 'upi' ? 'bg-akg-green/15 text-akg-green' : 'bg-emerald-500/15 text-akg-accent')}
+          p.method === 'upi' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-akg-green/15 dark:text-akg-green dark:border-transparent' : 'bg-sky-50 text-sky-800 border border-sky-200 dark:bg-emerald-500/15 dark:text-akg-accent dark:border-transparent')}
         >
           {p.method === 'upi' ? 'UPI' : p.network?.replace('USDT-', '') || 'USDT'}
         </span>
@@ -179,7 +179,7 @@ export default function Payments() {
       label: 'Amount',
       align: 'right',
       cell: (p) => (
-        <span className="whitespace-nowrap font-data text-xs font-bold tabular-nums text-white">
+        <span className="whitespace-nowrap font-data text-xs font-bold tabular-nums text-slate-900 dark:text-white">
           ${p.amount}
           {p.method === 'upi' && p.inr_amount ? <span className="ml-1 font-semibold text-akg-muted">₹{Number(p.inr_amount).toLocaleString('en-IN')}</span> : null}
         </span>
@@ -201,7 +201,7 @@ export default function Payments() {
           <button
             onClick={() => openReject(p)}
             title="Reject with reason (R)"
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-rose-500/30 text-xs font-bold text-rose-300 transition-colors hover:bg-rose-500/10 active:scale-95 cursor-pointer"
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-rose-300 dark:border-rose-500/30 bg-rose-50 dark:bg-transparent text-xs font-bold text-rose-700 dark:text-rose-300 transition-colors hover:bg-rose-100 dark:hover:bg-rose-500/10 active:scale-95 cursor-pointer"
           >
             ✕
           </button>
@@ -257,7 +257,7 @@ export default function Payments() {
 
       {/* verified-revenue strip */}
       {stats && (
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-xl border border-white/[0.07] bg-akg-surface px-4 py-2 font-data text-[11px] text-akg-muted">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1 rounded-xl border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-akg-surface px-4 py-2 font-data text-[11px] text-akg-muted shadow-xs">
           <Kpi k="24h" v={`$${stats.revenue.last24h.toLocaleString()}`} />
           <Kpi k="7d" v={`$${stats.revenue.last7d.toLocaleString()}`} />
           <Kpi k="30d" v={`$${stats.revenue.last30d.toLocaleString()}`} />
@@ -280,9 +280,9 @@ export default function Payments() {
         searchPlaceholder="Email, TXID, network, plan…"
         actions={(
           <span className="hidden font-data text-[10px] text-akg-muted/70 xl:block">
-            <kbd className="rounded border border-white/10 px-1">J</kbd>/<kbd className="rounded border border-white/10 px-1">K</kbd> move ·
-            <kbd className="ml-1 rounded border border-white/10 px-1">A</kbd> approve ·
-            <kbd className="rounded border border-white/10 px-1">R</kbd> reject
+            <kbd className="rounded border border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-1 text-slate-700 dark:text-slate-300">J</kbd>/<kbd className="rounded border border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-1 text-slate-700 dark:text-slate-300">K</kbd> move ·
+            <kbd className="ml-1 rounded border border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-1 text-slate-700 dark:text-slate-300">A</kbd> approve ·
+            <kbd className="rounded border border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-1 text-slate-700 dark:text-slate-300">R</kbd> reject
           </span>
         )}
       />
@@ -302,21 +302,21 @@ export default function Payments() {
         expanded={query.exp}
         renderExpanded={(p) => (
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-white/[0.06] bg-[#0A0D13] px-3.5 py-3">
+            <div className="rounded-xl border border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-akg-raised px-3.5 py-3">
               <div className="mb-2 font-data text-[9px] uppercase tracking-wider text-akg-muted">Reference</div>
               <TxidCell network={p.network} txid={p.txid} full />
             </div>
-            <div className="rounded-xl border border-white/[0.06] bg-[#0A0D13] px-3.5 py-3">
+            <div className="rounded-xl border border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-akg-raised px-3.5 py-3">
               <div className="mb-2 font-data text-[9px] uppercase tracking-wider text-akg-muted">Timeline</div>
-              <div className="space-y-1 text-[11px] text-akg-silver">
+              <div className="space-y-1 text-[11px] text-slate-800 dark:text-akg-silver">
                 <div>Submitted {fmtDateTime(p.created)}</div>
-                {p.license_key && <div className="font-mono text-[10px] text-akg-accent">key {p.license_key}</div>}
+                {p.license_key && <div className="font-mono text-[10px] text-emerald-600 dark:text-akg-accent font-semibold">key {p.license_key}</div>}
                 {p.admin_notes && <div className="text-akg-muted">note: {p.admin_notes}</div>}
               </div>
             </div>
             <button
               onClick={(e) => { e.stopPropagation(); replaceParams({ id: p.id, exp: '' }); }}
-              className="justify-self-start rounded-lg border border-akg-accent/40 bg-emerald-500/10 px-3.5 py-1.5 text-[11px] font-bold text-akg-accent hover:bg-emerald-500/20 cursor-pointer"
+              className="justify-self-start rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3.5 py-1.5 text-[11px] font-bold text-emerald-800 dark:text-akg-accent hover:bg-emerald-500/20 cursor-pointer"
             >
               Open dossier →
             </button>
@@ -334,22 +334,22 @@ export default function Payments() {
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className={cn('font-data text-[10px]', p.status === 'pending' ? 'font-bold text-amber-300' : 'text-akg-muted')}>
+                <span className={cn('font-data text-[10px]', p.status === 'pending' ? 'font-bold text-amber-800 dark:text-amber-300' : 'text-akg-muted')}>
                   {p.status === 'pending' ? timeWaiting(p.created) : fmtRelative(p.created)}
                 </span>
                 <span className="truncate text-xs font-semibold text-[var(--akg-text)]">{p.user_email || '-'}</span>
                 {p.status === 'pending' && purchaseLabel(priorMap[p.user_email] || 0) && (
-                  <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-px font-data text-[9px] text-akg-muted">{purchaseLabel(priorMap[p.user_email] || 0)}</span>
+                  <span className="shrink-0 rounded border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.06] px-1.5 py-px font-data text-[9px] text-slate-700 dark:text-akg-muted">{purchaseLabel(priorMap[p.user_email] || 0)}</span>
                 )}
               </div>
               <div className="mt-1 flex items-center gap-2 font-data text-[10px] text-akg-muted">
-                <span className="text-akg-silver">{planShort(p.plan)}</span>
+                <span className="text-slate-800 dark:text-akg-silver font-medium">{planShort(p.plan)}</span>
                 <span>·</span>
                 <span>{p.method === 'upi' ? 'UPI' : p.network?.replace('USDT-', '') || 'USDT'}</span>
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <span className="font-data text-xs font-bold tabular-nums text-white">${p.amount}</span>
+              <span className="font-data text-xs font-bold tabular-nums text-slate-900 dark:text-white">${p.amount}</span>
               {p.status === 'pending' ? (
                 <span className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                   <button
@@ -362,7 +362,7 @@ export default function Payments() {
                   <button
                     onClick={() => openReject(p)}
                     aria-label="Reject with reason (R)"
-                    className="flex h-7 w-7 items-center justify-center rounded-full border border-rose-500/30 text-xs font-bold text-rose-300"
+                    className="flex h-7 w-7 items-center justify-center rounded-full border border-rose-300 dark:border-rose-500/30 bg-rose-50 dark:bg-transparent text-xs font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-500/10 cursor-pointer"
                   >
                     ✕
                   </button>
@@ -416,20 +416,20 @@ export default function Payments() {
           subtitle={`${rejecting.user_email} · $${rejecting.amount} USDT · ${planShort(rejecting.plan)}`}
           footer={
             <div className="flex gap-2.5">
-              <button onClick={() => setRejecting(null)} className="h-10 flex-1 rounded-full border border-white/15 text-sm font-semibold text-akg-silver hover:bg-white/5">
+              <button onClick={() => setRejecting(null)} className="h-10 flex-1 rounded-full border border-slate-300 dark:border-white/15 bg-white dark:bg-akg-raised text-sm font-semibold text-slate-800 dark:text-akg-silver hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer">
                 Cancel
               </button>
               <button
                 onClick={async () => { const pay = rejecting; setRejecting(null); if (pay) { await rejectPayment(pay, reason); afterAction(); } }}
-                className="h-10 flex-1 rounded-full bg-rose-500 text-sm font-bold text-white hover:bg-rose-400 active:scale-[0.98]"
+                className="h-10 flex-1 rounded-full bg-rose-500 text-sm font-bold text-white hover:bg-rose-600 active:scale-[0.98] cursor-pointer shadow-xs"
               >
-                Reject & Notify
+                Reject &amp; Notify
               </button>
             </div>
           }
         >
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-akg-silver" htmlFor="akg-admin-reject-reason">
+            <label className="mb-1.5 block text-xs font-semibold text-slate-900 dark:text-akg-silver" htmlFor="akg-admin-reject-reason">
               Reason <span className="font-normal text-akg-muted">(sent to the trader as a notification)</span>
             </label>
             <div className="mb-2.5 flex flex-wrap gap-1.5">
@@ -437,7 +437,7 @@ export default function Payments() {
                 <button
                   key={preset}
                   onClick={() => setReason(preset)}
-                  className="rounded-full border border-rose-500/25 bg-rose-500/[0.06] px-2.5 py-1 text-[11px] font-semibold text-rose-200/90 transition-colors hover:bg-rose-500/15"
+                  className="rounded-full border border-rose-300 dark:border-rose-500/25 bg-rose-50 dark:bg-rose-500/[0.06] px-2.5 py-1 text-[11px] font-semibold text-rose-800 dark:text-rose-200/90 transition-colors hover:bg-rose-100 dark:hover:bg-rose-500/15 cursor-pointer"
                 >
                   {preset}
                 </button>
@@ -449,9 +449,9 @@ export default function Payments() {
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. TXID not found on-chain, or amount under-paid..."
-              className="min-h-[80px] w-full rounded-xl border border-white/10 bg-[#0A0D13] px-3.5 py-2.5 text-sm leading-relaxed text-white placeholder:text-akg-muted/60 focus:border-rose-400/50 focus:outline-none"
+              className="min-h-[80px] w-full rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-akg-raised px-3.5 py-2.5 text-sm leading-relaxed text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-akg-muted/60 focus:bg-white dark:focus:bg-akg-raised focus:border-rose-400 focus:outline-none"
             />
-            <div className="mt-3 rounded-xl border border-white/[0.07] bg-[#0A0D13] px-3 py-2.5">
+            <div className="mt-3 rounded-xl border border-slate-200 dark:border-white/[0.07] bg-slate-50 dark:bg-akg-raised px-3 py-2.5">
               <TxidCell network={rejecting.network} txid={rejecting.txid} full />
             </div>
           </div>

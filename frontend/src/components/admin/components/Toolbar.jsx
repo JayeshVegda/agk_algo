@@ -11,7 +11,7 @@ export function Toolbar({
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
       {tabs && tabs.length > 0 && (
-        <div className="inline-flex rounded-lg border border-akg-hairline bg-akg-raised p-1" role="tablist">
+        <div className="inline-flex rounded-lg border border-slate-200 dark:border-akg-hairline bg-slate-100 dark:bg-akg-raised p-1" role="tablist">
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -22,7 +22,7 @@ export function Toolbar({
                 'rounded-md px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer',
                 activeTab === t.id
                   ? 'bg-akg-cta text-akg-cta-text shadow-sm'
-                  : 'text-akg-muted hover:text-akg-text',
+                  : 'text-slate-600 dark:text-akg-muted hover:text-slate-900 dark:hover:text-akg-text',
               )}
             >
               {t.label}
@@ -41,13 +41,13 @@ export function Toolbar({
           className={cn(
             'inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer',
             chipValue === c.id
-              ? 'border-emerald-500/30 bg-emerald-500/15 text-akg-accent shadow-sm'
-              : 'border-akg-hairline bg-akg-raised text-akg-muted hover:text-akg-text',
+              ? 'border-emerald-300 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-800 dark:text-akg-accent shadow-xs'
+              : 'border-slate-200 dark:border-akg-hairline bg-slate-100 dark:bg-akg-raised text-slate-700 dark:text-akg-muted hover:text-slate-900 dark:hover:text-akg-text',
           )}
         >
           {c.label}
           {c.count !== undefined && c.count > 0 && (
-            <span className={cn('rounded px-1.5 font-mono text-[10px] tabular-nums', chipValue === c.id ? 'bg-emerald-500/20 text-akg-accent' : 'bg-akg-card text-akg-muted border border-akg-hairline')}>
+            <span className={cn('rounded px-1.5 font-mono text-[10px] tabular-nums', chipValue === c.id ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-900 dark:text-akg-accent' : 'bg-white dark:bg-akg-card text-slate-700 dark:text-akg-muted border border-slate-200 dark:border-akg-hairline')}>
               {c.count}
             </span>
           )}
@@ -68,7 +68,7 @@ export function Toolbar({
               value={search}
               onChange={(e) => onSearch(e.target.value)}
               placeholder={searchPlaceholder}
-              className="h-9 w-full rounded-lg border border-akg-hairline bg-akg-raised pl-8 pr-3.5 text-xs text-akg-text placeholder:text-akg-muted/60 focus:border-akg-accent focus:outline-none sm:w-56"
+              className="h-9 w-full rounded-lg border border-slate-300 dark:border-akg-hairline bg-white dark:bg-akg-raised pl-8 pr-3.5 text-xs text-slate-900 dark:text-akg-text placeholder:text-slate-400 dark:placeholder:text-akg-muted/60 focus:border-emerald-500 focus:outline-none sm:w-56"
             />
           </label>
         )}

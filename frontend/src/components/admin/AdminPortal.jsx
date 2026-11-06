@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Command as CommandIcon } from 'lucide-react';
+import { Command as CommandIcon, Sun, Moon } from 'lucide-react';
 import { pb } from '../../lib/pocketbase';
 import {
   RefreshCw, LogOut, Globe, Menu, X, ChevronRight, AlertTriangle,
 } from 'lucide-react';
 import { NotificationBell } from '../NotificationBell';
+import { useTheme } from '../../lib/theme';
+import { Button } from '../ui/Button';
 import { AdminDataProvider, useAdmin } from './AdminContext';
 import { useStats } from './lib/pagedList';
 import { useUrlQuery, setParams, replaceParams } from './lib/urlState';
@@ -27,6 +29,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState(null);
   const [authBusy, setAuthBusy] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
 
   useEffect(() => {
     const unsub = pb.authStore.onChange((token, model) => setCurrentUser(model));
@@ -61,29 +64,38 @@ export function AdminPortal({ onNavigatePublic, notify }) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-akg-bg px-4 font-sans text-akg-text">
         <div className="w-full max-w-sm">
-          <div className="rounded-2xl border border-akg-hairline bg-akg-card p-7 shadow-2xl">
+          <div className="relative rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-akg-card p-7 shadow-2xl">
+            <button
+              onClick={toggleTheme}
+              className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 text-akg-muted hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+              title={isDark ? 'Switch to Light theme' : 'Switch to Dark theme'}
+              aria-label="Toggle theme"
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+
             <img
               src="/assets/logos/akg-algo-metallic-nav.png"
               alt="AKG ALGO"
-              className="mx-auto h-10 w-auto opacity-90"
+              className="mx-auto h-10 w-auto opacity-95"
             />
-            <h1 className="mt-5 text-center font-display text-lg font-bold text-akg-text">Admin Console</h1>
+            <h1 className="mt-5 text-center font-display text-xl font-bold text-slate-900 dark:text-white">Admin Console</h1>
             <p className="mt-1 text-center text-xs text-akg-muted">Administrator access only.</p>
 
             {loginError && (
-              <div className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-400">
+              <div className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-500 dark:text-rose-400">
                 {loginError}
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="mt-5 space-y-3">
+            <form onSubmit={handleLogin} className="mt-5 space-y-3.5">
               <input
                 type="email"
                 required
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
                 placeholder="admin@example.com"
-                className="h-11 w-full rounded-lg border border-akg-hairline bg-akg-raised px-3.5 text-sm text-akg-text placeholder:text-akg-muted/60 focus:border-akg-accent focus:outline-none"
+                className="h-11 w-full rounded-xl border border-slate-300 dark:border-white/15 bg-slate-50 dark:bg-akg-raised px-3.5 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-akg-muted/60 focus:border-emerald-500 focus:bg-white dark:focus:bg-akg-raised focus:outline-none"
               />
               <input
                 type="password"
@@ -91,20 +103,22 @@ export function AdminPortal({ onNavigatePublic, notify }) {
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
                 placeholder="Password"
-                className="h-11 w-full rounded-lg border border-akg-hairline bg-akg-raised px-3.5 text-sm text-akg-text placeholder:text-akg-muted/60 focus:border-akg-accent focus:outline-none"
+                className="h-11 w-full rounded-xl border border-slate-300 dark:border-white/15 bg-slate-50 dark:bg-akg-raised px-3.5 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-akg-muted/60 focus:border-emerald-500 focus:bg-white dark:focus:bg-akg-raised focus:outline-none"
               />
-              <button
+              <Button
                 type="submit"
+                variant="gradient"
+                size="lg"
                 disabled={authBusy}
-                className="h-11 w-full rounded-lg bg-akg-cta text-sm font-bold text-akg-cta-text transition-all active:scale-[0.98] disabled:opacity-50 hover:opacity-90 shadow-sm cursor-pointer"
+                className="w-full font-bold text-sm shadow-md"
               >
                 {authBusy ? 'Authenticating...' : 'Sign In'}
-              </button>
+              </Button>
             </form>
 
             <button
               onClick={onNavigatePublic}
-              className="mt-4 flex w-full items-center justify-center gap-1.5 text-xs font-semibold text-akg-muted transition-colors hover:text-akg-accent cursor-pointer"
+              className="mt-4 flex w-full items-center justify-center gap-1.5 text-xs font-semibold text-akg-muted transition-colors hover:text-emerald-600 dark:hover:text-akg-accent cursor-pointer"
             >
               <Globe className="h-3.5 w-3.5" /> Return to public website
             </button>
@@ -118,16 +132,17 @@ export function AdminPortal({ onNavigatePublic, notify }) {
   return (
     <AdminDataProvider currentUser={currentUser} notify={notify}>
       <DensityProvider>
-        <ConsoleShell currentUser={currentUser} onLogout={handleLogout} notify={notify} />
+        <ConsoleShell currentUser={currentUser} onLogout={handleLogout} notify={notify} onNavigatePublic={onNavigatePublic} />
       </DensityProvider>
     </AdminDataProvider>
   );
 }
 
-function ConsoleShell({ currentUser, onLogout, notify }) {
+function ConsoleShell({ currentUser, onLogout, notify, onNavigatePublic }) {
   const admin = useAdmin();
   const { stats } = useStats();
   const query = useUrlQuery();
+  const { isDark, toggleTheme } = useTheme();
   const [section, setSectionState] = useState(() => (SECTION_IDS.has(query.s) ? query.s : query.s === 'connectors' ? 'users' : 'overview'));
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -200,7 +215,7 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
                   <ChevronRight className={cn('h-3 w-3 transition-transform', !isCollapsed && 'rotate-90')} />
                   <span className="flex-1 text-left">{g.label}</span>
                   {groupBadge > 0 && (
-                    <span className="rounded-md bg-amber-500/20 px-1.5 py-px font-mono text-[9px] font-bold text-amber-500">{groupBadge}</span>
+                    <span className="rounded-md bg-amber-100 dark:bg-amber-500/20 px-1.5 py-px font-mono text-[9px] font-bold text-amber-900 dark:text-amber-400 border border-amber-300/60 dark:border-amber-500/30">{groupBadge}</span>
                   )}
                 </button>
                 {!isCollapsed && (
@@ -215,14 +230,14 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
                           className={cn(
                             'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[13px] font-semibold transition-all cursor-pointer',
                             section === s.id
-                              ? 'bg-emerald-500/10 text-akg-accent ring-1 ring-emerald-500/25'
-                              : 'text-akg-muted hover:bg-akg-raised hover:text-akg-text'
+                              ? 'bg-emerald-500/10 text-emerald-800 dark:text-akg-accent ring-1 ring-emerald-500/25 font-bold'
+                              : 'text-slate-600 dark:text-akg-muted hover:bg-slate-100 dark:hover:bg-akg-raised hover:text-slate-900 dark:hover:text-akg-text'
                           )}
                         >
                           <Icon className="h-4 w-4 shrink-0" />
                           <span className="flex-1 truncate">{s.label}</span>
                           {badge > 0 && (
-                            <span className="rounded-md bg-amber-500/20 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-500">{badge}</span>
+                            <span className="rounded-md bg-amber-100 dark:bg-amber-500/20 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-900 dark:text-amber-400 border border-amber-300/60 dark:border-amber-500/30">{badge}</span>
                           )}
                         </button>
                       );
@@ -236,7 +251,7 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
         <div className="border-t border-akg-hairline p-3">
           <button
             onClick={onLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-semibold text-akg-muted transition-colors hover:bg-rose-500/10 hover:text-rose-400 cursor-pointer"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-semibold text-rose-500 dark:text-rose-400 transition-colors hover:bg-rose-500/10 cursor-pointer"
           >
             <LogOut className="h-4 w-4" /> Sign out
           </button>
@@ -247,6 +262,14 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-akg-hairline bg-akg-card/90 px-4 backdrop-blur-xl lg:hidden">
         <img src="/assets/logos/akg-algo-metallic-nav.png" alt="AKG ALGO" className="h-7 w-auto opacity-90" />
         <div className="flex items-center gap-1.5">
+          <button
+            onClick={toggleTheme}
+            className="rounded-lg border border-akg-hairline bg-akg-card p-2 text-akg-muted active:scale-95 cursor-pointer"
+            title={isDark ? 'Switch to Light theme' : 'Switch to Dark theme'}
+            aria-label="Toggle theme"
+          >
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
           <button
             onClick={() => admin.refresh()}
             className="rounded-lg border border-akg-hairline bg-akg-card p-2 text-akg-muted active:scale-95 cursor-pointer"
@@ -275,11 +298,18 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
             <span className="live-dot" /> live console · {stats ? `${stats.payments.total} payments · ${stats.users.total} traders` : 'syncing...'}
           </div>
           <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => onNavigatePublic?.()}
+              className="flex items-center gap-1.5 rounded-lg border border-akg-hairline bg-akg-card px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-akg-muted hover:text-emerald-700 dark:hover:text-akg-accent hover:border-emerald-500/40 transition-colors cursor-pointer"
+              title="Return to Public Website"
+            >
+              <Globe className="h-3.5 w-3.5" /> Public Desk
+            </button>
             {(badges.pendingPayments + badges.pendingConnectors) > 0 && (
               <button
                 onClick={() => go('payments', { f: 'pending' })}
                 title="Review the Money Queue"
-                className="flex items-center gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 font-mono text-[11px] font-bold text-amber-500 transition-colors hover:bg-amber-500/20 cursor-pointer"
+                className="flex items-center gap-1.5 rounded-md border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 font-mono text-[11px] font-bold text-amber-900 dark:text-amber-400 transition-colors hover:bg-amber-100 dark:hover:bg-amber-500/20 cursor-pointer"
               >
                 <AlertTriangle className="h-3.5 w-3.5" />
                 {badges.pendingPayments} deposits · {badges.pendingConnectors} bridges
@@ -294,6 +324,14 @@ function ConsoleShell({ currentUser, onLogout, notify }) {
               <CommandIcon className="h-3 w-3" /> K
             </button>
             <DensityToggle />
+            <button
+              onClick={toggleTheme}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-akg-hairline bg-akg-card text-akg-muted hover:text-akg-text transition-colors cursor-pointer"
+              title={isDark ? 'Switch to Light theme' : 'Switch to Dark theme'}
+              aria-label="Toggle theme"
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
             <button
               onClick={() => admin.refresh()}
               className="rounded-lg border border-akg-hairline bg-akg-card p-2 text-akg-muted transition-colors hover:border-akg-accent/40 hover:text-akg-accent cursor-pointer"

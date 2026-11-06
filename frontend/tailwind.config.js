@@ -12,6 +12,9 @@ export default {
         display: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
         mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
+      backgroundImage: {
+        'akg-cta': 'var(--akg-cta-bg)',
+      },
       colors: {
         akg: {
           bg: 'var(--akg-bg)',

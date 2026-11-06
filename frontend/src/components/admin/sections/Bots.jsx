@@ -131,10 +131,10 @@ export default function Bots() {
       {filtered.length === 0 ? (
         <EmptyState icon={Cpu} title="No bots match" hint="Add your first Expert Advisor with the button above." />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-white/10 bg-akg-surface">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-akg-surface shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left font-sans text-xs">
-              <thead className="border-b border-white/10 bg-white/[0.02] font-data text-[10px] uppercase tracking-wider text-akg-muted">
+              <thead className="border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] font-data text-[10px] uppercase tracking-wider text-slate-700 dark:text-akg-muted">
                 <tr>
                   <th className="px-4 py-3.5">Name</th>
                   <th className="px-4 py-3.5">Platform</th>
@@ -143,22 +143,22 @@ export default function Bots() {
                   <th className="px-4 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.05]">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/[0.05]">
                 {filtered.map((b) => (
-                  <tr key={b.id} className="transition-colors hover:bg-white/[0.02]">
+                  <tr key={b.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.02]">
                     <td className="px-4 py-3.5">
-                      <div className="font-bold text-sm text-white">{b.name}</div>
+                      <div className="font-bold text-sm text-slate-900 dark:text-white">{b.name}</div>
                       <div className="mt-0.5 font-data text-[10px] text-akg-muted">
                         {b.version || 'v1.0'} · {listText(b.pairs) || 'All pairs'}
                       </div>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 font-data text-[10px] font-semibold text-akg-silver">
+                      <span className="rounded-md border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-2 py-0.5 font-data text-[10px] font-semibold text-slate-800 dark:text-akg-silver">
                         {b.platform}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className="font-mono text-sm font-bold text-akg-accent">${b.price}</span>
+                      <span className="font-mono text-sm font-bold text-emerald-600 dark:text-akg-accent">${b.price}</span>
                       <span className="ml-1 text-[10px] text-akg-muted">USDT</span>
                     </td>
                     <td className="px-4 py-3.5">
@@ -166,11 +166,11 @@ export default function Bots() {
                         className={cn(
                           'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-data text-[10px] font-bold',
                           b.is_live !== false
-                            ? 'border-akg-green/30 bg-akg-green/15 text-akg-green'
-                            : 'border-white/15 bg-white/5 text-akg-muted'
+                            ? 'border-emerald-200 dark:border-akg-green/30 bg-emerald-50 dark:bg-akg-green/15 text-emerald-800 dark:text-akg-green'
+                            : 'border-slate-300 dark:border-white/15 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-akg-muted'
                         )}
                       >
-                        <span className={cn('h-1.5 w-1.5 rounded-full', b.is_live !== false ? 'bg-akg-green' : 'bg-akg-muted')} />
+                        <span className={cn('h-1.5 w-1.5 rounded-full', b.is_live !== false ? 'bg-emerald-600 dark:bg-akg-green' : 'bg-slate-400 dark:bg-akg-muted')} />
                         {b.is_live !== false ? 'Live' : 'Draft'}
                       </span>
                     </td>
@@ -178,14 +178,14 @@ export default function Bots() {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => setEditing(b)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-akg-muted hover:bg-white/5 hover:text-white transition-colors"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-akg-muted hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                           title="Edit"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => setDeleting(b)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-akg-muted hover:bg-rose-500/10 hover:text-rose-300 transition-colors"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-akg-muted hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-300 transition-colors cursor-pointer"
                           title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -351,11 +351,11 @@ function BotEditor({ bot, onClose, onSave }) {
               className={cn(
                 'flex h-10 w-full items-center justify-center gap-2 rounded-xl border font-data text-xs font-bold transition-colors',
                 form.is_live
-                  ? 'border-akg-green/40 bg-akg-green/15 text-akg-green'
-                  : 'border-white/15 bg-white/5 text-akg-muted hover:border-white/25'
+                  ? 'border-emerald-300 dark:border-akg-green/40 bg-emerald-50 dark:bg-akg-green/15 text-emerald-800 dark:text-akg-green'
+                  : 'border-slate-300 dark:border-white/15 bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-akg-muted hover:border-slate-400 dark:hover:border-white/25'
               )}
             >
-              <span className={cn('h-2 w-2 rounded-full', form.is_live ? 'bg-akg-green' : 'bg-akg-muted')} />
+              <span className={cn('h-2 w-2 rounded-full', form.is_live ? 'bg-emerald-600 dark:bg-akg-green' : 'bg-slate-400 dark:bg-akg-muted')} />
               {form.is_live ? 'Live' : 'Draft'}
             </button>
           </div>
@@ -394,22 +394,22 @@ function BotEditor({ bot, onClose, onSave }) {
             placeholder="https://drive.google.com/..."
           />
           <p className="mt-1 text-[11px] text-akg-muted">
-            Delivered in buyer notifications & My Account once payment is confirmed.
+            Delivered in buyer notifications &amp; My Account once payment is confirmed.
           </p>
         </div>
 
         {/* Collapsible: Stats (optional) */}
-        <div className="rounded-xl border border-white/10 bg-white/[0.015] overflow-hidden">
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.015] overflow-hidden">
           <button
             type="button"
             onClick={() => setOpenStats((o) => !o)}
-            className="flex w-full items-center justify-between px-4 py-3 text-left font-data text-xs font-semibold text-akg-silver hover:bg-white/[0.03]"
+            className="flex w-full items-center justify-between px-4 py-3 text-left font-data text-xs font-semibold text-slate-900 dark:text-akg-silver hover:bg-slate-100/60 dark:hover:bg-white/[0.03] cursor-pointer"
           >
             <span>Stats (optional)</span>
             {openStats ? <ChevronDown className="h-4 w-4 text-akg-muted" /> : <ChevronRight className="h-4 w-4 text-akg-muted" />}
           </button>
           {openStats && (
-            <div className="space-y-3 border-t border-white/10 p-4">
+            <div className="space-y-3 border-t border-slate-200 dark:border-white/10 p-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className={labelCls}>Win rate</label>
@@ -436,7 +436,7 @@ function BotEditor({ bot, onClose, onSave }) {
                   <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
-                    className="flex shrink-0 items-center gap-1.5 rounded-lg border border-akg-hairline px-3 py-2 text-xs font-semibold text-akg-accent hover:bg-akg-raised cursor-pointer"
+                    className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-300 dark:border-akg-hairline px-3 py-2 text-xs font-semibold text-emerald-600 dark:text-akg-accent hover:bg-slate-100 dark:hover:bg-akg-raised cursor-pointer"
                   >
                     <ImageIcon className="h-4 w-4" /> Upload
                   </button>
@@ -458,7 +458,7 @@ function BotEditor({ bot, onClose, onSave }) {
                   }}
                 />
                 {form.image_url && (
-                  <div className="mt-2.5 overflow-hidden rounded-xl border border-white/10 max-h-36">
+                  <div className="mt-2.5 overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 max-h-36">
                     <img src={form.image_url} alt="Backtest Preview" className="w-full object-cover" />
                   </div>
                 )}
@@ -468,17 +468,17 @@ function BotEditor({ bot, onClose, onSave }) {
         </div>
 
         {/* Collapsible: Advanced (optional) */}
-        <div className="rounded-xl border border-white/10 bg-white/[0.015] overflow-hidden">
+        <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.015] overflow-hidden">
           <button
             type="button"
             onClick={() => setOpenAdvanced((o) => !o)}
-            className="flex w-full items-center justify-between px-4 py-3 text-left font-data text-xs font-semibold text-akg-silver hover:bg-white/[0.03]"
+            className="flex w-full items-center justify-between px-4 py-3 text-left font-data text-xs font-semibold text-slate-900 dark:text-akg-silver hover:bg-slate-100/60 dark:hover:bg-white/[0.03] cursor-pointer"
           >
             <span>Advanced (optional)</span>
             {openAdvanced ? <ChevronDown className="h-4 w-4 text-akg-muted" /> : <ChevronRight className="h-4 w-4 text-akg-muted" />}
           </button>
           {openAdvanced && (
-            <div className="space-y-3 border-t border-white/10 p-4">
+            <div className="space-y-3 border-t border-slate-200 dark:border-white/10 p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls}>Strategy type</label>
