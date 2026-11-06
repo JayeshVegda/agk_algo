@@ -1,18 +1,16 @@
+import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 
 /**
- * Scroll-reveal wrapper. Fades and lifts children into view once.
- * Honors prefers-reduced-motion by rendering statically.
- *
- * <Reveal delay={0.1}><Card/></Reveal>
+ * Scroll-reveal wrapper. Fades and lifts children into view reliably.
+ * Uses generous viewport margin (50px) and low threshold (0.05) so elements
+ * are never stuck invisible at opacity: 0.
  */
 export default function Reveal({
   children,
   delay = 0,
-  y = 24,
+  y = 16,
   className = '',
-  once = true,
-  amount = 0.25,
   as = 'div',
 }) {
   const reduce = useReducedMotion();
@@ -28,8 +26,8 @@ export default function Reveal({
       className={className}
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once, amount }}
-      transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
+      viewport={{ once: true, amount: 0.05, margin: '80px 0px' }}
+      transition={{ duration: 0.45, delay, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
     </Comp>
@@ -37,7 +35,7 @@ export default function Reveal({
 }
 
 /** Stagger container: children revealed via <RevealItem> get sequenced timing. */
-export function RevealGroup({ children, className = '', stagger = 0.08, amount = 0.2 }) {
+export function RevealGroup({ children, className = '', stagger = 0.06 }) {
   const reduce = useReducedMotion();
 
   if (reduce) {
@@ -49,7 +47,7 @@ export function RevealGroup({ children, className = '', stagger = 0.08, amount =
       className={className}
       initial="hidden"
       whileInView="show"
-      viewport={{ once: true, amount }}
+      viewport={{ once: true, amount: 0.05, margin: '80px 0px' }}
       variants={{
         hidden: {},
         show: { transition: { staggerChildren: stagger } },
@@ -61,7 +59,7 @@ export function RevealGroup({ children, className = '', stagger = 0.08, amount =
 }
 
 /** Child of <RevealGroup>. */
-export function RevealItem({ children, className = '', y = 20 }) {
+export function RevealItem({ children, className = '', y = 14 }) {
   const reduce = useReducedMotion();
 
   if (reduce) {
@@ -73,7 +71,7 @@ export function RevealItem({ children, className = '', y = 20 }) {
       className={className}
       variants={{
         hidden: { opacity: 0, y },
-        show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } },
+        show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
       }}
     >
       {children}

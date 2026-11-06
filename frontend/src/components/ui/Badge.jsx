@@ -3,16 +3,17 @@ import { cva } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
 const badgeVariants = cva(
-  'inline-flex items-center whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-medium transition-colors focus:outline-none',
+  'inline-flex items-center whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-semibold transition-colors focus:outline-none',
   {
     variants: {
       variant: {
-        default: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
-        gold: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
-        positive: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
-        green: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
-        secondary: 'bg-akg-surfaceElevated text-akg-textSecondary border border-akg-hairline',
-        outline: 'text-akg-muted border border-akg-hairline bg-transparent',
+        default: 'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30',
+        emerald: 'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30',
+        positive: 'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30',
+        secondary: 'bg-slate-100 text-slate-800 border border-slate-200 dark:bg-white/10 dark:text-slate-200 dark:border-white/10',
+        outline: 'bg-white text-slate-800 border border-slate-300 dark:bg-[#0E141B] dark:text-slate-200 dark:border-white/15',
+        gold: 'bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30',
+        blue: 'bg-sky-50 text-sky-800 border border-sky-200 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30',
       },
     },
     defaultVariants: {

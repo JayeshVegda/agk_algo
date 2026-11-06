@@ -19,6 +19,8 @@ export default {
           tint: 'var(--akg-bg-tint)',
           surface: 'var(--akg-bg-elevated)',
           surfaceElevated: 'var(--akg-bg-elevated-2)',
+          raised: 'var(--akg-bg-elevated)',
+          raisedElevated: 'var(--akg-bg-elevated-2)',
           card: 'var(--akg-bg-card)',
           text: 'var(--akg-text)',
           textSecondary: 'var(--akg-text-secondary)',

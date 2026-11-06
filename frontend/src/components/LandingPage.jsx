@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './ui/Accordion';
 import Reveal, { RevealGroup, RevealItem } from './motion/Reveal';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
@@ -127,28 +128,22 @@ const PLANS = [
 function HeroHeadline({ botCount = 8 }) {
   return (
     <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 text-center select-none py-2">
-      <Reveal>
-        <div className="inline-flex items-center gap-2 rounded-full border border-akg-hairline bg-akg-card/90 px-3.5 py-1.5 text-xs font-medium text-akg-text shadow-xs backdrop-blur-sm">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="font-semibold text-akg-text">{botCount} robots</span>
-          <span className="text-akg-muted/40">·</span>
-          <span className="text-akg-muted">34 on our accounts</span>
-        </div>
-      </Reveal>
+      <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-[#0E141B]/95 px-4 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs">
+        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+        <span className="font-bold text-slate-900 dark:text-white">{botCount} robots</span>
+        <span className="text-slate-400">·</span>
+        <span className="text-slate-600 dark:text-slate-300">34 on our accounts</span>
+      </div>
 
-      <Reveal delay={0.06}>
-        <h1 className="mt-6 font-display text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.08]">
-          <span className="text-akg-text">Forex Trading Robots &amp; Expert Advisors,</span>
-          <br />
-          <span className="text-slate-400 dark:text-slate-400 font-bold">with what they did on our accounts.</span>
-        </h1>
-      </Reveal>
+      <h1 className="mt-6 font-display text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.08]">
+        <span className="text-slate-900 dark:text-white">Forex Trading Robots &amp; Expert Advisors,</span>
+        <br />
+        <span className="text-slate-500 dark:text-slate-400 font-bold">with what they did on our accounts.</span>
+      </h1>
 
-      <Reveal delay={0.1}>
-        <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-akg-muted leading-relaxed">
-          Every forex trading robot we list runs on real accounts of our own, so you can see the real drawdown next to the gain before you buy.
-        </p>
-      </Reveal>
+      <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+        Every forex trading robot we list runs on real accounts of our own, so you can see the real drawdown next to the gain before you buy.
+      </p>
     </div>
   );
 }
@@ -269,179 +264,168 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
         <HeroHeadline botCount={botCount} />
 
         <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 text-center">
-          <Reveal delay={0.14}>
-            <div className="mt-8 flex flex-col items-center justify-center">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
-                <button
-                  onClick={() => onNavigate('bots')}
-                  className="btn-cyan-emerald flex items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-sm font-semibold active:scale-[0.98] cursor-pointer shadow-md"
-                >
-                  <span>Browse forex trading robots</span>
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => onNavigate('signals')}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-akg-hairline bg-akg-card px-6 py-3.5 text-sm font-semibold text-akg-text hover:border-emerald-500/40 hover:text-emerald-500 transition-all cursor-pointer card-depth"
-                >
-                  <Terminal className="h-4 w-4 text-emerald-500" />
-                  <span>Signal Room</span>
-                </button>
-              </div>
-
-              {/* Breadcrumb matching Image 0 */}
-              <div className="mt-6 text-xs text-akg-muted flex items-center gap-2 font-medium">
-                <span className="hover:text-akg-text cursor-pointer transition-colors" onClick={() => onNavigate('home')}>Home</span>
-                <span className="text-akg-muted/40">/</span>
-                <span className="hover:text-akg-text cursor-pointer transition-colors" onClick={() => onNavigate('bots')}>Trading robots</span>
-                <span className="text-akg-muted/40">/</span>
-                <span className="text-akg-text font-semibold">Forex Trading Robots</span>
-              </div>
+          <div className="mt-8 flex flex-col items-center justify-center">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
+              <Button
+                variant="gradient"
+                size="lg"
+                onClick={() => onNavigate('bots')}
+                className="px-8 shadow-md font-bold text-sm"
+              >
+                <span>Browse forex trading robots</span>
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => onNavigate('signals')}
+                className="px-7 font-bold text-sm"
+              >
+                <Terminal className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mr-2" />
+                <span>Signal Room</span>
+              </Button>
             </div>
-          </Reveal>
+
+            {/* Breadcrumb matching Image 0 */}
+            <div className="mt-6 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 font-medium">
+              <span className="hover:text-slate-900 dark:hover:text-white cursor-pointer transition-colors" onClick={() => onNavigate('home')}>Home</span>
+              <span className="text-slate-400">/</span>
+              <span className="hover:text-slate-900 dark:hover:text-white cursor-pointer transition-colors" onClick={() => onNavigate('bots')}>Trading robots</span>
+              <span className="text-slate-400">/</span>
+              <span className="text-slate-900 dark:text-white font-semibold">Forex Trading Robots</span>
+            </div>
+          </div>
 
           {/* Minimal 4-Metric Strip with tactile unified card matching reference Image 0 */}
-          <Reveal delay={0.18}>
-            <div className="mt-10 rounded-2xl border border-akg-hairline bg-akg-card/90 backdrop-blur-md shadow-sm overflow-hidden text-left">
-              <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-akg-hairline">
-                <div className="p-5 sm:p-6 flex flex-col justify-between">
-                  <div className="text-xs font-medium text-akg-muted">Robots</div>
-                  <div className="mt-2 font-mono text-3xl sm:text-4xl font-extrabold text-akg-text"><CountUp value={botCount} /></div>
-                  <div className="mt-1.5 text-[11px] text-akg-muted font-medium">2 free</div>
-                </div>
-                <div className="p-5 sm:p-6 flex flex-col justify-between">
-                  <div className="text-xs font-medium text-akg-muted">On our own accounts</div>
-                  <div className="mt-2 font-mono text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400"><CountUp value={33} /></div>
-                  <div className="mt-1.5 text-[11px] text-emerald-600/80 dark:text-emerald-400/80 font-medium">Live verified</div>
-                </div>
-                <div className="p-5 sm:p-6 flex flex-col justify-between">
-                  <div className="text-xs font-medium text-akg-muted">Drawdown published</div>
-                  <div className="mt-2 font-mono text-3xl sm:text-4xl font-extrabold text-akg-text"><CountUp value={36} /></div>
-                  <div className="mt-1.5 text-[11px] text-akg-muted font-medium">Max peak-to-valley</div>
-                </div>
-                <div className="p-5 sm:p-6 flex flex-col justify-between">
-                  <div className="text-xs font-medium text-akg-muted">Symbols traded</div>
-                  <div className="mt-2 font-mono text-3xl sm:text-4xl font-extrabold text-sky-600 dark:text-sky-400"><CountUp value={37} /></div>
-                  <div className="mt-1.5 text-[11px] text-sky-600/80 dark:text-sky-400/80 font-medium">Forex, Gold &amp; Indices</div>
-                </div>
+          <div className="mt-10 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#0E141B] shadow-sm overflow-hidden text-left">
+            <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-white/10">
+              <div className="p-5 sm:p-6 flex flex-col justify-between">
+                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">Robots</div>
+                <div className="mt-2 font-mono text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white"><CountUp value={botCount} /></div>
+                <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">2 free included</div>
+              </div>
+              <div className="p-5 sm:p-6 flex flex-col justify-between">
+                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">On our own accounts</div>
+                <div className="mt-2 font-mono text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400"><CountUp value={33} /></div>
+                <div className="mt-1.5 text-xs text-emerald-600 font-semibold">Live verified</div>
+              </div>
+              <div className="p-5 sm:p-6 flex flex-col justify-between">
+                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">Drawdown published</div>
+                <div className="mt-2 font-mono text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white"><CountUp value={36} /></div>
+                <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">Max peak-to-valley</div>
+              </div>
+              <div className="p-5 sm:p-6 flex flex-col justify-between">
+                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">Symbols traded</div>
+                <div className="mt-2 font-mono text-3xl sm:text-4xl font-extrabold text-sky-600 dark:text-sky-400"><CountUp value={37} /></div>
+                <div className="mt-1.5 text-xs text-sky-600 font-semibold">Forex, Gold &amp; Indices</div>
               </div>
             </div>
-          </Reveal>
+          </div>
         </div>
       </section>
 
       {/* ============================================================
           2. WHAT MAKES AKG ALGO UNIQUE - 5 Signature Pillars (Image 1)
       ============================================================ */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-24 border-b border-akg-hairline">
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-24 border-b border-slate-200/80 dark:border-white/10">
         <div className="text-center max-w-2xl mx-auto">
           <Reveal>
-            <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-akg-text tracking-tight">
+            <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               What makes AKG ALGO unique?
             </h2>
-            <p className="mt-3 text-sm sm:text-base text-akg-muted leading-relaxed">
+            <p className="mt-3 text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed">
               Understand the product before creating your bot
             </p>
           </Reveal>
         </div>
 
         {/* Row 1: 3 Equal Width Cards */}
-        <RevealGroup className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" stagger={0.08}>
-          {/* Card 1 */}
-          <RevealItem>
-            <div className="card-depth h-full rounded-2xl border border-akg-hairline bg-akg-card p-6 sm:p-7 flex flex-col justify-between hover:border-emerald-500/40 hover:-translate-y-1 transition-all">
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                  <Check className="h-5 w-5" strokeWidth={2.5} />
-                </div>
-                <div>
-                  <h3 className="font-display text-base sm:text-lg font-bold text-akg-text">Proven Strategies</h3>
-                  <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
-                    Access 10+ trusted entry strategies, tested by traders worldwide, to give you a reliable foundation for trading.
-                  </p>
-                </div>
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <Card className="hover:border-emerald-500/40 hover:-translate-y-1 transition-all">
+            <CardContent className="p-6 sm:p-7 flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                <Check className="h-5 w-5" strokeWidth={2.5} />
               </div>
-            </div>
-          </RevealItem>
+              <div>
+                <h3 className="font-display text-base sm:text-lg font-bold text-slate-900 dark:text-white">Proven Strategies</h3>
+                <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
+                  Access 10+ trusted entry strategies, tested by traders worldwide, to give you a reliable foundation for trading.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Card 2 */}
-          <RevealItem>
-            <div className="card-depth h-full rounded-2xl border border-akg-hairline bg-akg-card p-6 sm:p-7 flex flex-col justify-between hover:border-emerald-500/40 hover:-translate-y-1 transition-all">
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                  <Command className="h-5 w-5" strokeWidth={2.2} />
-                </div>
-                <div>
-                  <h3 className="font-display text-base sm:text-lg font-bold text-akg-text">Live Tracking Record</h3>
-                  <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
-                    Traders can track the full history of each strategy on MyFxBook including drawdown, win rate, etc.
-                  </p>
-                </div>
+          <Card className="hover:border-emerald-500/40 hover:-translate-y-1 transition-all">
+            <CardContent className="p-6 sm:p-7 flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                <Command className="h-5 w-5" strokeWidth={2.2} />
               </div>
-            </div>
-          </RevealItem>
+              <div>
+                <h3 className="font-display text-base sm:text-lg font-bold text-slate-900 dark:text-white">Live Tracking Record</h3>
+                <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
+                  Traders can track the full history of each strategy on MyFxBook including drawdown, win rate, etc.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Card 3 */}
-          <RevealItem>
-            <div className="card-depth h-full rounded-2xl border border-akg-hairline bg-akg-card p-6 sm:p-7 flex flex-col justify-between hover:border-emerald-500/40 hover:-translate-y-1 transition-all">
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                  <Target className="h-5 w-5" strokeWidth={2.2} />
-                </div>
-                <div>
-                  <h3 className="font-display text-base sm:text-lg font-bold text-akg-text">All Markets Covered</h3>
-                  <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
-                    Trade across every major financial market including forex, crypto, gold, and indices through one powerful platform.
-                  </p>
-                </div>
+          <Card className="hover:border-emerald-500/40 hover:-translate-y-1 transition-all">
+            <CardContent className="p-6 sm:p-7 flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                <Target className="h-5 w-5" strokeWidth={2.2} />
               </div>
-            </div>
-          </RevealItem>
-        </RevealGroup>
+              <div>
+                <h3 className="font-display text-base sm:text-lg font-bold text-slate-900 dark:text-white">All Markets Covered</h3>
+                <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
+                  Trade across every major financial market including forex, crypto, gold, and indices through one powerful platform.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Row 2: 2 Centered Cards (Identical Width to Row 1) */}
         <div className="mt-6 flex flex-col md:flex-row justify-center gap-6">
-          {/* Card 4 */}
-          <div className="w-full md:w-[calc(33.333%-16px)] card-depth rounded-2xl border border-akg-hairline bg-akg-card p-6 sm:p-7 flex flex-col justify-between hover:border-emerald-500/40 hover:-translate-y-1 transition-all">
-            <div className="flex items-start gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/15 font-bold font-mono text-sm text-emerald-600 dark:text-emerald-400">
+          <Card className="w-full md:w-[calc(33.333%-16px)] hover:border-emerald-500/40 hover:-translate-y-1 transition-all">
+            <CardContent className="p-6 sm:p-7 flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 font-bold font-mono text-sm text-emerald-600 dark:text-emerald-400">
                 AI
               </div>
               <div>
-                <h3 className="font-display text-base sm:text-lg font-bold text-akg-text">AI-Powered Decisions</h3>
-                <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
+                <h3 className="font-display text-base sm:text-lg font-bold text-slate-900 dark:text-white">AI-Powered Decisions</h3>
+                <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
                   Get AI-powered insights that combine real-time sentiment, market news, and historical data for smarter trading.
                 </p>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          {/* Card 5 */}
-          <div className="w-full md:w-[calc(33.333%-16px)] card-depth rounded-2xl border border-akg-hairline bg-akg-card p-6 sm:p-7 flex flex-col justify-between hover:border-emerald-500/40 hover:-translate-y-1 transition-all">
-            <div className="flex items-start gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+          <Card className="w-full md:w-[calc(33.333%-16px)] hover:border-emerald-500/40 hover:-translate-y-1 transition-all">
+            <CardContent className="p-6 sm:p-7 flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                 <RefreshCw className="h-5 w-5" strokeWidth={2.2} />
               </div>
               <div>
-                <h3 className="font-display text-base sm:text-lg font-bold text-akg-text">Fully Automated Trading</h3>
-                <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
+                <h3 className="font-display text-base sm:text-lg font-bold text-slate-900 dark:text-white">Fully Automated Trading</h3>
+                <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
                   Automate the entire process by scanning markets, analyzing opportunities, and executing trades with precision, hands-free.
                 </p>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
       {/* ============================================================
           3. HOW IT WORKS - 3 Easy Steps with Visual Mockups (Image 2)
       ============================================================ */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-24 border-b border-akg-hairline">
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-24 border-b border-slate-200/80 dark:border-white/10">
         <div className="text-center max-w-xl mx-auto">
           <Reveal>
-            <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-akg-text tracking-tight">
+            <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Get started in 3 easy steps
             </h2>
-            <p className="mt-3 text-sm sm:text-base text-akg-muted leading-relaxed">
+            <p className="mt-3 text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed">
               A clearer path from create to install and automate your trading
             </p>
           </Reveal>
@@ -449,65 +433,69 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
 
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {/* Step 1 */}
-          <div className="group rounded-[28px] border border-emerald-900/5 dark:border-white/[0.08] bg-[#EEF7F2] dark:bg-[#0C1619] p-6 sm:p-7 flex flex-col justify-between overflow-hidden relative shadow-xs hover:shadow-md transition-all">
+          <Card className="group rounded-[28px] border border-emerald-200/70 dark:border-white/10 bg-[#EEF7F2] dark:bg-[#0C1619] p-6 sm:p-7 flex flex-col justify-between overflow-hidden relative shadow-sm hover:shadow-md transition-all">
             <div>
-              <div className="inline-flex items-center rounded-full bg-emerald-500/15 px-3 py-1 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+              <Badge variant="emerald" className="font-mono text-[10px] font-bold px-3 py-1">
                 STEP 01
-              </div>
-              <h3 className="mt-4 font-display text-xl sm:text-2xl font-bold text-akg-text">
+              </Badge>
+              <h3 className="mt-4 font-display text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                 1. Build Your Trading Bot
               </h3>
-              <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
+              <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
                 Select your market, choose a trusted strategy, customise the settings and download the compiled MT4 or MT5 version
               </p>
 
-              <button
-                onClick={() => onNavigate('bots')}
-                className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-[#009A60] hover:bg-[#008352] px-4 py-2 text-xs font-semibold text-white shadow-xs transition-colors cursor-pointer"
-              >
-                <span>Start free to build</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
+              <div className="mt-5">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => onNavigate('bots')}
+                  className="gap-1.5 font-semibold text-xs"
+                >
+                  <span>Start free to build</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
 
             {/* Visual: Isometric Floating Market Selector Tokens */}
             <div className="mt-8 pt-6 relative flex flex-col items-center justify-center min-h-[170px]">
               <div className="relative w-full max-w-[240px] h-[120px]">
                 {/* Top BTC */}
-                <div className="absolute top-0 right-8 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-1 text-xs font-bold text-amber-500 shadow-xs">
+                <div className="absolute top-0 right-8 rounded-xl border border-slate-200 bg-white dark:bg-slate-800 dark:border-white/10 px-3.5 py-1.5 text-xs font-bold text-slate-900 dark:text-white shadow-xs">
                   BTC
                 </div>
                 {/* Left AU */}
-                <div className="absolute top-7 left-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-1 text-xs font-bold text-amber-600 shadow-xs">
+                <div className="absolute top-7 left-2 rounded-xl border border-slate-200 bg-white dark:bg-slate-800 dark:border-white/10 px-3.5 py-1.5 text-xs font-bold text-slate-900 dark:text-white shadow-xs">
                   AU
                 </div>
                 {/* Center Highlighted AI */}
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 rounded-xl bg-[#056847] px-4 py-2 text-sm font-bold text-white shadow-md ring-4 ring-emerald-500/20">
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white shadow-md ring-4 ring-emerald-500/20">
                   AI
                 </div>
                 {/* Right EQ */}
-                <div className="absolute top-9 right-0 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-1 text-xs font-bold text-slate-600 dark:text-slate-300 shadow-xs">
+                <div className="absolute top-9 right-0 rounded-xl border border-slate-200 bg-white dark:bg-slate-800 dark:border-white/10 px-3.5 py-1.5 text-xs font-bold text-slate-900 dark:text-white shadow-xs">
                   EQ
                 </div>
                 {/* Bottom Selected market badge */}
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800 px-3.5 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-200 shadow-xs flex items-center gap-1.5">
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-slate-200 bg-white dark:bg-slate-800 dark:border-white/10 px-4 py-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-xs flex items-center gap-1.5">
                   <span>Selected market</span>
-                  <Check className="h-3 w-3 text-emerald-500" strokeWidth={3} />
+                  <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Step 2 */}
-          <div className="group rounded-[28px] border border-emerald-900/5 dark:border-white/[0.08] bg-[#EEF7F2] dark:bg-[#0C1619] p-6 sm:p-7 flex flex-col justify-between overflow-hidden relative shadow-xs hover:shadow-md transition-all">
+          <Card className="group rounded-[28px] border border-emerald-200/70 dark:border-white/10 bg-[#EEF7F2] dark:bg-[#0C1619] p-6 sm:p-7 flex flex-col justify-between overflow-hidden relative shadow-sm hover:shadow-md transition-all">
             <div>
-              <div className="inline-flex items-center rounded-full bg-emerald-500/15 px-3 py-1 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+              <Badge variant="emerald" className="font-mono text-[10px] font-bold px-3 py-1">
                 STEP 02
-              </div>
-              <h3 className="mt-4 font-display text-xl sm:text-2xl font-bold text-akg-text">
+              </Badge>
+              <h3 className="mt-4 font-display text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                 2. Connect Your Trading Account
               </h3>
-              <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
+              <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
                 Copy the bot into MetaTrader, connect a compatible account and test the setup on demo first
               </p>
             </div>
@@ -516,103 +504,103 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
             <div className="mt-8 pt-6 relative min-h-[170px] flex items-end justify-center">
               <div className="w-full space-y-[-14px]">
                 {/* Layer 3 (Back) */}
-                <div className="mx-4 rounded-xl border border-slate-200/60 dark:border-white/5 bg-white/60 dark:bg-slate-800/60 p-2.5 flex items-center justify-between text-xs opacity-50 shadow-xs">
+                <div className="mx-4 rounded-xl border border-slate-200 bg-white/60 dark:bg-slate-800/60 p-2.5 flex items-center justify-between text-xs opacity-50 shadow-xs">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[10px] font-bold text-slate-400">03</span>
+                    <span className="font-mono text-[10px] font-bold text-slate-500">03</span>
                     <div>
-                      <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">Risk settings</div>
-                      <div className="text-[9px] text-slate-400">Review before building</div>
+                      <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">Risk settings</div>
+                      <div className="text-[9px] text-slate-500">Review before building</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Layer 2 (Middle) */}
-                <div className="mx-2 rounded-xl border border-slate-200/70 dark:border-white/10 bg-white/80 dark:bg-slate-800/80 p-2.5 flex items-center justify-between text-xs opacity-80 shadow-xs">
+                <div className="mx-2 rounded-xl border border-slate-200 bg-white/80 dark:bg-slate-800/80 p-2.5 flex items-center justify-between text-xs opacity-80 shadow-xs">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400">02</span>
                     <div>
-                      <div className="text-[11px] font-semibold text-slate-800 dark:text-white">Platform &amp; account</div>
-                      <div className="text-[9px] text-slate-400">MT4 / MT5 connection</div>
+                      <div className="text-[11px] font-semibold text-slate-900 dark:text-white">Platform &amp; account</div>
+                      <div className="text-[9px] text-slate-500">MT4 / MT5 connection</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Layer 1 (Front, prominent) */}
-                <div className="relative z-10 rounded-xl border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-800 p-3 flex items-center justify-between text-xs shadow-md">
+                <div className="relative z-10 rounded-xl border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-800 p-3.5 flex items-center justify-between text-xs shadow-md">
                   <div className="flex items-center gap-2.5">
-                    <div className="h-7 w-7 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
+                    <div className="h-7 w-7 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
                       01
                     </div>
                     <div>
-                      <div className="font-bold text-[11px] text-slate-900 dark:text-white">Multi-Level Strategy</div>
-                      <div className="text-[9px] text-slate-500 dark:text-slate-400">Configure, test and refine</div>
+                      <div className="font-bold text-[12px] text-slate-900 dark:text-white">Multi-Level Strategy</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400">Configure, test and refine</div>
                     </div>
                   </div>
-                  <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <Badge variant="emerald" className="font-mono text-[10px]">
                     Ready
-                  </span>
+                  </Badge>
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Step 3 */}
-          <div className="group rounded-[28px] border border-emerald-900/5 dark:border-white/[0.08] bg-[#EEF7F2] dark:bg-[#0C1619] p-6 sm:p-7 flex flex-col justify-between overflow-hidden relative shadow-xs hover:shadow-md transition-all">
+          <Card className="group rounded-[28px] border border-emerald-200/70 dark:border-white/10 bg-[#EEF7F2] dark:bg-[#0C1619] p-6 sm:p-7 flex flex-col justify-between overflow-hidden relative shadow-sm hover:shadow-md transition-all">
             <div>
-              <div className="inline-flex items-center rounded-full bg-emerald-500/15 px-3 py-1 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+              <Badge variant="emerald" className="font-mono text-[10px] font-bold px-3 py-1">
                 STEP 03
-              </div>
-              <h3 className="mt-4 font-display text-xl sm:text-2xl font-bold text-akg-text">
+              </Badge>
+              <h3 className="mt-4 font-display text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                 3. Start Automated Trading
               </h3>
-              <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
+              <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
                 Turn on your algotrading, then monitor trading behaviour, platform connectivity and account risk
               </p>
             </div>
 
             {/* Visual: Live Automated Trades Desk */}
             <div className="mt-8 pt-6 relative min-h-[170px] flex items-end">
-              <div className="w-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-800 p-3.5 shadow-sm">
+              <div className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-4 shadow-sm">
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-2.5">
-                  <span className="font-display text-[11px] font-bold text-slate-900 dark:text-white">Automated trades</span>
-                  <span className="flex items-center gap-1 font-mono text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="font-display text-[12px] font-bold text-slate-900 dark:text-white">Automated trades</span>
+                  <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Live monitoring
                   </span>
                 </div>
-                <div className="mt-2.5 space-y-2">
-                  <div className="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-900/60 p-2 border border-slate-100 dark:border-white/5">
-                    <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-mono text-[9px] font-bold flex items-center justify-center">
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-900/60 p-2.5 border border-slate-100 dark:border-white/5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-6 w-6 rounded-full bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300 font-mono text-[10px] font-bold flex items-center justify-center">
                         AU
                       </div>
                       <div>
-                        <div className="font-bold text-[11px] text-slate-900 dark:text-white">XAU / USD</div>
-                        <div className="text-[9px] text-slate-400">Gold · Trend</div>
+                        <div className="font-bold text-[12px] text-slate-900 dark:text-white">XAU / USD</div>
+                        <div className="text-[10px] text-slate-500">Gold · Trend</div>
                       </div>
                     </div>
-                    <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    <Badge variant="emerald" className="font-mono text-[10px]">
                       Running
-                    </span>
+                    </Badge>
                   </div>
-                  <div className="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-900/60 p-2 border border-slate-100 dark:border-white/5">
-                    <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 rounded-full bg-sky-500/10 text-sky-700 dark:text-sky-300 font-mono text-[9px] font-bold flex items-center justify-center">
+                  <div className="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-900/60 p-2.5 border border-slate-100 dark:border-white/5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-6 w-6 rounded-full bg-sky-50 text-sky-800 dark:bg-sky-500/10 dark:text-sky-300 font-mono text-[10px] font-bold flex items-center justify-center">
                         FX
                       </div>
                       <div>
-                        <div className="font-bold text-[11px] text-slate-900 dark:text-white">EUR / USD</div>
-                        <div className="text-[9px] text-slate-400">Forex · Multi-Level</div>
+                        <div className="font-bold text-[12px] text-slate-900 dark:text-white">EUR / USD</div>
+                        <div className="text-[10px] text-slate-500">Forex · Multi-Level</div>
                       </div>
                     </div>
-                    <span className="rounded-full bg-slate-200/60 dark:bg-slate-700/60 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                    <Badge variant="secondary" className="font-mono text-[10px]">
                       Watching
-                    </span>
+                    </Badge>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
       </section>
 
@@ -757,17 +745,17 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
           </div>
         </Reveal>
 
-        <Reveal>
-          <div className="mt-8 text-center">
-            <button
-              onClick={() => onNavigate('bots')}
-              className="btn-cyan-emerald inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold shadow-md cursor-pointer"
-            >
-              <span>Browse all {botCount} Expert Advisors</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </Reveal>
+        <div className="mt-10 text-center">
+          <Button
+            variant="gradient"
+            size="lg"
+            onClick={() => onNavigate('bots')}
+            className="px-8 shadow-md font-bold text-sm"
+          >
+            <span>Browse all {botCount} Expert Advisors</span>
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
       </section>
 
       {/* ============================================================
@@ -825,16 +813,14 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                   </ul>
 
                   <div className="mt-auto pt-7">
-                    <button
+                    <Button
+                      variant={plan.vip ? 'gradient' : 'secondary'}
+                      size="lg"
                       onClick={() => onNavigate('pricing')}
-                      className={`w-full py-3 rounded-xl font-bold text-sm transition-all cursor-pointer ${
-                        plan.vip
-                          ? 'btn-cyan-emerald'
-                          : 'border border-akg-hairline bg-akg-surface hover:bg-akg-surfaceElevated text-akg-text shadow-sm'
-                      }`}
+                      className="w-full font-bold text-sm shadow-sm"
                     >
                       Get Access
-                    </button>
+                    </Button>
                   </div>
                 </article>
               </RevealItem>
@@ -945,19 +931,23 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
               Pick an Expert Advisor license or watch live setups inside the web terminal.
             </p>
 
-            <div className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-3">
-              <button
+            <div className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-3.5">
+              <Button
+                variant="gradient"
+                size="lg"
                 onClick={() => onNavigate('pricing')}
-                className="btn-cyan-emerald px-7 py-3 rounded-xl font-bold text-sm shadow-md cursor-pointer"
+                className="px-8 font-bold text-sm shadow-md"
               >
                 <span>Get Access</span>
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
                 onClick={() => onNavigate('signals')}
-                className="px-6 py-3 rounded-xl border border-akg-hairline bg-akg-surface hover:bg-akg-surfaceElevated font-semibold text-sm text-akg-text shadow-sm cursor-pointer"
+                className="px-7 font-bold text-sm"
               >
                 <span>Open Signal Room</span>
-              </button>
+              </Button>
             </div>
           </div>
         </Reveal>

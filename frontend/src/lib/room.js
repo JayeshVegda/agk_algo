@@ -51,14 +51,10 @@ function escapeFilter(value) {
 }
 
 export async function fetchContent(messageIds) {
-  if (!messageIds.length) return {};
+  if (!messageIds || !messageIds.length) return [];
   const filter = messageIds.map((id) => 'message = "' + id + '"').join(' || ');
   const rows = await pb.collection('message_content').getFullList({ filter }).catch(() => []);
-  const byMessage = {};
-  rows.forEach((row) => {
-    byMessage[row.message] = row;
-  });
-  return byMessage;
+  return Array.isArray(rows) ? rows : [];
 }
 
 export async function fetchReactions() {

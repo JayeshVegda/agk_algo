@@ -329,8 +329,9 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
       const missing = page.filter((m) => canReadAudience(user, m.audience)).map((m) => m.id);
       if (missing.length > 0) {
         const rows = await fetchContent(missing);
+        const safeRows = Array.isArray(rows) ? rows : Object.values(rows || {});
         const next = {};
-        rows.forEach((r) => { next[r.message] = withUrls(r, fileTokenInit.current); });
+        safeRows.forEach((r) => { if (r && r.message) next[r.message] = withUrls(r, fileTokenInit.current); });
         setContentById((prev) => Object.assign({}, prev, next));
       }
     } catch (err) {
@@ -359,7 +360,8 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
           fetchReactions(),
         ]);
         const cMap = {};
-        contentRows.forEach((r) => { cMap[r.message] = withUrls(r, fileTokenInit.current); });
+        const safeContent = Array.isArray(contentRows) ? contentRows : Object.values(contentRows || {});
+        safeContent.forEach((r) => { if (r && r.message) cMap[r.message] = withUrls(r, fileTokenInit.current); });
         setContentById(cMap);
         setReactions(rxns);
 
