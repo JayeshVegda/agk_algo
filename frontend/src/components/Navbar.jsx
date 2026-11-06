@@ -117,27 +117,21 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
     <header className="sticky top-0 z-40 w-full border-b border-akg-hairline bg-akg-bg/85 backdrop-blur-xl transition-[background-color,border-color] duration-150">
       <div className="w-[94%] max-w-[1560px] mx-auto px-2 sm:px-4 h-16 flex items-center justify-between gap-4">
 
-        {/* Left: Brand Header Logo & Live Pill */}
-        <div className="flex items-center gap-6">
+        {/* Left: Brand Header Logo */}
+        <div className="flex items-center gap-8">
           <div
             onClick={() => setActiveTab('home')}
-            className="flex items-center gap-3 cursor-pointer select-none shrink-0 group"
+            className="flex items-center gap-2 cursor-pointer select-none shrink-0 group"
           >
             <img
               src="/assets/logos/akg-algo-metallic-nav.png"
               alt="AKG ALGO"
               className="h-8 sm:h-9 w-auto group-hover:opacity-90 transition-opacity"
             />
-            <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
-                Live Desk
-              </span>
-            </div>
           </div>
 
-          {/* Desktop Navigation Menu - Clean Segmented Bar */}
-          <nav className="hidden lg:flex items-center gap-1 rounded-xl border border-akg-hairline bg-akg-card/70 p-1 backdrop-blur-md shadow-xs">
+          {/* Desktop Navigation Links — Clean inline links with active indicator */}
+          <nav className="hidden lg:flex items-center gap-7">
             {[
               { id: 'home', label: 'Overview' },
               { id: 'bots', label: 'Robots' },
@@ -152,15 +146,18 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                   key={link.id}
                   onClick={() => setActiveTab(link.id)}
                   className={cn(
-                    'relative rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 cursor-pointer',
+                    'relative py-2 text-sm font-medium transition-colors cursor-pointer',
                     isActive
-                      ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 shadow-xs'
-                      : 'text-akg-muted hover:text-akg-text hover:bg-akg-surface/80 border border-transparent'
+                      ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+                      : 'text-akg-muted hover:text-akg-text'
                   )}
                 >
-                  {link.label}
+                  <span>{link.label}</span>
                   {link.id === 'signals' && (
                     <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  )}
+                  {isActive && (
+                    <span className="absolute -bottom-[21px] left-0 right-0 h-[2.5px] bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                   )}
                 </button>
               );
@@ -169,7 +166,16 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
         </div>
 
         {/* Right: Theme Toggle + Search + Notifications + Profile & Auth */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Quick Search Trigger Icon */}
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="flex items-center justify-center h-8 w-8 rounded-lg border border-akg-hairline bg-akg-surface hover:bg-akg-surfaceElevated text-akg-muted hover:text-akg-text transition-colors cursor-pointer"
+            title="Search systems (⌘K)"
+            aria-label="Search systems"
+          >
+            <Search className="h-3.5 w-3.5" />
+          </button>
 
           {/* Theme Toggle (Dark / Light) */}
           <button
@@ -183,19 +189,6 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
 
           {/* Realtime Notifications */}
           <NotificationBell user={user} notify={notify} dark={isDark} />
-
-          {/* Quick Search Trigger */}
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="hidden md:flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-akg-hairline bg-akg-surface hover:bg-akg-surfaceElevated text-akg-muted text-xs transition-colors cursor-pointer"
-            title="Press Cmd+K to search"
-          >
-            <Search className="h-3.5 w-3.5 text-akg-muted" />
-            <span className="hidden xl:inline">Search systems...</span>
-            <kbd className="hidden xl:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-akg-muted bg-akg-surfaceElevated border border-akg-hairline rounded">
-              ⌘K
-            </kbd>
-          </button>
 
           {/* User Logged In / Out Controls */}
           {user ? (

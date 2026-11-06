@@ -14,11 +14,12 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './ui/Accordion';
 import Reveal, { RevealGroup, RevealItem } from './motion/Reveal';
-import { AnimatePresence, motion, useReducedMotion, useMotionValue, useSpring, useMotionTemplate } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import CountUp from './motion/CountUp';
 import EquityCurve from './EquityCurve';
 import { useSiteSettings } from '../lib/wallets';
 import { SpotlightCard } from './ui/SpotlightCard';
+import FluidCursorCanvas from './ui/FluidCursorCanvas';
 
 const botSlug = (name) =>
   String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -122,82 +123,29 @@ const PLANS = [
 
 
 
-function FluidHeroHeader() {
-  const containerRef = React.useRef(null);
-  const mouseX = useMotionValue(300);
-  const mouseY = useMotionValue(100);
-  const [isHovered, setIsHovered] = useState(false);
-
-  // Smooth fluid spring with liquid inertia
-  const springConfig = { damping: 25, stiffness: 120, mass: 0.5 };
-  const fluidX = useSpring(mouseX, springConfig);
-  const fluidY = useSpring(mouseY, springConfig);
-
-  // A lagging secondary fluid orb for organic liquid viscosity
-  const trailConfig = { damping: 35, stiffness: 70, mass: 0.9 };
-  const trailX = useSpring(mouseX, trailConfig);
-  const trailY = useSpring(mouseY, trailConfig);
-
-  const handleMouseMove = (e) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    mouseX.set(e.clientX - rect.left);
-    mouseY.set(e.clientY - rect.top);
-  };
-
-  const fluidSpotlight = useMotionTemplate`radial-gradient(420px circle at ${fluidX}px ${fluidY}px, rgba(16, 185, 129, 0.22), rgba(6, 182, 212, 0.12) 40%, transparent 75%)`;
-
+function HeroHeadline() {
   return (
-    <div
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="relative mx-auto max-w-4xl px-4 sm:px-6 text-center select-none py-2"
-    >
-      {/* Interactive Fluid Cursor Light */}
-      <motion.div
-        className="pointer-events-none absolute -inset-8 rounded-full transition-opacity duration-500 blur-2xl"
-        style={{
-          opacity: isHovered ? 1 : 0.35,
-          background: fluidSpotlight,
-        }}
-      />
+    <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 text-center select-none py-2">
+      <Reveal>
+        <div className="inline-flex items-center gap-2 rounded-full badge-gradient px-3.5 py-1 text-xs font-medium text-akg-text shadow-sm">
+          <span className="live-dot" />
+          <span>Verified MetaTrader 4 &amp; 5 Expert Advisors</span>
+        </div>
+      </Reveal>
 
-      {/* Fluid Viscous Secondary Orb tracking with lag */}
-      <motion.div
-        className="pointer-events-none absolute h-60 w-60 rounded-full blur-3xl opacity-35 mix-blend-screen transition-opacity duration-700"
-        style={{
-          x: trailX,
-          y: trailY,
-          translateX: '-50%',
-          translateY: '-50%',
-          background: 'radial-gradient(circle, rgba(6, 182, 212, 0.5) 0%, rgba(16, 185, 129, 0.25) 50%, transparent 75%)',
-        }}
-      />
+      <Reveal delay={0.06}>
+        <h1 className="mt-6 font-display text-4xl sm:text-6xl font-extrabold tracking-tight text-akg-text leading-[1.08]">
+          Algorithmic Trading Robots.
+          <br />
+          <span className="text-gradient-emerald">Built for MetaTrader.</span>
+        </h1>
+      </Reveal>
 
-      <div className="relative z-10">
-        <Reveal>
-          <div className="inline-flex items-center gap-2 rounded-full badge-gradient px-3.5 py-1 text-xs font-medium text-akg-text shadow-sm">
-            <span className="live-dot" />
-            <span>Verified MetaTrader 4 &amp; 5 Expert Advisors</span>
-          </div>
-        </Reveal>
-
-        <Reveal delay={0.06}>
-          <h1 className="mt-6 font-display text-4xl sm:text-6xl font-extrabold tracking-tight text-akg-text leading-[1.08]">
-            Algorithmic Trading Robots.
-            <br />
-            <span className="text-gradient-emerald">Built for MetaTrader.</span>
-          </h1>
-        </Reveal>
-
-        <Reveal delay={0.1}>
-          <p className="mt-4 max-w-xl mx-auto text-base sm:text-lg text-akg-muted leading-relaxed">
-            Automated Expert Advisors engineered with hard equity-lockouts, verified forward history, and sub-15ms execution.
-          </p>
-        </Reveal>
-      </div>
+      <Reveal delay={0.1}>
+        <p className="mt-4 max-w-xl mx-auto text-base sm:text-lg text-akg-muted leading-relaxed">
+          Automated Expert Advisors engineered with hard equity-lockouts, verified forward history, and sub-15ms execution.
+        </p>
+      </Reveal>
     </div>
   );
 }
@@ -308,14 +256,16 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       )}
 
       {/* ============================================================
-          1. HERO - Minimal, Confident, Direct
+          1. HERO - Minimal, Confident, Direct with Fluid WebGL Cursor
       ============================================================ */}
       <section className="relative overflow-hidden pt-10 pb-16 sm:pt-16 sm:pb-24 bg-tech-grid">
-        <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[380px] w-[800px] rounded-full bg-gradient-to-b from-emerald-500/10 via-teal-500/10 to-transparent blur-3xl" />
+        <FluidCursorCanvas palette={['#10b981', '#06b6d4', '#34d399']} />
 
-        <FluidHeroHeader />
+        <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[380px] w-[800px] rounded-full bg-gradient-to-b from-emerald-500/10 via-teal-500/10 to-transparent blur-3xl z-0" />
 
-        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 text-center">
+        <HeroHeadline />
+
+        <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 text-center">
           <Reveal delay={0.14}>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5">
               <button
@@ -335,24 +285,24 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
             </div>
           </Reveal>
 
-          {/* Minimal 4-Metric Strip */}
+          {/* Minimal 4-Metric Strip with tactile cards matching reference */}
           <Reveal delay={0.18}>
-            <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 border-t border-akg-hairline">
-              <div>
-                <div className="font-mono text-2xl sm:text-3xl font-bold text-akg-text"><CountUp value={botCount} /></div>
-                <div className="mt-0.5 text-xs text-akg-muted">Robots Available</div>
+            <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-6 text-left">
+              <div className="rounded-2xl border border-akg-hairline bg-akg-card/80 p-4 sm:p-5 backdrop-blur-sm card-depth">
+                <div className="text-xs text-akg-muted">Robots Available</div>
+                <div className="mt-1.5 font-mono text-2xl sm:text-3xl font-extrabold text-akg-text"><CountUp value={botCount} /></div>
               </div>
-              <div>
-                <div className="font-mono text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400"><CountUp value={34} /></div>
-                <div className="mt-0.5 text-xs text-akg-muted">Live Forward Accounts</div>
+              <div className="rounded-2xl border border-akg-hairline bg-akg-card/80 p-4 sm:p-5 backdrop-blur-sm card-depth">
+                <div className="text-xs text-akg-muted">Live Forward Accounts</div>
+                <div className="mt-1.5 font-mono text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400"><CountUp value={34} /></div>
               </div>
-              <div>
-                <div className="font-mono text-2xl sm:text-3xl font-bold text-akg-text">4.8%</div>
-                <div className="mt-0.5 text-xs text-akg-muted">Max Verified Drawdown</div>
+              <div className="rounded-2xl border border-akg-hairline bg-akg-card/80 p-4 sm:p-5 backdrop-blur-sm card-depth">
+                <div className="text-xs text-akg-muted">Max Verified Drawdown</div>
+                <div className="mt-1.5 font-mono text-2xl sm:text-3xl font-extrabold text-akg-text">4.8%</div>
               </div>
-              <div>
-                <div className="font-mono text-2xl sm:text-3xl font-bold text-akg-text">&lt;15ms</div>
-                <div className="mt-0.5 text-xs text-akg-muted">Socket Execution</div>
+              <div className="rounded-2xl border border-akg-hairline bg-akg-card/80 p-4 sm:p-5 backdrop-blur-sm card-depth">
+                <div className="text-xs text-akg-muted">Socket Execution</div>
+                <div className="mt-1.5 font-mono text-2xl sm:text-3xl font-extrabold text-cyan-600 dark:text-cyan-400">&lt;15ms</div>
               </div>
             </div>
           </Reveal>
