@@ -19,7 +19,6 @@ import CountUp from './motion/CountUp';
 import EquityCurve from './EquityCurve';
 import { useSiteSettings } from '../lib/wallets';
 import { SpotlightCard } from './ui/SpotlightCard';
-import { InteractiveTradingTerminal } from './InteractiveTradingTerminal';
 
 const botSlug = (name) =>
   String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -121,57 +120,7 @@ const PLANS = [
   },
 ];
 
-const ENGINEERING_PILLARS = [
-  {
-    id: 'risk-lockout',
-    title: 'Hard-Coded Risk Lockouts',
-    icon: ShieldCheck,
-    tag: 'Capital Preservation',
-    description: 'Dynamic daily drawdown caps (2% to 5%) and equity breakers encoded directly into the EA binary. Trades halt automatically during abnormal market volatility.',
-  },
-  {
-    id: 'mql-bridge',
-    title: 'Sub-15ms Native MQL Bridge',
-    icon: Zap,
-    tag: 'Ultra-Low Latency',
-    description: 'Direct socket communication through native MetaTrader WebRequest. Zero intermediate cloud webhooks, ensuring lightning-fast order execution on fast ticks.',
-  },
-  {
-    id: 'forward-audit',
-    title: 'Audited Forward Statements',
-    icon: Activity,
-    tag: 'Verified Capital',
-    description: 'Zero synthetic backtests or over-fitted curve graphs. Every algorithm runs on live forward capital with published tick-by-tick drawdown logs.',
-  },
-  {
-    id: 'silent-binding',
-    title: 'Silent Hardware-Locked Licensing',
-    icon: Lock,
-    tag: 'One-Click Setup',
-    description: 'Instant checkout with automated binary generation. The EA silently pairs with your authorized MT4 or MT5 terminal on first launch with zero manual forms.',
-  },
-];
 
-const WORKFLOW_STEPS = [
-  {
-    step: '01',
-    title: 'Select Strategy & Risk Parameters',
-    subtitle: 'Match your capital to tailored algorithmic models',
-    description: 'Choose your asset class (Gold, Forex Majors, or Hedged Crosses) and configure your risk appetite from conservative 2% daily cap to dynamic growth.',
-  },
-  {
-    step: '02',
-    title: 'Instant MetaTrader Deployment',
-    subtitle: 'One-file installation for MT4 and MT5',
-    description: 'Download your compiled .ex4 or .ex5 binary and drop it directly into your terminal Experts folder. Enter your automated license key for instant activation.',
-  },
-  {
-    step: '03',
-    title: '24/5 Automated Execution',
-    subtitle: 'Continuous tick monitoring and trailing protection',
-    description: 'The algorithm scans liquidity sweeps, manages position sizing per tick, and executes trailing stop-losses with zero emotional interference.',
-  },
-];
 
 export function LandingPage({ onNavigate, onOpenAuth, notify }) {
   const [bots, setBots] = useState(FALLBACK_BOTS);
@@ -279,117 +228,70 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       )}
 
       {/* ============================================================
-          1. HERO - Quantitative Forex & Gold Trading Infrastructure
+          1. HERO - Minimal, Confident, Direct
       ============================================================ */}
-      <section className="relative overflow-hidden pt-6 pb-16 sm:pt-10 sm:pb-24 bg-tech-grid">
-        {/* Soft Radial Ambient Glow */}
-        <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-[420px] w-[900px] rounded-full bg-gradient-to-b from-teal-500/10 via-emerald-500/10 to-transparent blur-3xl" />
-        <div className="pointer-events-none absolute top-40 right-[-10%] h-80 w-80 rounded-full bg-emerald-500/[0.08] blur-3xl" />
+      <section className="relative overflow-hidden pt-10 pb-16 sm:pt-16 sm:pb-24 bg-tech-grid">
+        <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[380px] w-[800px] rounded-full bg-gradient-to-b from-emerald-500/10 via-teal-500/10 to-transparent blur-3xl" />
 
-        <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-          {/* Eyebrow Badge with Live Pulse */}
+        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 text-center">
           <Reveal>
-            <div className="inline-flex items-center gap-2.5 rounded-full badge-gradient px-4 py-1.5 shadow-sm backdrop-blur-md">
+            <div className="inline-flex items-center gap-2 rounded-full badge-gradient px-3.5 py-1 text-xs font-medium text-akg-text shadow-sm">
               <span className="live-dot" />
-              <span className="font-mono text-xs font-bold text-akg-text tracking-wide">
-                {botCount} Verified EAs
-              </span>
-              <span className="text-akg-muted/40 font-mono">·</span>
-              <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                34 Live Forward Accounts
-              </span>
-              <span className="text-akg-muted/40 font-mono">·</span>
-              <span className="font-mono text-xs text-akg-muted">
-                Sub-15ms MT4/MT5
-              </span>
+              <span>Verified MetaTrader 4 &amp; 5 Expert Advisors</span>
             </div>
           </Reveal>
 
-          {/* Main Headline (Original AKG ALGO Thesis, Unslop) */}
           <Reveal delay={0.06}>
-            <h1 className="mt-5 font-display text-[2.35rem] font-extrabold leading-[1.08] tracking-tight text-akg-text sm:mt-7 sm:text-5xl lg:text-6xl">
-              Systematic Forex Algorithms.
-              <br className="hidden sm:block" />{' '}
-              <span className="text-gradient-emerald sm:block">
-                Engineered For Capital Preservation.
-              </span>
+            <h1 className="mt-6 font-display text-4xl sm:text-6xl font-extrabold tracking-tight text-akg-text leading-[1.08]">
+              Algorithmic Trading Robots.
+              <br />
+              <span className="text-gradient-emerald">Built for MetaTrader.</span>
             </h1>
           </Reveal>
 
-          {/* Subtitle */}
-          <Reveal delay={0.12}>
-            <p className="mt-5 max-w-2xl text-[15px] sm:text-lg leading-relaxed text-akg-textSecondary">
-              Eliminate emotional trading errors. Deploy quantitative Expert Advisors built with strict equity-lock limits, sub-15ms MetaTrader routing, and audited forward statements.
+          <Reveal delay={0.1}>
+            <p className="mt-4 max-w-xl mx-auto text-base sm:text-lg text-akg-muted leading-relaxed">
+              Automated Expert Advisors engineered with hard equity-lockouts, verified forward history, and sub-15ms execution.
             </p>
           </Reveal>
 
-          {/* CTA Buttons */}
-          <Reveal delay={0.18}>
-            <div className="mt-7 sm:mt-9 flex flex-col sm:flex-row sm:items-center gap-3.5">
+          <Reveal delay={0.14}>
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5">
               <button
                 onClick={() => onNavigate('bots')}
-                className="btn-cyan-emerald flex items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-sm font-bold active:scale-[0.98] cursor-pointer"
+                className="btn-cyan-emerald flex items-center justify-center gap-2 rounded-xl px-7 py-3 text-sm font-semibold active:scale-[0.98] cursor-pointer"
               >
-                <span>Explore Algorithmic Systems</span>
+                <span>Browse Robots</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
               <button
                 onClick={() => onNavigate('signals')}
-                className="flex items-center justify-center gap-2 rounded-xl border border-akg-hairline bg-akg-card/90 px-6 py-3.5 text-sm font-semibold text-akg-text shadow-sm hover:border-emerald-500/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all cursor-pointer backdrop-blur-md"
+                className="flex items-center justify-center gap-2 rounded-xl border border-akg-hairline bg-akg-card px-6 py-3 text-sm font-semibold text-akg-text hover:border-emerald-500/40 hover:text-emerald-500 transition-all cursor-pointer card-depth"
               >
                 <Terminal className="h-4 w-4 text-emerald-500" />
-                <span>Live Signal Desk</span>
+                <span>Signal Room</span>
               </button>
             </div>
-            <div className="mt-3.5 flex items-center gap-3 font-mono text-[11px] text-akg-muted">
-              <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-500" /> Instant MQL4/MQL5 Delivery</span>
-              <span>·</span>
-              <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-500" /> Silent Hardware Binding</span>
-            </div>
           </Reveal>
 
-          {/* Interactive Trading Terminal Component (The Hero Centerpiece) */}
-          <Reveal delay={0.24}>
-            <div className="mt-10 sm:mt-12">
-              <InteractiveTradingTerminal onDeploy={(id) => onNavigate('bots')} />
-            </div>
-          </Reveal>
-
-          {/* 4-Column Floating Stats Bar */}
-          <Reveal delay={0.28}>
-            <div className="card-depth mt-8 rounded-2xl border border-akg-hairline bg-akg-card p-5 sm:p-7 backdrop-blur-md">
-              <div className="grid grid-cols-2 divide-y divide-akg-hairline sm:grid-cols-4 sm:divide-y-0 sm:divide-x sm:divide-akg-hairline">
-                <div className="pb-4 sm:pb-0 sm:pr-6">
-                  <div className="text-xs font-semibold text-akg-muted uppercase tracking-wider">Verified EAs</div>
-                  <div className="mt-1 font-display text-3xl font-extrabold text-akg-text sm:text-4xl">
-                    <CountUp value={botCount} />
-                  </div>
-                  <div className="mt-1 text-[11px] font-medium text-akg-muted">MQL4 &amp; MQL5 binaries</div>
-                </div>
-
-                <div className="pb-4 sm:pb-0 sm:px-6">
-                  <div className="text-xs font-semibold text-akg-muted uppercase tracking-wider">Forward Accounts</div>
-                  <div className="mt-1 font-display text-3xl font-extrabold text-emerald-500 sm:text-4xl">
-                    <CountUp value={34} />
-                  </div>
-                  <div className="mt-1 text-[11px] font-medium text-emerald-600/80 dark:text-emerald-400/80">real verified capital</div>
-                </div>
-
-                <div className="pt-4 sm:pt-0 sm:px-6">
-                  <div className="text-xs font-semibold text-akg-muted uppercase tracking-wider">Published Drawdown</div>
-                  <div className="mt-1 font-display text-3xl font-extrabold text-akg-text sm:text-4xl">
-                    4.8%
-                  </div>
-                  <div className="mt-1 text-[11px] font-medium text-akg-muted">hard equity ceiling</div>
-                </div>
-
-                <div className="pt-4 sm:pt-0 sm:pl-6">
-                  <div className="text-xs font-semibold text-akg-muted uppercase tracking-wider">Execution Latency</div>
-                  <div className="mt-1 font-display text-3xl font-extrabold text-cyan-600 dark:text-cyan-400 sm:text-4xl">
-                    &lt; 15ms
-                  </div>
-                  <div className="mt-1 text-[11px] font-medium text-cyan-600/80 dark:text-cyan-400/80">direct socket bridge</div>
-                </div>
+          {/* Minimal 4-Metric Strip */}
+          <Reveal delay={0.18}>
+            <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 border-t border-akg-hairline">
+              <div>
+                <div className="font-mono text-2xl sm:text-3xl font-bold text-akg-text"><CountUp value={botCount} /></div>
+                <div className="mt-0.5 text-xs text-akg-muted">Robots Available</div>
+              </div>
+              <div>
+                <div className="font-mono text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400"><CountUp value={34} /></div>
+                <div className="mt-0.5 text-xs text-akg-muted">Live Forward Accounts</div>
+              </div>
+              <div>
+                <div className="font-mono text-2xl sm:text-3xl font-bold text-akg-text">4.8%</div>
+                <div className="mt-0.5 text-xs text-akg-muted">Max Verified Drawdown</div>
+              </div>
+              <div>
+                <div className="font-mono text-2xl sm:text-3xl font-bold text-akg-text">&lt;15ms</div>
+                <div className="mt-0.5 text-xs text-akg-muted">Socket Execution</div>
               </div>
             </div>
           </Reveal>
@@ -397,205 +299,45 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
       </section>
 
       {/* ============================================================
-          2. THE AKG QUANTITATIVE FRAMEWORK - 4 High-Craft Spotlight Cards
+          2. HOW IT WORKS - 3 Minimal Steps (Quiet & Uncluttered)
       ============================================================ */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-24">
-        <Reveal>
-          <div className="text-center max-w-2xl mx-auto">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              System Architecture
-            </span>
-            <h2 className="mt-2.5 font-display text-3xl font-extrabold tracking-tight text-akg-text sm:text-4xl">
-              The AKG Quantitative Framework
-            </h2>
-            <p className="mt-3 text-sm text-akg-muted sm:text-base">
-              Four institutional engineering disciplines embedded into every compiled MQL binary.
-            </p>
-          </div>
-        </Reveal>
-
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:gap-8">
-          {ENGINEERING_PILLARS.map((pillar) => {
-            const Icon = pillar.icon;
-            return (
-              <SpotlightCard key={pillar.id} className="p-6 sm:p-8">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400 shadow-sm border border-emerald-500/20">
-                    <Icon className="h-6 w-6" strokeWidth={2} />
-                  </div>
-                  <span className="rounded-full border border-akg-hairline bg-akg-tint/60 px-3 py-1 font-mono text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
-                    {pillar.tag}
-                  </span>
-                </div>
-                <h3 className="mt-6 font-display text-xl font-bold text-akg-text">
-                  {pillar.title}
-                </h3>
-                <p className="mt-2.5 text-xs sm:text-sm leading-relaxed text-akg-muted">
-                  {pillar.description}
-                </p>
-              </SpotlightCard>
-            );
-          })}
+      <section className="mx-auto max-w-5xl px-4 py-14 sm:py-20 border-b border-akg-hairline">
+        <div className="text-center max-w-xl mx-auto">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            Frictionless Setup
+          </span>
+          <h2 className="mt-2 font-display text-2xl sm:text-3xl font-extrabold text-akg-text">
+            Get started in 3 simple steps
+          </h2>
+          <p className="mt-2 text-sm text-akg-muted">
+            From checkout to automated execution on your MetaTrader terminal.
+          </p>
         </div>
-      </section>
 
-      {/* ============================================================
-          3. 3-STAGE QUANTITATIVE WORKFLOW - High-Craft Process with Realistic Widgets
-      ============================================================ */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:py-24">
-        <Reveal>
-          <div className="text-center max-w-2xl mx-auto">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              Seamless Deployment
-            </span>
-            <h2 className="mt-2.5 font-display text-3xl font-extrabold tracking-tight text-akg-text sm:text-4xl">
-              Three Steps to Automated Execution
-            </h2>
-            <p className="mt-3 text-sm text-akg-muted sm:text-base">
-              From strategy calibration to live MetaTrader order execution in under two minutes.
+        <div className="mt-10 grid gap-6 sm:grid-cols-3">
+          <div className="rounded-2xl border border-akg-hairline bg-akg-card p-6 card-depth">
+            <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">01</span>
+            <h3 className="mt-3 font-display text-base font-bold text-akg-text">Choose Robot</h3>
+            <p className="mt-1.5 text-xs leading-relaxed text-akg-muted">
+              Select your robot based on asset class (Gold, Forex, Indices) and risk parameters.
             </p>
           </div>
-        </Reveal>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {/* Step 1 Card */}
-          <SpotlightCard className="p-6 sm:p-7 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="inline-block rounded-full badge-gradient px-3 py-1 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-                  STEP 01
-                </span>
-                <span className="font-mono text-[10px] text-akg-muted">Asset Selection</span>
-              </div>
-              <h3 className="mt-4 font-display text-xl font-bold text-akg-text">
-                1. Strategy &amp; Risk Calibration
-              </h3>
-              <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
-                Choose your targeted asset class (Gold, Forex Majors, or Crosses) and configure hard drawdown caps before installation.
-              </p>
-              <div className="mt-4">
-                <button
-                  onClick={() => onNavigate('bots')}
-                  className="btn-cyan-emerald inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold shadow-md cursor-pointer"
-                >
-                  <span>Select Strategy</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
+          <div className="rounded-2xl border border-akg-hairline bg-akg-card p-6 card-depth">
+            <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">02</span>
+            <h3 className="mt-3 font-display text-base font-bold text-akg-text">Drop into MetaTrader</h3>
+            <p className="mt-1.5 text-xs leading-relaxed text-akg-muted">
+              Copy the compiled .ex4 or .ex5 file into your MT4 or MT5 Experts folder.
+            </p>
+          </div>
 
-            {/* Interactive Widget in Card 1 */}
-            <div className="mt-8 pt-5 border-t border-akg-hairline">
-              <div className="text-[11px] font-semibold text-akg-muted mb-2">Target Asset Class</div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-2 text-center">
-                  <div className="font-bold text-xs text-emerald-600 dark:text-emerald-400">XAU/USD</div>
-                  <div className="text-[9px] text-akg-muted">Gold Scalper</div>
-                </div>
-                <div className="rounded-xl border border-akg-hairline bg-akg-card p-2 text-center">
-                  <div className="font-bold text-xs text-akg-text">EUR/USD</div>
-                  <div className="text-[9px] text-akg-muted">Momentum</div>
-                </div>
-                <div className="rounded-xl border border-akg-hairline bg-akg-card p-2 text-center">
-                  <div className="font-bold text-xs text-akg-text">CROSSES</div>
-                  <div className="text-[9px] text-akg-muted">Grid Hedge</div>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between rounded-lg bg-akg-bg/60 px-3 py-1.5 font-mono text-[10px]">
-                <span className="text-akg-muted">Selected Daily Cap:</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">3.0% Max Loss Breaker</span>
-              </div>
-            </div>
-          </SpotlightCard>
-
-          {/* Step 2 Card */}
-          <SpotlightCard className="p-6 sm:p-7 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="inline-block rounded-full badge-gradient px-3 py-1 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-                  STEP 02
-                </span>
-                <span className="font-mono text-[10px] text-akg-muted">MetaTrader Setup</span>
-              </div>
-              <h3 className="mt-4 font-display text-xl font-bold text-akg-text">
-                2. Instant Terminal Deployment
-              </h3>
-              <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
-                Drop the compiled .ex4 or .ex5 binary into your MetaTrader Experts folder. The binary auto-binds your license on first run.
-              </p>
-            </div>
-
-            {/* Interactive Widget in Card 2 */}
-            <div className="mt-8 space-y-2 pt-5 border-t border-akg-hairline">
-              <div className="rounded-xl border border-akg-hairline bg-akg-card p-3 shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Terminal className="h-4 w-4 text-emerald-500" />
-                  <span className="font-mono text-xs font-semibold text-akg-text">MQL/Experts/AKG_EA.ex4</span>
-                </div>
-                <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-emerald-600 dark:text-emerald-400">Validated</span>
-              </div>
-              <div className="rounded-xl border border-akg-hairline bg-akg-card/80 p-3 shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-cyan-500" />
-                  <span className="font-mono text-xs font-semibold text-akg-text">Silent Hardware Lock</span>
-                </div>
-                <span className="font-mono text-[10px] text-akg-muted">Account Bound</span>
-              </div>
-              <div className="rounded-xl border border-akg-hairline bg-akg-card/60 p-3 shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-teal-500" />
-                  <span className="font-mono text-xs font-semibold text-akg-text">WebRequest Bridge</span>
-                </div>
-                <span className="font-mono text-[10px] text-emerald-500 font-bold">11ms Latency</span>
-              </div>
-            </div>
-          </SpotlightCard>
-
-          {/* Step 3 Card */}
-          <SpotlightCard className="p-6 sm:p-7 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="inline-block rounded-full badge-gradient px-3 py-1 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-                  STEP 03
-                </span>
-                <span className="font-mono text-[10px] text-akg-muted">Execution</span>
-              </div>
-              <h3 className="mt-4 font-display text-xl font-bold text-akg-text">
-                3. 24/5 Automated Execution
-              </h3>
-              <p className="mt-2 text-xs sm:text-[13px] leading-relaxed text-akg-muted">
-                The algorithm monitors tick volume, opens hedge positions, and locks trailing stops with zero discretionary bias.
-              </p>
-            </div>
-
-            {/* Interactive Widget in Card 3 */}
-            <div className="mt-8 pt-5 border-t border-akg-hairline">
-              <div className="rounded-2xl border border-akg-hairline bg-akg-card p-3.5 shadow-sm">
-                <div className="flex items-center justify-between border-b border-akg-hairline pb-2 mb-2.5">
-                  <span className="text-[11px] font-bold text-akg-text">Automated Order Guard</span>
-                  <span className="flex items-center gap-1.5 font-mono text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">
-                    <span className="live-dot" /> Active Guard
-                  </span>
-                </div>
-                <div className="space-y-2 font-mono text-xs">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-600 dark:text-amber-400">GOLD</span>
-                      <div>
-                        <div className="font-bold text-akg-text">XAU/USD</div>
-                        <div className="text-[9px] text-akg-muted">Trailing +48 pips</div>
-                      </div>
-                    </div>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">+$237.50</span>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-akg-hairline/60 pt-2 text-[10px]">
-                    <span className="text-akg-muted">Session Drawdown:</span>
-                    <span className="font-bold text-akg-text">0.4% / 3.0% cap</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </SpotlightCard>
+          <div className="rounded-2xl border border-akg-hairline bg-akg-card p-6 card-depth">
+            <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">03</span>
+            <h3 className="mt-3 font-display text-base font-bold text-akg-text">Run 24/5 Automated</h3>
+            <p className="mt-1.5 text-xs leading-relaxed text-akg-muted">
+              The EA silently verifies your license and executes trades with hard risk caps.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -826,40 +568,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
         </div>
       </section>
 
-      {/* ============================================================
-          5.5 MEMBERSHIP GAINS - tabbed checks + live panel
-      ============================================================ */}
-      <section className="mx-auto max-w-6xl px-4 pt-14 sm:pt-20">
-        <div className="card-depth rounded-3xl border border-akg-hairline bg-akg-card px-5 py-12 sm:px-8 sm:py-16">
-          <Reveal>
-            <div className="text-center">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                Inside AKG
-              </span>
-              <h2 className="mt-2.5 font-display text-3xl font-extrabold tracking-tight text-akg-text sm:text-4xl">
-                What membership gives you
-              </h2>
-            </div>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <Achievements briefings={briefings} onNavigate={onNavigate} />
-          </Reveal>
-        </div>
-      </section>
 
-      {/* ============================================================
-          6. DESK TOOLKIT - switchable tool cards
-      ============================================================ */}
-      <section className="mx-auto max-w-6xl px-4 py-14 sm:py-20">
-        <Reveal>
-          <div className="card-depth rounded-3xl border border-akg-hairline bg-akg-card px-4 py-10 sm:px-8 sm:py-12">
-            <h2 className="text-center font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-akg-text">
-              The desk toolkit
-            </h2>
-            <Toolkit />
-          </div>
-        </Reveal>
-      </section>
 
       {/* ============================================================
           7. LATEST FROM THE DESK - real briefings
