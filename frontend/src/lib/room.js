@@ -131,6 +131,6 @@ export function subscribeRoom({ onMessages, onContent, onReactions }) {
     return pb.collection(collection).subscribe('*', (e) => handler(e)).catch(() => null);
   };
   return Promise.all([wire('messages', onMessages), wire('message_content', onContent), wire('reactions', onReactions)]).then(
-    (all) => () => all.forEach((u) => u && (typeof u === 'function' ? u() : u.then && u.then((fn) => fn && fn()))),
+    (all) => all.filter(Boolean),
   );
 }

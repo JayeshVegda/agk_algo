@@ -159,7 +159,7 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
           </div>
           {isActive && (
             <div className="flex justify-between text-[10px] text-akg-muted mt-1 font-mono">
-              <span>{30 - daysLeft} days used</span>
+               <span>{Math.min(30, Math.max(0, 30 - daysLeft))} days used</span>
               <span>{daysLeft} days left</span>
             </div>
           )}

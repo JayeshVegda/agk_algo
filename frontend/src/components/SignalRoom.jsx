@@ -438,7 +438,7 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
     }
     boot();
     return () => {
-      unsubs.forEach((u) => { try { u(); } catch {} });
+      unsubs.forEach((u) => { try { typeof u === 'function' ? u() : u?.then?.((fn) => fn && fn()); } catch {} });
     };
   }, [user]);
 
