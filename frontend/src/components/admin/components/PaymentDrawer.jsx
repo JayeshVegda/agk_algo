@@ -56,9 +56,9 @@ export default function PaymentDrawer({ payment, loading = false, onClose, onRej
     : null;
 
   const row = (k, v, cls) => (
-    <div className="flex items-start justify-between gap-4 border-b border-white/[0.05] px-4 py-2.5 last:border-0">
+    <div className="flex items-start justify-between gap-4 border-b border-[var(--akg-hairline)] px-4 py-2.5 last:border-0">
       <span className="shrink-0 font-data text-[10px] uppercase tracking-wider text-akg-muted">{k}</span>
-      <span className={cn('min-w-0 break-all text-right text-xs font-semibold text-white', cls)}>{v}</span>
+      <span className={cn('min-w-0 break-all text-right text-xs font-semibold text-[var(--akg-text)]', cls)}>{v}</span>
     </div>
   );
 
@@ -75,28 +75,28 @@ export default function PaymentDrawer({ payment, loading = false, onClose, onRej
               <>
                 <button
                   onClick={() => setConfirming(true)}
-                  className="h-10 flex-1 rounded-full bg-[linear-gradient(120deg,#E8BC4F,#F3C653,#DFAE3E)] text-sm font-bold text-[#1C1403] active:scale-[0.98]"
+                  className="h-10 flex-1 rounded-lg bg-akg-cta text-sm font-bold text-akg-cta-text shadow-sm transition-opacity hover:opacity-90 active:scale-[0.98]"
                 >
                   {isBot ? 'Approve + Issue License' : 'Approve + Grant 30d'}
                 </button>
                 <button
                   onClick={() => { onClose(); onReject?.(p); }}
-                  className="h-10 rounded-full border border-rose-500/30 px-4 text-sm font-bold text-rose-300 hover:bg-rose-500/10"
+                  className="h-10 rounded-lg border border-rose-500/30 px-4 text-sm font-bold text-rose-300 hover:bg-rose-500/10 transition-colors"
                 >
-                  Reject…
+                  Reject...
                 </button>
               </>
             ) : (
               <>
                 <button
                   onClick={() => setConfirmingUndo(true)}
-                  className="h-10 flex-1 rounded-full border border-[#F3C653]/40 text-sm font-bold text-akg-gold hover:bg-[#F3C653]/10"
+                  className="h-10 flex-1 rounded-lg border border-akg-accent/40 text-sm font-bold text-akg-accent hover:bg-emerald-500/10 transition-colors"
                 >
                   Undo → pending
                 </button>
                 <button
                   onClick={() => setConfirmingDelete(true)}
-                  className="h-10 rounded-full border border-white/15 px-4 text-sm font-semibold text-akg-muted hover:border-rose-500/40 hover:text-rose-300"
+                  className="h-10 rounded-lg border border-white/15 px-4 text-sm font-semibold text-akg-muted hover:border-rose-500/40 hover:text-rose-300 transition-colors"
                 >
                   Delete
                 </button>
@@ -109,13 +109,13 @@ export default function PaymentDrawer({ payment, loading = false, onClose, onRej
           <div className="flex items-center justify-between">
             <StatusDot status={p.status} />
             {p.method === 'upi' && p.inr_amount ? (
-              <span className="rounded-full bg-akg-green/15 px-2.5 py-1 font-data text-[11px] font-bold text-akg-green">₹{Number(p.inr_amount).toLocaleString('en-IN')} via UPI</span>
+              <span className="rounded-md bg-emerald-500/15 px-2.5 py-1 font-data text-[11px] font-bold text-akg-accent">₹{Number(p.inr_amount).toLocaleString('en-IN')} via UPI</span>
             ) : (
-              <span className="rounded-full bg-[#F3C653]/15 px-2.5 py-1 font-data text-[11px] font-bold text-akg-gold">{p.network}</span>
+              <span className="rounded-md bg-emerald-500/15 px-2.5 py-1 font-data text-[11px] font-bold text-akg-accent">{p.network}</span>
             )}
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-[#0A0D13]">
+          <div className="overflow-hidden rounded-xl border border-[var(--akg-hairline)] bg-akg-card">
             {row('Trader', p.user_email)}
             {row('Plan', planShort(p.plan))}
             {row('Amount', `$${p.amount} USDT${p.inr_amount ? ` · ₹${Number(p.inr_amount).toLocaleString('en-IN')}` : ''}`)}
@@ -130,13 +130,13 @@ export default function PaymentDrawer({ payment, loading = false, onClose, onRej
             <h3 className="mb-2 font-data text-[10px] uppercase tracking-[0.14em] text-akg-muted">Trader context</h3>
             <div className="grid grid-cols-3 gap-2">
               {[
-                ['Prior confirmed', history ? String(history.filter((h) => h.status === 'confirmed').length) : '…'],
-                ['Current plan', user ? (user.plan === 'PERFECT_SIGNAL_BOX' ? 'Perfect' : user.plan === 'SR_SIGNAL_BOX' ? 'SR' : 'None') : '…'],
-                ['Cycle', cycleDays === null ? '—' : cycleDays < 0 ? 'expired' : `${cycleDays}d left`],
+                ['Prior confirmed', history ? String(history.filter((h) => h.status === 'confirmed').length) : '...'],
+                ['Current plan', user ? (user.plan === 'PERFECT_SIGNAL_BOX' ? 'Perfect' : user.plan === 'SR_SIGNAL_BOX' ? 'SR' : 'None') : '...'],
+                ['Cycle', cycleDays === null ? '-' : cycleDays < 0 ? 'expired' : `${cycleDays}d left`],
               ].map(([k, v]) => (
-                <div key={k} className="rounded-xl border border-white/[0.07] bg-[#0A0D13] px-3 py-2.5">
+                <div key={k} className="rounded-xl border border-[var(--akg-hairline)] bg-akg-card px-3 py-2.5">
                   <div className="font-data text-[9px] uppercase tracking-wide text-akg-muted">{k}</div>
-                  <div className="mt-0.5 font-data text-sm font-bold text-white">{v}</div>
+                  <div className="mt-0.5 font-data text-sm font-bold text-[var(--akg-text)]">{v}</div>
                 </div>
               ))}
             </div>
@@ -149,17 +149,17 @@ export default function PaymentDrawer({ payment, loading = false, onClose, onRej
             {history === null ? (
               <div className="h-16 animate-pulse rounded-xl bg-white/[0.03]" />
             ) : history.length === 0 ? (
-              <p className="rounded-xl border border-white/[0.06] bg-[#0A0D13] px-4 py-3 text-[11px] text-akg-muted">First payment from this trader.</p>
+              <p className="rounded-xl border border-[var(--akg-hairline)] bg-akg-card px-4 py-3 text-[11px] text-akg-muted">First payment from this trader.</p>
             ) : (
-              <div className="divide-y divide-white/[0.05] overflow-hidden rounded-xl border border-white/[0.07] bg-[#0A0D13]">
+              <div className="divide-y divide-[var(--akg-hairline)] overflow-hidden rounded-xl border border-[var(--akg-hairline)] bg-akg-card">
                 {history.map((h) => (
-                  <div key={h.id} className={cn('flex items-center justify-between gap-3 px-3.5 py-2', h.id === p.id && 'bg-[#F3C653]/[0.05]')}>
+                  <div key={h.id} className={cn('flex items-center justify-between gap-3 px-3.5 py-2', h.id === p.id && 'bg-emerald-500/10')}>
                     <span className="flex min-w-0 items-center gap-2">
                       <span className="font-data text-[10px] text-akg-muted">{fmtDateTime(h.created)}</span>
                       <span className="truncate text-[11px] text-akg-silver">{planShort(h.plan)}</span>
                     </span>
                     <span className="flex shrink-0 items-center gap-2">
-                      <span className="font-data text-[11px] font-bold text-white">${h.amount}</span>
+                      <span className="font-data text-[11px] font-bold text-[var(--akg-text)]">${h.amount}</span>
                       <StatusDot status={h.status} pulse={false} />
                     </span>
                   </div>

@@ -44,7 +44,7 @@ export default function Resources() {
               title: '', category: 'software', url: '', description: '',
               icon: 'download', badge: '', sort_order: resources.length + 1, is_active: true,
             })}
-            className="flex h-10 items-center gap-2 rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] px-4 text-sm font-bold text-[#1C1403] active:scale-[0.98]"
+            className="flex h-10 items-center gap-2 rounded-lg bg-akg-cta px-4 text-sm font-bold text-akg-cta-text shadow-sm transition-opacity hover:opacity-90 active:scale-[0.98]"
           >
             <Plus className="h-4 w-4" /> Add Item
           </button>
@@ -73,13 +73,13 @@ export default function Resources() {
             <article
               key={r.id}
               className={cn(
-                'flex flex-col rounded-2xl border border-white/10 bg-akg-surface p-4 transition-all',
+                'flex flex-col rounded-2xl border border-[var(--akg-hairline)] bg-akg-card p-4 transition-all',
                 r.is_active === false && 'opacity-50'
               )}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-bold text-white">{r.title}</div>
+                  <div className="truncate text-sm font-bold text-[var(--akg-text)]">{r.title}</div>
                   <div className="mt-0.5 font-data text-[10px] uppercase tracking-wide text-akg-muted">
                     {CATEGORY_LABELS[r.category] || r.category}{r.badge ? ` · ${r.badge}` : ''}
                   </div>
@@ -89,32 +89,32 @@ export default function Resources() {
                   className={cn(
                     'shrink-0 rounded-full border px-2.5 py-1 font-data text-[9px] font-bold uppercase transition-colors',
                     r.is_active === false
-                      ? 'border-white/10 text-akg-muted hover:border-akg-green/40 hover:text-akg-green'
-                      : 'border-akg-green/30 bg-akg-green/10 text-akg-green hover:bg-akg-green/20'
+                      ? 'border-[var(--akg-hairline)] text-akg-muted hover:border-akg-accent/40 hover:text-akg-accent'
+                      : 'border-akg-accent/30 bg-emerald-500/10 text-akg-accent hover:bg-emerald-500/20'
                   )}
                 >
                   {r.is_active === false ? 'hidden' : 'live'}
                 </button>
               </div>
               {r.description && <p className="mt-2 line-clamp-2 flex-1 text-[11px] leading-relaxed text-akg-muted">{r.description}</p>}
-              <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/[0.06] pt-3">
+              <div className="mt-3 flex items-center justify-between gap-2 border-t border-[var(--akg-hairline)] pt-3">
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(r.url || '');
                     setCopiedId(r.id);
                     setTimeout(() => setCopiedId(null), 1500);
                   }}
-                  className="flex min-w-0 items-center gap-1.5 font-data text-[10px] text-akg-gold hover:underline"
+                  className="flex min-w-0 items-center gap-1.5 font-data text-[10px] text-akg-accent hover:underline"
                   title={r.url}
                 >
                   {copiedId === r.id ? <Check className="h-3 w-3 shrink-0" /> : <Copy className="h-3 w-3 shrink-0" />}
                   <span className="truncate">{r.url}</span>
                 </button>
                 <div className="flex shrink-0 items-center gap-1.5">
-                  <a href={r.url} target="_blank" rel="noopener noreferrer" className="rounded-lg p-1.5 text-akg-muted hover:bg-white/5 hover:text-white" title="Open">
+                  <a href={r.url} target="_blank" rel="noopener noreferrer" className="rounded-lg p-1.5 text-akg-muted hover:bg-white/5 hover:text-[var(--akg-text)]" title="Open">
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
-                  <button onClick={() => setEditing(r)} className="rounded-lg p-1.5 text-akg-muted hover:bg-white/5 hover:text-white" title="Edit">
+                  <button onClick={() => setEditing(r)} className="rounded-lg p-1.5 text-akg-muted hover:bg-white/5 hover:text-[var(--akg-text)]" title="Edit">
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button onClick={() => setDeleting(r)} className="rounded-lg p-1.5 text-akg-muted hover:bg-rose-500/10 hover:text-rose-300" title="Delete">
@@ -174,7 +174,7 @@ function ResourceEditor({ item, onClose, onSave }) {
         <button
           onClick={() => onSave({ ...form, sort_order: Number(form.sort_order) || 10, is_active: Boolean(form.is_active) })}
           disabled={!form.title.trim() || !form.url.trim()}
-          className="h-11 w-full rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] text-sm font-bold text-[#1C1403] disabled:opacity-40"
+          className="h-11 w-full rounded-lg bg-akg-cta text-sm font-bold text-akg-cta-text shadow-sm transition-opacity hover:opacity-90 disabled:opacity-40"
         >
           Save Item
         </button>
@@ -217,7 +217,7 @@ function ResourceEditor({ item, onClose, onSave }) {
               type="checkbox"
               checked={form.is_active}
               onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-              className="h-4 w-4 accent-[#F3C653]"
+              className="h-4 w-4 accent-[var(--akg-accent)]"
             />
             Live on /kit
           </label>

@@ -1,5 +1,5 @@
 /* bots helpers: the DB stores pairs/features/gallery as json arrays and the
-   performance fields as numbers — normalize once, use everywhere. */
+   performance fields as numbers - normalize once, use everywhere. */
 
 export const pairsOf = (bot) => {
   const p = bot?.pairs;

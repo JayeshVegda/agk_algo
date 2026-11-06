@@ -18,8 +18,6 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
   const [copied, setCopied] = useState(false);
   const [myPayments, setMyPayments] = useState([]);
 
-  // The member's own ledger drives the state-aware CTAs (current plan badge,
-  // pending-verification state, renew vs subscribe).
   const loadMyPayments = useCallback(async () => {
     if (!user?.email) { setMyPayments([]); return; }
     try {
@@ -40,10 +38,8 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
     return () => { unsub?.then?.((u) => u && u()); };
   }, [user?.email, loadMyPayments]);
 
-  // Live wallets from site_settings (rotatable without redeploy); see lib/wallets.
   const WALLETS = useWallets();
 
-  // Escape closes the checkout modal.
   useEffect(() => {
     if (!selectedPlan) return undefined;
     const onKey = (e) => {
@@ -59,7 +55,7 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
     if (notify) {
       notify({
         type: 'copy',
-        title: 'Wallet Address Copied',
+        title: 'Wallet address copied',
         message: `${network}: ${WALLETS[network]}`
       });
     }
@@ -69,7 +65,6 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
   const handleSubmitTxid = async (e) => {
     e.preventDefault();
     if (!user) {
-      // Guard against toast+sheet in the same tick (see BotsTab.openCheckout).
       onOpenAuth();
       return;
     }
@@ -98,7 +93,7 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
       if (notify) {
         notify({
           type: 'success',
-          title: 'Transaction Submitted',
+          title: 'Transaction submitted',
           message: 'Payment TXID submitted for automated ledger verification'
         });
       }
@@ -106,7 +101,7 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
       if (notify) {
         notify({
           type: 'error',
-          title: 'Submission Error',
+          title: 'Submission error',
           message: err.message || 'Check connection'
         });
       }
@@ -124,11 +119,11 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
       popular: false,
       tag: 'STANDARD EXECUTION',
       features: [
-        'Photo & text signal execution parameters',
+        'Photo and text signal execution parameters',
         'Standard currency pairs (EUR/USD, GBP/USD)',
         'Monthly archive full access',
         'Real-time SSE desktop push notifications',
-        'Standard broker setups & PDF guides'
+        'Standard broker setups and PDF guides'
       ]
     },
     {
@@ -140,16 +135,15 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
       tag: 'INSTITUTIONAL VIP',
       features: [
         'High-volatility signals (XAU/USD Gold, BTC/USD, NAS100)',
-        'Multi-tier Take Profit & Trailing Stop zones',
-        'Live algorithm commentary & rationale',
-        'Full access to all bots & MT4/MT5 templates',
-        'Priority execution advisory & admin broadcast stream',
+        'Multi-tier Take Profit and Trailing Stop zones',
+        'Live algorithm commentary and rationale',
+        'Full access to all bots and MT4/MT5 templates',
+        'Priority execution advisory and admin broadcast stream',
         'VIP real-time execution channel access'
       ]
     }
   ];
 
-  // ---- Membership state (drives state-aware CTAs) -------------------------
   const now = Date.now();
   const expiry = user?.cycle_expires_at ? new Date(String(user.cycle_expires_at).replace(' ', 'T')).getTime() : null;
   const isActive = expiry && expiry > now;
@@ -158,7 +152,6 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
     myPayments.filter((p) => p.status === 'pending' && !p.plan?.startsWith('BOT:')).map((p) => p.plan)
   );
 
-  // Per-plan CTA: what the button should say and do for this member right now.
   const planCta = (plan) => {
     if (!user) return { label: `Select ${plan.name}`, icon: 'arrow', action: 'checkout' };
     if (pendingPlans.has(plan.id)) {
@@ -174,19 +167,19 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
   };
 
   return (
-    <div className="space-y-10 max-w-5xl mx-auto font-sans text-[#E7E9EF]">
+    <div className="space-y-10 max-w-5xl mx-auto font-sans text-akg-text">
       {/* Title */}
       <div className="text-center space-y-3">
         <div className="flex justify-center">
-          <Badge variant="gold" className="gap-1.5 py-1 px-3 text-xs">
+          <Badge variant="emerald" className="gap-1.5 py-1 px-3 text-xs">
             <Zap className="h-3.5 w-3.5" />
             <span>Structured 30-Day Cycles</span>
           </Badge>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-          Signal Subscriptions & Memberships
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-akg-text tracking-tight font-display">
+          Signal Subscriptions and Memberships
         </h1>
-        <p className="text-sm text-[#A6ADB9] max-w-lg mx-auto leading-relaxed">
+        <p className="text-sm text-akg-muted max-w-lg mx-auto leading-relaxed">
           Predictable cycle renewals. Zero automated credit card charges or recurring fees. Direct crypto settlement in USDT.
         </p>
       </div>
@@ -201,61 +194,61 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
           return (
             <Card
               key={plan.id}
-              className={`flex flex-col justify-between transition-all bg-[#10141B] ${
+              className={`flex flex-col justify-between transition-all bg-akg-card ${
                 plan.popular
-                  ? 'border-[#F3C653] ring-1 ring-[#F3C653]/30 shadow-xl shadow-[#F3C653]/10'
-                  : 'border-white/10 hover:border-white/20'
+                  ? 'border-akg-accent/50 ring-1 ring-akg-accent/20 shadow-sm'
+                  : 'border-akg-hairline hover:border-akg-hairline/80'
               }`}
             >
               <div>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <Badge variant={plan.popular ? 'gold' : 'secondary'}>
+                    <Badge variant={plan.popular ? 'emerald' : 'secondary'}>
                       {plan.tag}
                     </Badge>
                     {isCurrentPlan ? (
-                      <span className="text-xs font-bold text-[#00D878] flex items-center gap-1 bg-[#00D878]/10 border border-[#00D878]/30 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-semibold text-akg-green flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-md">
                         <Check className="h-3 w-3" /> Your Plan: {daysLeft}d left
                       </span>
                     ) : hasPending && user ? (
-                      <span className="text-xs font-bold text-amber-300 flex items-center gap-1 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-semibold text-amber-500 flex items-center gap-1 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-md">
                         <Timer className="h-3 w-3" /> Pending Verification
                       </span>
                     ) : null}
                   </div>
 
-                  <CardTitle className="mt-3 text-2xl font-bold text-white">
+                  <CardTitle className="mt-3 text-2xl font-bold text-akg-text">
                     {plan.name}
                   </CardTitle>
 
                   <div className="mt-4 flex items-baseline gap-1">
-                    <span className={`text-4xl font-black tabular-nums ${plan.popular ? 'text-metallic' : 'text-white'}`}>${plan.price}</span>
-                    <span className="text-xs text-[#F3C653] font-bold">USDT</span>
-                    <span className="text-xs text-[#A6ADB9] ml-1">/ {plan.period}</span>
+                    <span className="text-4xl font-extrabold tabular-nums text-akg-text">${plan.price}</span>
+                    <span className="text-xs text-akg-accent font-bold">USDT</span>
+                    <span className="text-xs text-akg-muted ml-1">/ {plan.period}</span>
                   </div>
 
-                  <CardDescription className="mt-2 text-xs text-[#A6ADB9]">
+                  <CardDescription className="mt-2 text-xs text-akg-muted">
                     Fixed cycle duration. Extend or pause manually anytime.
                   </CardDescription>
                 </CardHeader>
 
                 <CardContent className="space-y-3 pt-2">
-                  <div className="text-[10px] font-bold text-[#A6ADB9] uppercase tracking-wider mb-2">
+                  <div className="text-[10px] font-mono font-semibold text-akg-muted uppercase tracking-wider mb-2">
                     Included Benefits
                   </div>
                   {plan.features.map((feature, i) => (
-                    <div key={i} className="flex items-start gap-2.5 text-xs text-[#E7E9EF]">
-                      <Check className="h-4 w-4 text-[#00D878] shrink-0 mt-0.5" />
+                    <div key={i} className="flex items-start gap-2.5 text-xs text-akg-text">
+                      <Check className="h-4 w-4 text-akg-green shrink-0 mt-0.5" />
                       <span>{feature}</span>
                     </div>
                   ))}
                 </CardContent>
               </div>
 
-              <CardFooter className="pt-6 border-t border-white/10 mt-6 space-y-2">
+              <CardFooter className="pt-6 border-t border-akg-hairline mt-6 space-y-2">
                 {isCurrentPlan && (
-                  <div className="text-[10px] text-[#A6ADB9] leading-relaxed">
-                    Your cycle ends <b className="text-[#E7E9EF]">{new Date(expiry).toLocaleDateString()}</b>. Buying now stacks
+                  <div className="text-[10px] text-akg-muted leading-relaxed">
+                    Your cycle ends <b className="text-akg-text">{new Date(expiry).toLocaleDateString()}</b>. Buying now stacks
                     30 more days on top, with no gap in access.
                   </div>
                 )}
@@ -284,8 +277,8 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
       </div>
 
       {/* Risk Notice */}
-      <div className="p-4 rounded-2xl border border-white/10 bg-[#10141B] text-xs text-[#A6ADB9] flex items-start gap-3">
-        <ShieldAlert className="h-5 w-5 text-[#F3C653] shrink-0 mt-0.5" />
+      <div className="p-4 rounded-xl border border-akg-hairline bg-akg-card text-xs text-akg-muted flex items-start gap-3">
+        <ShieldAlert className="h-5 w-5 text-akg-accent shrink-0 mt-0.5" />
         <p className="leading-relaxed">
           Regulatory Risk Disclaimer: Algorithmic trading and foreign exchange execution carry significant risk of capital loss. Past algorithmic performance does not guarantee future results. Signals provided are for educational and analytical purposes.
         </p>
@@ -293,15 +286,15 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
 
       {/* USDT Payment Modal */}
       {selectedPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
-          <Card className="w-full max-w-lg shadow-2xl bg-[#10141B] border border-white/10 max-h-[92vh] flex flex-col overflow-hidden my-auto">
-            <CardHeader className="p-4 sm:p-6 pb-3 border-b border-white/10 shrink-0 flex flex-row items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+          <Card className="w-full max-w-lg shadow-2xl bg-akg-card border border-akg-hairline max-h-[92vh] flex flex-col overflow-hidden my-auto rounded-xl">
+            <CardHeader className="p-4 sm:p-6 pb-3 border-b border-akg-hairline shrink-0 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-lg flex items-center gap-2 text-white">
-                  <CreditCard className="h-5 w-5 text-[#F3C653]" />
+                <CardTitle className="text-lg flex items-center gap-2 text-akg-text">
+                  <CreditCard className="h-5 w-5 text-akg-accent" />
                   USDT Checkout · {selectedPlan.name}
                 </CardTitle>
-                <CardDescription className="mt-1 text-[#A6ADB9]">
+                <CardDescription className="mt-1 text-akg-muted">
                   {isActive && user?.plan === selectedPlan.id
                     ? 'Renewal: 30 days will be added on top of your current cycle end date.'
                     : 'Transfer exact USDT amount to the official deposit address.'}
@@ -309,7 +302,7 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
               </div>
               <button 
                 onClick={() => setSelectedPlan(null)} 
-                className="text-[#A6ADB9] hover:text-white p-1 rounded-lg cursor-pointer"
+                className="text-akg-muted hover:text-akg-text p-1 rounded-md cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -318,14 +311,14 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
             <CardContent className="p-4 sm:p-6 flex-1 overflow-y-auto space-y-4">
               {submitted ? (
                 <div className="text-center py-6 space-y-4">
-                  <div className="h-12 w-12 rounded-full bg-[#00D878]/15 text-[#00D878] flex items-center justify-center mx-auto border border-[#00D878]/30">
+                  <div className="h-12 w-12 rounded-lg bg-emerald-500/15 text-akg-green flex items-center justify-center mx-auto border border-emerald-500/30">
                     <CheckCircle2 className="h-8 w-8" />
                   </div>
-                  <h3 className="text-xl font-bold text-white">Payment Submitted for Verification</h3>
-                  <p className="text-xs text-[#A6ADB9] leading-relaxed max-w-sm mx-auto">
+                  <h3 className="text-xl font-bold text-akg-text">Payment Submitted for Verification</h3>
+                  <p className="text-xs text-akg-muted leading-relaxed max-w-sm mx-auto">
                     Your TXID has been logged. Transactions are verified on-chain to activate your 30-day membership access.
                   </p>
-                  <div className="p-3 rounded-xl border border-white/10 bg-[#07090D] text-xs font-mono text-[#F3C653] break-all select-all">
+                  <div className="p-3 rounded-lg border border-akg-hairline bg-akg-raised text-xs font-mono text-akg-accent break-all select-all">
                     TXID: {txid}
                   </div>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mt-4">
@@ -341,7 +334,7 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
                         setSelectedPlan(null);
                         if (onNavigateSignals) onNavigateSignals();
                       }}
-                      className="w-full sm:w-auto bg-[#00D878] text-[#07090D] hover:bg-[#00F09A] font-bold text-xs"
+                      className="w-full sm:w-auto text-xs font-semibold"
                     >
                       Open Signals Terminal →
                     </Button>
@@ -350,9 +343,9 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
               ) : (
                 <div className="space-y-4 text-xs">
                   {!user && (
-                    <div className="p-3 rounded-xl border border-[#F3C653]/30 bg-[#F3C653]/10 flex items-center justify-between text-xs">
-                      <span className="text-[#E7E9EF]">Sign in to bind this subscription to your email</span>
-                      <Button size="sm" onClick={onOpenAuth} className="font-bold text-xs h-7">
+                    <div className="p-3 rounded-lg border border-akg-accent/30 bg-akg-accent/10 flex items-center justify-between text-xs">
+                      <span className="text-akg-text">Sign in to bind this subscription to your email</span>
+                      <Button size="sm" onClick={onOpenAuth} className="font-semibold text-xs h-7">
                         Sign In / Register
                       </Button>
                     </div>
@@ -360,17 +353,17 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
 
                   {/* Network Picker */}
                   <div>
-                    <label className="block text-[#E7E9EF] font-semibold mb-1.5">Select Settlement Network</label>
+                    <label className="block text-akg-text font-semibold mb-1.5">Select Settlement Network</label>
                     <div className="grid grid-cols-3 gap-2">
                       {['USDT-TRC20', 'USDT-BEP20', 'USDT-ERC20'].map((net) => (
                         <button
                           key={net}
                           type="button"
                           onClick={() => setNetwork(net)}
-                          className={`py-2 px-3 rounded-xl border text-center transition-all cursor-pointer font-bold ${
+                          className={`py-2 px-3 rounded-lg border text-center transition-all cursor-pointer font-semibold ${
                             network === net
-                              ? 'border-[#F3C653] bg-[#F3C653]/15 text-[#F3C653]'
-                              : 'border-white/10 bg-white/5 text-[#A6ADB9] hover:bg-white/10'
+                              ? 'border-akg-accent bg-akg-accent/15 text-akg-accent'
+                              : 'border-akg-hairline bg-akg-raised text-akg-muted hover:text-akg-text'
                           }`}
                         >
                           {net.replace('USDT-', '')}
@@ -380,12 +373,12 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
                   </div>
 
                   {/* Amount to send */}
-                  <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 flex items-center justify-between">
+                  <div className="p-3.5 rounded-lg border border-akg-hairline bg-akg-raised flex items-center justify-between">
                     <div>
-                      <div className="text-[10px] text-[#A6ADB9] uppercase tracking-wider font-semibold">Exact Amount to Transfer</div>
-                      <div className="text-2xl font-bold text-white mt-0.5 tabular-nums">${selectedPlan.price}.00 USDT</div>
+                      <div className="text-[10px] text-akg-muted uppercase tracking-wider font-mono">Exact Amount to Transfer</div>
+                      <div className="text-2xl font-bold text-akg-text mt-0.5 tabular-nums">${selectedPlan.price}.00 USDT</div>
                     </div>
-                    <Badge variant="positive">
+                    <Badge variant="emerald">
                       Zero Fees
                     </Badge>
                   </div>
@@ -393,17 +386,17 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
                   {/* Deposit Address Box */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[#E7E9EF] font-semibold">Official Deposit Address ({network})</span>
+                      <span className="text-akg-text font-semibold">Official Deposit Address ({network})</span>
                       <button
                         type="button"
                         onClick={handleCopy}
-                        className="text-[#F3C653] hover:underline flex items-center gap-1 cursor-pointer font-semibold"
+                        className="text-akg-accent hover:underline flex items-center gap-1 cursor-pointer font-semibold"
                       >
                         {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                         <span>{copied ? 'Copied!' : 'Copy'}</span>
                       </button>
                     </div>
-                    <div className="p-3 rounded-xl border border-white/10 bg-[#07090D] text-[#F3C653] break-all select-all font-mono text-xs">
+                    <div className="p-3 rounded-lg border border-akg-hairline bg-akg-raised text-akg-accent break-all select-all font-mono text-xs">
                       {WALLETS[network]}
                     </div>
                   </div>
@@ -411,7 +404,7 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
                   {/* TXID Submission Form */}
                   <form onSubmit={handleSubmitTxid} className="space-y-3 pt-2">
                     <div>
-                      <label className="block text-[#E7E9EF] font-semibold mb-1">
+                      <label className="block text-akg-text font-semibold mb-1">
                         Transaction Hash / TXID
                       </label>
                       <input
@@ -420,7 +413,7 @@ export function PricingTab({ user, onOpenAuth, onNavigateSignals, onNavigate, no
                         value={txid}
                         onChange={(e) => setTxid(e.target.value)}
                         placeholder="Paste your blockchain transaction hash here..."
-                        className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-white placeholder:text-[#A6ADB9] focus:border-[#F3C653] focus:outline-none text-xs"
+                        className="w-full rounded-lg border border-akg-hairline bg-akg-raised px-3 py-2 text-akg-text placeholder:text-akg-muted focus:border-akg-accent focus:outline-none text-xs"
                       />
                     </div>
 

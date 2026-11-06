@@ -50,18 +50,18 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
   ].filter(Boolean);
 
   return (
-    <footer className="mt-8 border-t border-white/[0.07] bg-[#07090D] pb-24 text-xs text-[#A6ADB9] md:pb-10">
-      <div className="mx-auto w-[94%] max-w-[1750px] px-2 sm:px-4">
+    <footer className="mt-8 border-t border-akg-hairline bg-akg-bg pb-24 text-xs text-akg-muted md:pb-10 transition-[background-color,border-color] duration-150">
+      <div className="mx-auto w-[94%] max-w-[1560px] px-2 sm:px-4">
         <div className="grid gap-10 py-12 md:grid-cols-12 md:gap-8 lg:py-14">
           {/* Brand + trust */}
           <div className="md:col-span-4">
             <img
               src="/assets/logos/akg-algo-metallic-footer.webp"
-              alt="AKG ALGO — Trade Smarter"
-              className="h-10 w-auto"
+              alt="AKG ALGO"
+              className="h-9 w-auto"
               loading="lazy"
             />
-            <p className="mt-4 max-w-sm text-[13px] leading-relaxed text-[#A6ADB9]">
+            <p className="mt-4 max-w-sm text-[13px] leading-relaxed text-akg-muted">
               Rule-based MetaTrader Expert Advisors and live signal desks with hard stop-loss on
               every trade. Settled in USDT, licensed once, yours to keep.
             </p>
@@ -70,7 +70,7 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
               {networks.map((n) => (
                 <span
                   key={n}
-                  className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 font-data text-[10px] uppercase tracking-wider text-akg-muted"
+                  className="rounded-md border border-akg-hairline bg-akg-surface px-2 py-0.5 font-mono text-[10px] text-akg-muted"
                 >
                   {n}
                 </span>
@@ -82,7 +82,7 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
                 {settings.support_email && (
                   <a
                     href={`mailto:${settings.support_email}`}
-                    className="inline-flex items-center gap-1.5 text-[#A6ADB9] transition-colors hover:text-akg-gold"
+                    className="inline-flex items-center gap-1.5 text-akg-muted transition-colors hover:text-akg-green"
                   >
                     <Mail className="h-3.5 w-3.5" />
                     {settings.support_email}
@@ -93,7 +93,7 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
                     href={`https://t.me/${telegramHandle}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-[#A6ADB9] transition-colors hover:text-akg-gold"
+                    className="inline-flex items-center gap-1.5 text-akg-muted transition-colors hover:text-akg-green"
                   >
                     <Send className="h-3.5 w-3.5" />
                     @{telegramHandle}
@@ -110,7 +110,7 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
           >
             {LINK_GROUPS.map((group) => (
               <div key={group.title}>
-                <h2 className="font-data text-[10px] font-bold uppercase tracking-[0.16em] text-white/40">
+                <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-akg-muted">
                   {group.title}
                 </h2>
                 <ul className="mt-3.5 space-y-2.5">
@@ -118,10 +118,10 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
                     <li key={link.label}>
                       <button
                         onClick={() => onNavigate(link.tab)}
-                        className="group inline-flex items-center gap-1 text-left text-[13px] text-[#A6ADB9] transition-colors hover:text-akg-gold"
+                        className="group inline-flex items-center gap-1 text-left text-[13px] text-akg-muted transition-colors hover:text-akg-text cursor-pointer"
                       >
-                        {link.label}
-                        <ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+                        <span>{link.label}</span>
+                        <ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100 text-akg-green" />
                       </button>
                     </li>
                   ))}
@@ -132,11 +132,11 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
         </div>
 
         {/* Compliance */}
-        <div className="border-t border-white/[0.07] py-6">
+        <div className="border-t border-akg-hairline py-6">
           <div className="flex items-start gap-2.5">
-            <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#F3C653]/60" strokeWidth={2} />
-            <p className="max-w-4xl text-[11px] leading-relaxed text-white/35">
-              <span className="font-semibold text-white/55">Risk disclosure.</span> Trading
+            <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-akg-green" strokeWidth={1.5} />
+            <p className="max-w-4xl text-[11px] leading-relaxed text-akg-muted">
+              <span className="font-medium text-akg-text">Risk disclosure.</span> Trading
               leveraged instruments carries a high level of risk and can result in the loss of all
               invested capital. Signals, Expert Advisors, and the managed-account service are
               analytical tools, not investment advice. Performance figures shown on this site are
@@ -147,27 +147,27 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
         </div>
 
         {/* Bottom bar */}
-        <div className="flex flex-col gap-3 border-t border-white/[0.07] py-5 text-[11px] sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-white/40">
+        <div className="flex flex-col gap-3 border-t border-akg-hairline py-5 text-[11px] sm:flex-row sm:items-center sm:justify-between text-akg-muted">
+          <div>
             © {new Date().getFullYear()} AKG ALGO. All rights reserved.
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[#A6ADB9]">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <span>
-              Platform <span className="font-semibold text-akg-green">MT4 &amp; MT5</span>
+              Platform <span className="font-medium text-akg-green">MT4 &amp; MT5</span>
             </span>
-            <span className="text-white/15">·</span>
+            <span className="text-akg-hairline">·</span>
             <span>
-              Settlement <span className="font-semibold text-akg-gold">USDT direct</span>
+              Settlement <span className="font-medium text-akg-green">USDT direct</span>
             </span>
-            <span className="text-white/15">·</span>
+            <span className="text-akg-hairline">·</span>
             <span>Perpetual licenses &amp; 30-day cycles</span>
             {user?.role === 'admin' && (
               <>
-                <span className="text-white/15">·</span>
+                <span className="text-akg-hairline">·</span>
                 <button
                   onClick={onNavigateAdmin}
-                  className="font-bold text-akg-gold hover:underline"
+                  className="font-medium text-akg-green hover:underline cursor-pointer"
                 >
                   Admin console
                 </button>

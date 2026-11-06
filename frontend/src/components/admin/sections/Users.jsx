@@ -56,7 +56,7 @@ export default function Users() {
     setLoading(true);
     try {
       // Roster route returns trader records with emails (PB hides user emails
-      // from other users, even console admins — see hook /api/akg/traders).
+      // from other users, even console admins - see hook /api/akg/traders).
       const [us, ps, bs] = await Promise.all([
         pb.send('/api/akg/traders'),
         pb.collection('payments').getFullList({ sort: '-created' }),
@@ -306,7 +306,7 @@ export default function Users() {
         sortKey: 'systems',
         cell: (u) => {
           const r = botsOf.get(keyOf(u.email));
-          if (!r) return <span className="text-[11px] text-akg-muted">—</span>;
+          if (!r) return <span className="text-[11px] text-akg-muted">-</span>;
           return (
             <div className="flex min-w-0 flex-wrap items-center gap-1">
               {r.licenses.slice(0, 2).map((l) => (
@@ -337,7 +337,7 @@ export default function Users() {
         head: 'w-[90px]',
         cell: (u) => {
           const total = (sigOf.get(keyOf(u.email))?.spend || 0) + (botsOf.get(keyOf(u.email))?.spend || 0);
-          return <span className="whitespace-nowrap font-data text-xs font-bold tabular-nums text-white">{total ? `$${total}` : '—'}</span>;
+          return <span className="whitespace-nowrap font-data text-xs font-bold tabular-nums text-white">{total ? `$${total}` : '-'}</span>;
         },
       },
       {
@@ -378,7 +378,7 @@ export default function Users() {
         actions={tab !== 'managed' && (
           <button
             onClick={() => exportCsv({ tab, rows: sorted, sigOf, botsOf })}
-            className="flex h-9 items-center gap-2 rounded-full border border-white/15 px-4 text-xs font-bold text-akg-silver transition-colors hover:border-[#F3C653]/40 hover:text-akg-gold"
+            className="flex h-9 items-center gap-2 rounded-lg border border-white/15 px-4 text-xs font-bold text-akg-silver transition-colors hover:border-akg-accent/40 hover:text-akg-accent"
           >
             <Download className="h-3.5 w-3.5" /> Export CSV
           </button>
@@ -401,7 +401,7 @@ export default function Users() {
             name="botFilter"
             value={botFilter}
             onChange={(e) => { replaceParams({ f: e.target.value, page: '', id: '' }); setCursor(0); }}
-            className="h-9 rounded-full border border-white/10 bg-[#0A0D13] px-3 text-xs font-semibold text-akg-silver focus:border-[#F3C653]/50 focus:outline-none"
+            className="h-9 rounded-lg border border-[var(--akg-hairline)] bg-akg-card px-3 text-xs font-semibold text-akg-silver focus:border-akg-accent/60 focus:outline-none"
           >
             <option value="">All systems</option>
             {botNames.map((name) => (
@@ -467,20 +467,20 @@ export default function Users() {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={async () => { await grantDays(dossierUser, 30); load(); }}
-                className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-[linear-gradient(120deg,#E8BC4F,#F3C653,#DFAE3E)] text-sm font-bold text-[#1C1403] active:scale-[0.98]"
+                className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg bg-akg-cta text-sm font-bold text-akg-cta-text shadow-sm transition-opacity hover:opacity-90 active:scale-[0.98]"
               >
                 <Plus className="h-4 w-4" /> Grant 30 Days
               </button>
               <button
                 onClick={async () => { await grantDays(dossierUser, 3); load(); }}
-                className="flex h-10 items-center gap-1.5 rounded-full border border-akg-green/40 px-4 text-xs font-bold text-akg-green hover:bg-akg-green/10"
+                className="flex h-10 items-center gap-1.5 rounded-lg border border-akg-green/40 px-4 text-xs font-bold text-akg-green hover:bg-akg-green/10 transition-colors"
                 title="Free 3-day win-back grant"
               >
                 <Gift className="h-3.5 w-3.5" /> +3d
               </button>
               <button
                 onClick={() => setEditing(dossierUser)}
-                className="flex h-10 items-center gap-1.5 rounded-full border border-white/15 px-4 text-xs font-semibold text-akg-silver hover:bg-white/5"
+                className="flex h-10 items-center gap-1.5 rounded-lg border border-white/15 px-4 text-xs font-semibold text-akg-silver hover:bg-white/5 transition-colors"
               >
                 <Pencil className="h-3.5 w-3.5" /> Edit Access
               </button>
@@ -543,7 +543,7 @@ function TraderDossier({ user, payments, bots, botsOf, sigOf }) {
 
       {botRec?.pending > 0 && (
         <p className="rounded-xl border border-amber-400/25 bg-amber-400/10 px-4 py-2.5 text-xs text-amber-200">
-          {botRec.pending} bot payment{botRec.pending > 1 ? 's' : ''} awaiting desk verification — approve from the Money Queue to issue the license key.
+          {botRec.pending} bot payment{botRec.pending > 1 ? 's' : ''} awaiting desk verification: approve from the Money Queue to issue the license key.
         </p>
       )}
 
@@ -667,7 +667,7 @@ function EditAccessSheet({ user, onClose, onSave }) {
               : '0001-01-01 00:00:00.000Z';
             onSave({ plan, role, cycle_expires_at: iso });
           }}
-          className="h-11 w-full rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] text-sm font-bold text-[#1C1403] active:scale-[0.98]"
+          className="h-11 w-full rounded-lg bg-akg-cta text-sm font-bold text-akg-cta-text shadow-sm transition-opacity hover:opacity-90 active:scale-[0.98]"
         >
           Save Access
         </button>

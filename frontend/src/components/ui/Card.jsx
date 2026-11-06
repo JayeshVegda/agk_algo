@@ -5,7 +5,7 @@ export function Card({ className, ...props }) {
   return (
     <div
       className={cn(
-        'rounded-2xl border border-white/10 bg-[#10141B] text-[#E7E9EF] shadow-xl',
+        'rounded-xl border border-akg-hairline bg-akg-card text-akg-text shadow-sm transition-[border-color,background-color] duration-150',
         className
       )}
       {...props}
@@ -16,7 +16,7 @@ export function Card({ className, ...props }) {
 export function CardHeader({ className, ...props }) {
   return (
     <div
-      className={cn('flex flex-col space-y-1.5 p-6', className)}
+      className={cn('flex flex-col space-y-1.5 p-5', className)}
       {...props}
     />
   );
@@ -25,7 +25,7 @@ export function CardHeader({ className, ...props }) {
 export function CardTitle({ className, ...props }) {
   return (
     <div
-      className={cn('text-lg font-bold leading-none tracking-tight text-[#E7E9EF]', className)}
+      className={cn('text-base font-medium leading-none tracking-tight text-akg-text', className)}
       {...props}
     />
   );
@@ -34,20 +34,20 @@ export function CardTitle({ className, ...props }) {
 export function CardDescription({ className, ...props }) {
   return (
     <div
-      className={cn('text-xs text-[#A6ADB9] leading-relaxed', className)}
+      className={cn('text-xs text-akg-muted leading-relaxed', className)}
       {...props}
     />
   );
 }
 
 export function CardContent({ className, ...props }) {
-  return <div className={cn('p-6 pt-0', className)} {...props} />;
+  return <div className={cn('p-5 pt-0', className)} {...props} />;
 }
 
 export function CardFooter({ className, ...props }) {
   return (
     <div
-      className={cn('flex items-center p-6 pt-0', className)}
+      className={cn('flex items-center p-5 pt-0', className)}
       {...props}
     />
   );

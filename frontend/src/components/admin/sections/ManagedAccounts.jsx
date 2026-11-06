@@ -95,7 +95,7 @@ export default function ManagedAccounts({ sub, search }) {
       label: 'Trader',
       sortKey: 'name',
       head: 'w-[230px]',
-      cell: (c) => <div className="truncate text-xs font-semibold text-white">{c.user_email}</div>,
+      cell: (c) => <div className="truncate text-xs font-semibold text-[var(--akg-text)]">{c.user_email}</div>,
     },
     {
       key: 'account',
@@ -111,7 +111,7 @@ export default function ManagedAccounts({ sub, search }) {
       label: 'Split',
       head: 'w-[70px]',
       cell: (c) => (
-        <span className="font-data text-[11px] font-bold text-akg-green">
+        <span className="font-data text-[11px] font-bold text-akg-accent">
           {c.user_profit_share ?? 70}/{100 - (c.user_profit_share ?? 70)}
         </span>
       ),
@@ -161,11 +161,11 @@ export default function ManagedAccounts({ sub, search }) {
         mobileCard={(c) => (
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <div className="truncate text-xs font-semibold text-white">{c.user_email}</div>
+              <div className="truncate text-xs font-semibold text-[var(--akg-text)]">{c.user_email}</div>
               <div className="mt-0.5 truncate font-data text-[10px] text-akg-muted">
                 {c.platform} · #{c.account_number} · {c.broker || c.server || '-'}
               </div>
-              <div className="font-data text-[10px] text-akg-green">
+              <div className="font-data text-[10px] text-akg-accent">
                 {c.user_profit_share ?? 70}/{100 - (c.user_profit_share ?? 70)} split · {fmtRelative(c.created)}
               </div>
             </div>
@@ -230,12 +230,12 @@ function ManagedDossier({ account, onClose }) {
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            className="min-h-[70px] w-full rounded-xl border border-white/10 bg-[#0A0D13] px-3.5 py-2.5 text-sm leading-relaxed text-white placeholder:text-akg-muted/60 focus:border-[#F3C653]/50 focus:outline-none"
-            placeholder="Statement, settlement details, next steps…"
+            className="min-h-[70px] w-full rounded-xl border border-[var(--akg-hairline)] bg-akg-card px-3.5 py-2.5 text-sm leading-relaxed text-[var(--akg-text)] placeholder:text-akg-muted/60 focus:border-akg-accent/60 focus:outline-none"
+            placeholder="Statement, settlement details, next steps..."
           />
           <button
             onClick={() => updateConnector(account, { admin_notes: note })}
-            className="mt-2 h-10 w-full rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] text-sm font-bold text-[#1C1403] active:scale-[0.98]"
+            className="mt-2 h-10 w-full rounded-lg bg-akg-cta text-sm font-bold text-akg-cta-text shadow-sm transition-opacity hover:opacity-90 active:scale-[0.98]"
           >
             Save & Transmit Note
           </button>
@@ -243,19 +243,19 @@ function ManagedDossier({ account, onClose }) {
       }
     >
       <div className="space-y-5">
-        <div className="flex items-center justify-between rounded-xl border border-white/[0.07] bg-[#0A0D13] px-4 py-3">
+        <div className="flex items-center justify-between rounded-xl border border-[var(--akg-hairline)] bg-akg-card px-4 py-3">
           <span className="text-xs text-akg-muted">Stage</span>
           <StatusDot status={account.status} />
         </div>
 
-        <div className="rounded-2xl border border-[#F3C653]/25 bg-[#0A0D13] p-4">
+        <div className="rounded-2xl border border-akg-accent/30 bg-akg-card p-4 ring-1 ring-akg-accent/15">
           <div className="flex items-center justify-between">
             <h3 className="flex items-center gap-2 text-xs font-bold text-akg-silver">
-              <Lock className="h-3.5 w-3.5 text-akg-gold" /> Broker credentials
+              <Lock className="h-3.5 w-3.5 text-akg-accent" /> Broker credentials
             </h3>
             <button
               onClick={() => (revealed ? setRevealed(false) : reveal())}
-              className="flex items-center gap-1.5 rounded-full border border-[#F3C653]/30 px-3 py-1.5 text-[11px] font-bold text-akg-gold hover:bg-[#F3C653]/10"
+              className="flex items-center gap-1.5 rounded-md border border-akg-accent/30 px-3 py-1.5 text-[11px] font-bold text-akg-accent hover:bg-emerald-500/10 transition-colors"
             >
               {revealed ? <><EyeOff className="h-3.5 w-3.5" /> Hide</> : <><Eye className="h-3.5 w-3.5" /> Reveal</>}
             </button>
@@ -271,7 +271,7 @@ function ManagedDossier({ account, onClose }) {
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-3 rounded-lg bg-white/[0.04] px-3 py-1.5">
                   <span className="text-akg-muted">{k}</span>
-                  <span className="text-white">{v}</span>
+                  <span className="text-[var(--akg-text)]">{v}</span>
                 </div>
               ))}
             </div>
@@ -286,11 +286,11 @@ function ManagedDossier({ account, onClose }) {
           <div className="grid grid-cols-2 gap-2">
             {STAGES.map((a) => {
               const tone = {
-                sky: 'border-sky-400/30 text-sky-300 hover:bg-sky-400/10',
-                green: 'border-akg-green/30 text-akg-green hover:bg-akg-green/10',
-                amber: 'border-amber-400/30 text-amber-300 hover:bg-amber-400/10',
-                rose: 'border-rose-500/30 text-rose-300 hover:bg-rose-500/10',
-                plain: 'border-white/15 text-akg-muted hover:bg-white/5',
+                sky: 'border-sky-400/30 text-sky-400 hover:bg-sky-400/10',
+                green: 'border-akg-accent/30 text-akg-accent hover:bg-emerald-500/10',
+                amber: 'border-amber-400/30 text-amber-400 hover:bg-amber-400/10',
+                rose: 'border-rose-500/30 text-rose-400 hover:bg-rose-500/10',
+                plain: 'border-[var(--akg-hairline)] text-akg-muted hover:bg-white/5',
               }[a.tone];
               return (
                 <button
@@ -318,7 +318,7 @@ function ManagedDossier({ account, onClose }) {
             <h3 className={labelCls}>Profit-split settlements</h3>
             <button
               onClick={() => setShowSettleForm((v) => !v)}
-              className="flex h-8 items-center gap-1 rounded-full border border-[#F3C653]/40 px-3 text-[11px] font-bold text-akg-gold hover:bg-[#F3C653]/10"
+              className="flex h-8 items-center gap-1 rounded-md border border-akg-accent/40 px-3 text-[11px] font-bold text-akg-accent hover:bg-emerald-500/10 transition-colors"
             >
               <Plus className="h-3 w-3" /> Record settlement
             </button>
@@ -334,26 +334,26 @@ function ManagedDossier({ account, onClose }) {
           {settlements === null ? (
             <div className="h-12 animate-pulse rounded-xl bg-white/[0.03]" />
           ) : settlements.length === 0 ? (
-            <p className="rounded-xl border border-white/[0.06] bg-[#0A0D13] px-4 py-3 text-[11px] text-akg-muted">
+            <p className="rounded-xl border border-[var(--akg-hairline)] bg-akg-card px-4 py-3 text-[11px] text-akg-muted">
               No settlements recorded yet.
             </p>
           ) : (
             <div className="space-y-2">
               {settlements.map((st) => (
-                <div key={st.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-[#0A0D13] px-3.5 py-2.5">
+                <div key={st.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--akg-hairline)] bg-akg-card px-3.5 py-2.5">
                   <span className="font-data text-[11px] text-akg-muted">
                     {st.period_start} → {st.period_end}
                   </span>
                   <span className="flex items-center gap-3 font-data text-[11px]">
                     <span className="text-akg-silver">gross ${Number(st.gross_profit).toLocaleString()}</span>
-                    <span className="text-akg-green">trader ${Number(st.user_amount).toLocaleString()}</span>
-                    <span className="text-akg-gold">desk ${Number(st.desk_amount).toLocaleString()}</span>
+                    <span className="text-akg-accent">trader ${Number(st.user_amount).toLocaleString()}</span>
+                    <span className="text-emerald-400">desk ${Number(st.desk_amount).toLocaleString()}</span>
                     <button
                       onClick={async () => {
                         await pb.collection('managed_settlements').update(st.id, { status: st.status === 'paid' ? 'due' : 'paid' });
                         loadSettlements(account.id);
                       }}
-                      className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${st.status === 'paid' ? 'bg-akg-green/15 text-akg-green' : 'bg-amber-400/15 text-amber-300'}`}
+                      className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase ${st.status === 'paid' ? 'bg-emerald-500/15 text-akg-accent' : 'bg-amber-400/15 text-amber-400'}`}
                     >
                       {st.status}
                     </button>
@@ -396,10 +396,10 @@ function SettlementForm({ account, onSaved }) {
     }
   };
 
-  const input = 'h-10 w-full rounded-xl border border-white/10 bg-[#0A0D13] px-3 font-data text-xs text-white focus:border-[#F3C653]/50 focus:outline-none';
+  const input = 'h-10 w-full rounded-xl border border-[var(--akg-hairline)] bg-akg-card px-3 font-data text-xs text-[var(--akg-text)] focus:border-akg-accent/60 focus:outline-none';
 
   return (
-    <div className="mb-3 space-y-2.5 rounded-xl border border-[#F3C653]/20 bg-[#F3C653]/[0.03] p-3.5">
+    <div className="mb-3 space-y-2.5 rounded-xl border border-akg-accent/25 bg-emerald-500/5 p-3.5">
       <div className="grid grid-cols-2 gap-2.5">
         <input type="date" value={form.period_start} onChange={(e) => setForm({ ...form, period_start: e.target.value })} className={input} />
         <input type="date" value={form.period_end} onChange={(e) => setForm({ ...form, period_end: e.target.value })} className={input} />
@@ -408,17 +408,17 @@ function SettlementForm({ account, onSaved }) {
       </div>
       {form.end_balance !== '' && (
         <div className="flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-2 font-data text-[11px]">
-          <span className="text-akg-muted">gross ${isNaN(gross) ? '—' : gross.toFixed(2)}</span>
-          <span className="text-akg-green">trader ${isNaN(gross) ? '—' : (gross * share / 100).toFixed(2)} ({share}%)</span>
-          <span className="text-akg-gold">desk ${isNaN(gross) ? '—' : (gross * (100 - share) / 100).toFixed(2)}</span>
+          <span className="text-akg-muted">gross ${isNaN(gross) ? '-' : gross.toFixed(2)}</span>
+          <span className="text-akg-accent">trader ${isNaN(gross) ? '-' : (gross * share / 100).toFixed(2)} ({share}%)</span>
+          <span className="text-emerald-400">desk ${isNaN(gross) ? '-' : (gross * (100 - share) / 100).toFixed(2)}</span>
         </div>
       )}
       <button
         onClick={save}
         disabled={!valid || busy}
-        className="h-10 w-full rounded-full bg-[linear-gradient(120deg,#E8BC4F,#F3C653,#DFAE3E)] text-xs font-bold text-[#1C1403] disabled:opacity-40"
+        className="h-10 w-full rounded-lg bg-akg-cta text-xs font-bold text-akg-cta-text shadow-sm transition-opacity hover:opacity-90 active:scale-[0.98] disabled:opacity-40"
       >
-        {busy ? 'Saving…' : 'Save settlement'}
+        {busy ? 'Saving...' : 'Save settlement'}
       </button>
     </div>
   );

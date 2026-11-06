@@ -3,8 +3,8 @@ import { pb } from '../lib/pocketbase';
 import { 
   Zap, Cpu, Network, BarChart3, Bell, 
   CreditCard, ChevronDown, User, LogOut, Shield, 
-  Compass, Search, Menu, ArrowRight, CheckCircle2,
-  Sparkles, Layers, Download, Link2, KeyRound
+  Compass, Search, Menu, ArrowRight, Download, 
+  KeyRound, Sun, Moon
 } from 'lucide-react';
 import { 
   NavigationMenu, 
@@ -12,7 +12,6 @@ import {
   NavigationMenuItem, 
   NavigationMenuTrigger, 
   NavigationMenuContent, 
-  NavigationMenuLink 
 } from './ui/NavigationMenu';
 import { 
   DropdownMenu, 
@@ -28,17 +27,17 @@ import {
   SheetTrigger, 
   SheetContent, 
   SheetHeader, 
-  SheetTitle,
 } from './ui/Sheet';
 import { Button } from './ui/Button';
-import { Badge } from './ui/Badge';
 import { NotificationBell } from './NotificationBell';
+import { useTheme } from '../lib/theme';
 import { cn } from '../lib/utils';
 
 export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNavigateAdmin, onOpenAccount }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const { isDark, toggleTheme } = useTheme();
 
   const handleLogout = () => {
     pb.authStore.clear();
@@ -52,7 +51,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
       description: 'Real-time trade broadcasts with strict tier gating and live desk updates.',
       icon: Zap,
       badge: 'LIVE',
-      badgeClass: 'bg-[#00D878]/15 text-[#00D878] border border-[#00D878]/30',
+      badgeClass: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
     },
     {
       id: 'bots',
@@ -60,7 +59,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
       description: 'Automated Expert Advisors with audited drawdown caps and dynamic lot algorithms.',
       icon: Cpu,
       badge: 'v4.2',
-      badgeClass: 'bg-[#F3C653]/15 text-[#F3C653] border border-[#F3C653]/30',
+      badgeClass: 'bg-akg-surfaceElevated text-akg-muted border border-akg-hairline',
     },
     {
       id: 'connector',
@@ -68,7 +67,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
       description: 'Hand your account to the desk: bots trade it for you, profits split 70/30.',
       icon: Network,
       badge: 'DEMO',
-      badgeClass: 'bg-white/10 text-[#E7E9EF] border border-white/15',
+      badgeClass: 'bg-akg-surfaceElevated text-akg-muted border border-akg-hairline',
     },
   ];
 
@@ -85,7 +84,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
       description: 'Live desk announcements, risk directives, and desk-lead analysis.',
       icon: Bell,
       badge: 'ALERTS',
-      badgeClass: 'bg-[#00D878]/15 text-[#00D878] border border-[#00D878]/30',
+      badgeClass: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
     },
     {
       id: 'resources',
@@ -93,7 +92,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
       description: 'Official files, vetted brokers and VPS, and the community channels.',
       icon: Download,
       badge: 'KIT',
-      badgeClass: 'bg-[#F3C653]/15 text-[#F3C653] border border-[#F3C653]/30',
+      badgeClass: 'bg-akg-surfaceElevated text-akg-muted border border-akg-hairline',
     },
   ];
 
@@ -121,10 +120,10 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-white/[0.07] bg-[#07090D]/80 backdrop-blur-xl supports-[backdrop-filter]:bg-[#07090D]/65 transition-all">
-      <div className="w-[94%] max-w-[1750px] mx-auto px-2 sm:px-4 h-16 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 w-full border-b border-akg-hairline bg-akg-bg/80 backdrop-blur-xl transition-[background-color,border-color] duration-150">
+      <div className="w-[94%] max-w-[1560px] mx-auto px-2 sm:px-4 h-15 flex items-center justify-between gap-4">
 
-        {/* Left: Official Brand Header Logo from Web Kit */}
+        {/* Left: Brand Header Logo */}
         <div className="flex items-center gap-8">
           <div
             onClick={() => setActiveTab('home')}
@@ -132,12 +131,12 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
           >
             <img
               src="/assets/logos/akg-algo-metallic-nav.png"
-              alt="AKG ALGO — Trade Smarter"
-              className="h-10 sm:h-11 w-auto group-hover:brightness-110 transition-[filter]"
+              alt="AKG ALGO"
+              className="h-8 sm:h-9 w-auto group-hover:opacity-90 transition-opacity"
             />
           </div>
 
-          {/* Desktop Navigation Menu (Radix UI NavigationMenu) */}
+          {/* Desktop Navigation Menu */}
           <div className="hidden lg:block">
             <NavigationMenu>
               <NavigationMenuList className="flex items-center gap-1">
@@ -147,10 +146,10 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                   <button
                     onClick={() => setActiveTab('home')}
                     className={cn(
-                      'inline-flex h-9 items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer',
+                      'inline-flex h-8 items-center justify-center rounded-md px-3 text-xs font-medium whitespace-nowrap transition-colors cursor-pointer',
                       activeTab === 'home'
-                        ? 'bg-[#F3C653]/15 text-[#F3C653] font-bold border border-[#F3C653]/30 shadow-sm'
-                        : 'text-[#A6ADB9] hover:text-[#E7E9EF] hover:bg-white/5 border border-transparent'
+                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25'
+                        : 'text-akg-muted hover:text-akg-text hover:bg-akg-surface border border-transparent'
                     )}
                   >
                     Overview
@@ -162,14 +161,14 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                   <NavigationMenuTrigger
                     className={cn(
                       ['signals', 'bots', 'connector'].includes(activeTab) &&
-                        'bg-[#F3C653]/15 text-[#F3C653] border border-[#F3C653]/30 font-bold'
+                        'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 font-medium'
                     )}
                   >
                     Trading Systems
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <div className="w-[430px] p-3 grid gap-1.5 bg-[#10141B] rounded-2xl shadow-2xl border border-white/10">
-                      <div className="px-2 py-1 text-[10px] font-bold text-[#A6ADB9] uppercase tracking-wider">
+                    <div className="w-[400px] p-2.5 grid gap-1 bg-akg-card rounded-xl shadow-lg border border-akg-hairline">
+                      <div className="px-2 py-1 text-[10px] font-medium text-akg-muted uppercase tracking-wider">
                         Execution Modules
                       </div>
                       {tradingSystems.map((item) => {
@@ -180,32 +179,32 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
                             className={cn(
-                              'group flex items-start gap-3 p-2.5 rounded-xl transition-all cursor-pointer border',
+                              'group flex items-start gap-3 p-2.5 rounded-lg transition-colors cursor-pointer border',
                               isCurrent
-                                ? 'bg-[#171D26] border-[#F3C653]/30'
-                                : 'hover:bg-white/5 border-transparent'
+                                ? 'bg-emerald-500/10 border-emerald-500/20'
+                                : 'hover:bg-akg-surfaceElevated border-transparent'
                             )}
                           >
                             <div className={cn(
-                              'p-2 rounded-lg shrink-0 transition-colors',
+                              'p-2 rounded-md shrink-0 transition-colors',
                               isCurrent 
-                                ? 'bg-[#F3C653] text-[#07090D]' 
-                                : 'bg-white/5 text-[#A6ADB9] group-hover:bg-[#F3C653]/15 group-hover:text-[#F3C653]'
+                                ? 'bg-[#00D878] text-[#07080D]' 
+                                : 'bg-akg-surfaceElevated text-akg-muted group-hover:text-akg-green'
                             )}>
                               <Icon className="h-4 w-4" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-[#E7E9EF] group-hover:text-[#F3C653] transition-colors">
+                                <span className="text-xs font-medium text-akg-text group-hover:text-akg-green transition-colors">
                                   {item.title}
                                 </span>
                                 {item.badge && (
-                                  <span className={cn('text-[9px] px-1.5 py-0.2 rounded font-bold uppercase', item.badgeClass)}>
+                                  <span className={cn('text-[9px] px-1.5 py-0.5 rounded font-medium', item.badgeClass)}>
                                     {item.badge}
                                   </span>
                                 )}
                               </div>
-                              <p className="text-[11px] text-[#A6ADB9] leading-snug mt-0.5">
+                              <p className="text-[11px] text-akg-muted leading-snug mt-0.5">
                                 {item.description}
                               </p>
                             </div>
@@ -220,15 +219,15 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                 <NavigationMenuItem>
                   <NavigationMenuTrigger
                     className={cn(
-                      ['charts', 'broadcasts'].includes(activeTab) &&
-                        'bg-[#F3C653]/15 text-[#F3C653] border border-[#F3C653]/30 font-bold'
+                      ['charts', 'broadcasts', 'resources'].includes(activeTab) &&
+                        'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 font-medium'
                     )}
                   >
                     Intelligence
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <div className="w-[370px] p-3 grid gap-1.5 bg-[#10141B] rounded-2xl shadow-2xl border border-white/10">
-                      <div className="px-2 py-1 text-[10px] font-bold text-[#A6ADB9] uppercase tracking-wider">
+                    <div className="w-[360px] p-2.5 grid gap-1 bg-akg-card rounded-xl shadow-lg border border-akg-hairline">
+                      <div className="px-2 py-1 text-[10px] font-medium text-akg-muted uppercase tracking-wider">
                         Market Telemetry
                       </div>
                       {marketIntelligence.map((item) => {
@@ -239,32 +238,32 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
                             className={cn(
-                              'group flex items-start gap-3 p-2.5 rounded-xl transition-all cursor-pointer border',
+                              'group flex items-start gap-3 p-2.5 rounded-lg transition-colors cursor-pointer border',
                               isCurrent
-                                ? 'bg-[#171D26] border-[#F3C653]/30'
-                                : 'hover:bg-white/5 border-transparent'
+                                ? 'bg-emerald-500/10 border-emerald-500/20'
+                                : 'hover:bg-akg-surfaceElevated border-transparent'
                             )}
                           >
                             <div className={cn(
-                              'p-2 rounded-lg shrink-0 transition-colors',
+                              'p-2 rounded-md shrink-0 transition-colors',
                               isCurrent 
-                                ? 'bg-[#F3C653] text-[#07090D]' 
-                                : 'bg-white/5 text-[#A6ADB9] group-hover:bg-[#F3C653]/15 group-hover:text-[#F3C653]'
+                                ? 'bg-[#00D878] text-[#07080D]' 
+                                : 'bg-akg-surfaceElevated text-akg-muted group-hover:text-akg-green'
                             )}>
                               <Icon className="h-4 w-4" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-[#E7E9EF] group-hover:text-[#F3C653] transition-colors">
+                                <span className="text-xs font-medium text-akg-text group-hover:text-akg-green transition-colors">
                                   {item.title}
                                 </span>
                                 {item.badge && (
-                                  <span className={cn('text-[9px] px-1.5 py-0.2 rounded font-bold uppercase', item.badgeClass)}>
+                                  <span className={cn('text-[9px] px-1.5 py-0.5 rounded font-medium', item.badgeClass)}>
                                     {item.badge}
                                   </span>
                                 )}
                               </div>
-                              <p className="text-[11px] text-[#A6ADB9] leading-snug mt-0.5">
+                              <p className="text-[11px] text-akg-muted leading-snug mt-0.5">
                                 {item.description}
                               </p>
                             </div>
@@ -280,14 +279,14 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                   <button
                     onClick={() => setActiveTab('pricing')}
                     className={cn(
-                      'inline-flex h-9 items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer gap-1.5',
+                      'inline-flex h-8 items-center justify-center rounded-md px-3 text-xs font-medium whitespace-nowrap transition-colors cursor-pointer gap-1.5',
                       activeTab === 'pricing'
-                        ? 'bg-[#F3C653]/15 text-[#F3C653] font-bold border border-[#F3C653]/30 shadow-sm'
-                        : 'text-[#A6ADB9] hover:text-[#E7E9EF] hover:bg-white/5 border border-transparent'
+                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25'
+                        : 'text-akg-muted hover:text-akg-text hover:bg-akg-surface border border-transparent'
                     )}
                   >
                     <span>Plans & Pricing</span>
-                    <span className="text-[10px] font-bold text-[#F3C653] bg-[#F3C653]/20 px-1.5 py-0.2 rounded border border-[#F3C653]/30">
+                    <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
                       USDT
                     </span>
                   </button>
@@ -298,21 +297,31 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
           </div>
         </div>
 
-        {/* Right: Search + Notifications + Profile & Auth */}
+        {/* Right: Theme Toggle + Search + Notifications + Profile & Auth */}
         <div className="flex items-center gap-2 sm:gap-3">
 
+          {/* Theme Toggle (Dark / Light) */}
+          <button
+            onClick={toggleTheme}
+            className="flex items-center justify-center h-8 w-8 rounded-lg border border-akg-hairline bg-akg-surface hover:bg-akg-surfaceElevated text-akg-muted hover:text-akg-text transition-colors cursor-pointer"
+            title={isDark ? 'Switch to Light theme' : 'Switch to Dark theme'}
+            aria-label="Toggle theme"
+          >
+            {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+          </button>
+
           {/* Realtime Notifications */}
-          <NotificationBell user={user} notify={notify} dark />
+          <NotificationBell user={user} notify={notify} dark={isDark} />
 
           {/* Quick Search Trigger */}
           <button
             onClick={() => setSearchOpen(true)}
-            className="hidden md:flex items-center gap-2 px-2.5 py-1.5 xl:px-3 rounded-xl border border-white/10 bg-[#10141B] hover:bg-white/5 text-[#A6ADB9] text-xs transition-colors cursor-pointer lg:px-3"
+            className="hidden md:flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-akg-hairline bg-akg-surface hover:bg-akg-surfaceElevated text-akg-muted text-xs transition-colors cursor-pointer"
             title="Press Cmd+K to search"
           >
-            <Search className="h-3.5 w-3.5 text-[#A6ADB9]" />
+            <Search className="h-3.5 w-3.5 text-akg-muted" />
             <span className="hidden xl:inline">Search systems...</span>
-            <kbd className="hidden xl:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-[#A6ADB9] bg-white/5 border border-white/10 rounded">
+            <kbd className="hidden xl:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-akg-muted bg-akg-surfaceElevated border border-akg-hairline rounded">
               ⌘K
             </kbd>
           </button>
@@ -321,48 +330,48 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2.5 p-1 sm:px-2.5 sm:py-1.5 rounded-xl border border-white/10 hover:border-[#F3C653]/30 hover:bg-white/5 transition-all cursor-pointer bg-[#10141B] shadow-sm focus:outline-none">
-                  <Avatar className="h-8 w-8">
+                <button className="flex items-center gap-2.5 p-1 sm:px-2.5 sm:py-1 rounded-lg border border-akg-hairline hover:border-emerald-500/30 hover:bg-akg-surfaceElevated transition-colors cursor-pointer bg-akg-surface shadow-sm focus:outline-none">
+                  <Avatar className="h-7 w-7">
                     <AvatarFallback>
                       {(user.name || user.email || 'U')[0].toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="text-left hidden md:block leading-tight max-w-[120px]">
-                    <div className="text-xs font-bold text-[#E7E9EF] flex items-center gap-1.5">
+                    <div className="text-xs font-medium text-akg-text flex items-center gap-1.5">
                       <span className="max-w-[96px] truncate">{user.name || user.email.split('@')[0]}</span>
                       {user.role === 'admin' && (
-                        <span className="px-1.5 py-0.2 rounded bg-[#F3C653]/20 text-[#F3C653] border border-[#F3C653]/30 text-[9px] font-extrabold uppercase">
+                        <span className="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-mono uppercase">
                           ADMIN
                         </span>
                       )}
                     </div>
-                    <div className="text-[10px] text-[#00D878] font-semibold uppercase truncate">
+                    <div className="text-[10px] text-akg-green font-medium uppercase truncate">
                       {user.role === 'admin' ? 'Executive Desk' : (user.plan || 'Free Tier')}
                     </div>
                   </div>
-                  <ChevronDown className="h-3.5 w-3.5 text-[#A6ADB9]" />
+                  <ChevronDown className="h-3.5 w-3.5 text-akg-muted" />
                 </button>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-56 bg-akg-card border-akg-hairline">
                 <DropdownMenuLabel>
-                  <div className="text-xs font-bold text-[#E7E9EF]">Signed in as</div>
-                  <div className="text-[11px] font-normal text-[#A6ADB9] truncate">{user.email}</div>
+                  <div className="text-xs font-medium text-akg-text">Signed in as</div>
+                  <div className="text-[11px] font-normal text-akg-muted truncate">{user.email}</div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
 
                 <DropdownMenuItem onClick={() => setActiveTab('signals')}>
-                  <Zap className="h-3.5 w-3.5 text-[#00D878]" />
-                  <span>Signals Terminal</span>
+                  <Zap className="h-3.5 w-3.5 text-akg-green" />
+                  <span>Signal Room</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem onClick={() => setActiveTab('pricing')}>
-                  <CreditCard className="h-3.5 w-3.5 text-[#F3C653]" />
+                  <CreditCard className="h-3.5 w-3.5 text-akg-muted" />
                   <span>Subscription & Billing</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem onClick={onOpenAccount}>
-                  <KeyRound className="h-3.5 w-3.5 text-[#00D878]" />
+                  <KeyRound className="h-3.5 w-3.5 text-akg-green" />
                   <span>My Account & Licenses</span>
                 </DropdownMenuItem>
 
@@ -371,9 +380,9 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
                       onClick={onNavigateAdmin}
-                      className="bg-[#F3C653]/10 text-[#F3C653] font-semibold"
+                      className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-medium"
                     >
-                      <Shield className="h-3.5 w-3.5 text-[#F3C653]" />
+                      <Shield className="h-3.5 w-3.5 text-akg-green" />
                       <span>Dedicated Admin Portal →</span>
                     </DropdownMenuItem>
                   </>
@@ -382,7 +391,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={handleLogout}
-                  className="text-rose-400 focus:bg-rose-500/10 focus:text-rose-300 font-medium"
+                  className="text-rose-500 dark:text-rose-400 focus:bg-rose-500/10 font-medium"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   <span>Sign Out</span>
@@ -395,9 +404,9 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                 variant="outline"
                 size="sm"
                 onClick={onOpenAuth}
-                className="gap-1.5 font-semibold text-xs"
+                className="gap-1.5 font-medium text-xs"
               >
-                <User className="h-3.5 w-3.5 text-[#A6ADB9]" />
+                <User className="h-3.5 w-3.5 text-akg-muted" />
                 <span>Sign In</span>
               </Button>
 
@@ -405,57 +414,62 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                 variant="default"
                 size="sm"
                 onClick={() => setActiveTab('pricing')}
-                className="gap-1.5 shadow-sm text-xs"
+                className="gap-1.5 text-xs"
               >
-                <Sparkles className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Get Access</span>
-                <span className="sm:hidden">Plans</span>
+                <span>Get Access</span>
               </Button>
             </div>
           )}
 
-          {/* Mobile Drawer */}
+          {/* Mobile Menu Trigger */}
           <div className="lg:hidden">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
                 <button
-                  className="p-2 rounded-xl border border-white/10 text-[#A6ADB9] hover:text-[#E7E9EF] hover:bg-white/5 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg border border-akg-hairline text-akg-muted hover:text-akg-text hover:bg-akg-surface transition-colors cursor-pointer"
                   aria-label="Open Mobile Menu"
                 >
                   <Menu className="h-5 w-5" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[350px] p-0 flex flex-col justify-between bg-[#07090D] border-l border-white/10">
+              <SheetContent side="right" className="w-[300px] sm:w-[350px] p-0 flex flex-col justify-between bg-akg-bg border-l border-akg-hairline">
                 <div>
-                  <SheetHeader className="p-4 pr-12 border-b border-white/10">
+                  <SheetHeader className="p-4 pr-12 border-b border-akg-hairline flex flex-row items-center justify-between">
                     <img
                       src="/assets/logos/akg-algo-metallic-nav.png"
                       alt="AKG ALGO"
-                      className="h-7 w-auto max-w-[70%] self-start object-contain"
+                      className="h-7 w-auto max-w-[70%] object-contain"
                     />
+                    <button
+                      onClick={toggleTheme}
+                      className="p-1.5 rounded-md border border-akg-hairline bg-akg-surface text-akg-muted hover:text-akg-text"
+                      title="Toggle Theme"
+                    >
+                      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                    </button>
                   </SheetHeader>
 
                   <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-160px)]">
                     <div>
-                      <div className="text-[10px] font-bold text-[#A6ADB9] uppercase tracking-wider mb-2">
+                      <div className="text-[10px] font-medium text-akg-muted uppercase tracking-wider mb-2">
                         General
                       </div>
                       <button
                         onClick={() => { setActiveTab('home'); setMobileOpen(false); }}
                         className={cn(
-                          'w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer text-left',
+                          'w-full flex items-center gap-3 p-2.5 rounded-lg text-xs font-medium transition-colors cursor-pointer text-left',
                           activeTab === 'home'
-                            ? 'bg-[#F3C653]/15 text-[#F3C653] border border-[#F3C653]/30'
-                            : 'text-[#E7E9EF] hover:bg-white/5'
+                            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25'
+                            : 'text-akg-text hover:bg-akg-surface'
                         )}
                       >
-                        <Compass className="h-4 w-4 text-[#F3C653]" />
+                        <Compass className="h-4 w-4 text-akg-green" />
                         <span>Overview & Terminal</span>
                       </button>
                     </div>
 
                     <div>
-                      <div className="text-[10px] font-bold text-[#A6ADB9] uppercase tracking-wider mb-2">
+                      <div className="text-[10px] font-medium text-akg-muted uppercase tracking-wider mb-2">
                         Trading Systems
                       </div>
                       <div className="space-y-1">
@@ -467,18 +481,18 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                               key={item.id}
                               onClick={() => { setActiveTab(item.id); setMobileOpen(false); }}
                               className={cn(
-                                'w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer text-left',
+                                'w-full flex items-center justify-between p-2.5 rounded-lg text-xs font-medium transition-colors cursor-pointer text-left',
                                 isCurrent
-                                  ? 'bg-[#F3C653]/15 text-[#F3C653] border border-[#F3C653]/30'
-                                  : 'text-[#E7E9EF] hover:bg-white/5'
+                                  ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25'
+                                  : 'text-akg-text hover:bg-akg-surface'
                               )}
                             >
                               <div className="flex items-center gap-3">
-                                <Icon className={cn('h-4 w-4', isCurrent ? 'text-[#F3C653]' : 'text-[#A6ADB9]')} />
+                                <Icon className={cn('h-4 w-4', isCurrent ? 'text-akg-green' : 'text-akg-muted')} />
                                 <span>{item.title}</span>
                               </div>
                               {item.badge && (
-                                <span className={cn('text-[9px] px-1.5 py-0.2 rounded font-bold', item.badgeClass)}>
+                                <span className={cn('text-[9px] px-1.5 py-0.5 rounded font-medium', item.badgeClass)}>
                                   {item.badge}
                                 </span>
                               )}
@@ -489,7 +503,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                     </div>
 
                     <div>
-                      <div className="text-[10px] font-bold text-[#A6ADB9] uppercase tracking-wider mb-2">
+                      <div className="text-[10px] font-medium text-akg-muted uppercase tracking-wider mb-2">
                         Intelligence
                       </div>
                       <div className="space-y-1">
@@ -501,18 +515,18 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                               key={item.id}
                               onClick={() => { setActiveTab(item.id); setMobileOpen(false); }}
                               className={cn(
-                                'w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer text-left',
+                                'w-full flex items-center justify-between p-2.5 rounded-lg text-xs font-medium transition-colors cursor-pointer text-left',
                                 isCurrent
-                                  ? 'bg-[#F3C653]/15 text-[#F3C653] border border-[#F3C653]/30'
-                                  : 'text-[#E7E9EF] hover:bg-white/5'
+                                  ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25'
+                                  : 'text-akg-text hover:bg-akg-surface'
                               )}
                             >
                               <div className="flex items-center gap-3">
-                                <Icon className={cn('h-4 w-4', isCurrent ? 'text-[#F3C653]' : 'text-[#A6ADB9]')} />
+                                <Icon className={cn('h-4 w-4', isCurrent ? 'text-akg-green' : 'text-akg-muted')} />
                                 <span>{item.title}</span>
                               </div>
                               {item.badge && (
-                                <span className={cn('text-[9px] px-1.5 py-0.2 rounded font-bold', item.badgeClass)}>
+                                <span className={cn('text-[9px] px-1.5 py-0.5 rounded font-medium', item.badgeClass)}>
                                   {item.badge}
                                 </span>
                               )}
@@ -523,23 +537,23 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                     </div>
 
                     <div>
-                      <div className="text-[10px] font-bold text-[#A6ADB9] uppercase tracking-wider mb-2">
+                      <div className="text-[10px] font-medium text-akg-muted uppercase tracking-wider mb-2">
                         Membership
                       </div>
                       <button
                         onClick={() => { setActiveTab('pricing'); setMobileOpen(false); }}
                         className={cn(
-                          'w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer text-left',
+                          'w-full flex items-center justify-between p-2.5 rounded-lg text-xs font-medium transition-colors cursor-pointer text-left',
                           activeTab === 'pricing'
-                            ? 'bg-[#F3C653]/15 text-[#F3C653] border border-[#F3C653]/30'
-                            : 'text-[#E7E9EF] hover:bg-white/5'
+                            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25'
+                            : 'text-akg-text hover:bg-akg-surface'
                         )}
                       >
                         <div className="flex items-center gap-3">
-                          <CreditCard className="h-4 w-4 text-[#F3C653]" />
+                          <CreditCard className="h-4 w-4 text-akg-green" />
                           <span>Plans & Pricing</span>
                         </div>
-                        <span className="text-[10px] bg-[#F3C653]/20 text-[#F3C653] border border-[#F3C653]/30 px-1.5 py-0.5 rounded font-bold">
+                        <span className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-mono">
                           USDT
                         </span>
                       </button>
@@ -549,10 +563,10 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                       <div className="pt-2">
                         <button
                           onClick={() => { if (onOpenAccount) onOpenAccount(); setMobileOpen(false); }}
-                          className="w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-bold bg-[#00D878]/15 text-[#00D878] border border-[#00D878]/30 hover:bg-[#00D878]/25 transition-colors cursor-pointer"
+                          className="w-full flex items-center justify-between p-2.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/20 transition-colors cursor-pointer"
                         >
                           <div className="flex items-center gap-2">
-                            <KeyRound className="h-4 w-4 text-[#00D878]" />
+                            <KeyRound className="h-4 w-4 text-akg-green" />
                             <span>My Account & Licenses</span>
                           </div>
                           <ArrowRight className="h-3.5 w-3.5" />
@@ -561,13 +575,13 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                     )}
 
                     {user?.role === 'admin' && (
-                      <div className="pt-2 border-t border-white/10">
+                      <div className="pt-2 border-t border-akg-hairline">
                         <button
                           onClick={() => { onNavigateAdmin(); setMobileOpen(false); }}
-                          className="w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-bold bg-[#F3C653]/15 text-[#F3C653] border border-[#F3C653]/30 hover:bg-[#F3C653]/25 transition-colors cursor-pointer"
+                          className="w-full flex items-center justify-between p-2.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 hover:bg-emerald-500/20 transition-colors cursor-pointer"
                         >
                           <div className="flex items-center gap-2">
-                            <Shield className="h-4 w-4 text-[#F3C653]" />
+                            <Shield className="h-4 w-4 text-akg-green" />
                             <span>Dedicated Admin Portal</span>
                           </div>
                           <ArrowRight className="h-3.5 w-3.5" />
@@ -577,27 +591,27 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                   </div>
                 </div>
 
-                <div className="p-4 border-t border-white/10 bg-[#10141B]">
+                <div className="p-4 border-t border-akg-hairline bg-akg-card">
                   {user ? (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
-                        <Avatar className="h-8 w-8">
+                        <Avatar className="h-7 w-7">
                           <AvatarFallback>
                             {(user.name || user.email)[0].toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="text-left leading-none">
-                          <div className="text-xs font-bold text-[#E7E9EF] truncate max-w-[140px]">
+                          <div className="text-xs font-medium text-akg-text truncate max-w-[140px]">
                             {user.name || user.email.split('@')[0]}
                           </div>
-                          <div className="text-[10px] text-[#00D878] uppercase font-semibold mt-0.5">
+                          <div className="text-[10px] text-akg-green uppercase font-medium mt-0.5">
                             {user.role === 'admin' ? 'Executive' : (user.plan || 'Free Member')}
                           </div>
                         </div>
                       </div>
                       <button
                         onClick={handleLogout}
-                        className="p-2 rounded-lg text-[#A6ADB9] hover:text-rose-400 hover:bg-white/5 transition-colors"
+                        className="p-1.5 rounded-md text-akg-muted hover:text-rose-500 transition-colors"
                         title="Sign Out"
                       >
                         <LogOut className="h-4 w-4" />
@@ -630,34 +644,34 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
 
       {/* Quick Jump Search Modal */}
       {searchOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-start justify-center pt-20 px-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center pt-20 px-4">
           <div 
-            className="w-full max-w-lg bg-[#10141B] rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
+            className="w-full max-w-lg bg-akg-card rounded-xl shadow-2xl border border-akg-hairline overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-white/5">
-              <Search className="h-4 w-4 text-[#A6ADB9]" />
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-akg-hairline bg-akg-surface">
+              <Search className="h-4 w-4 text-akg-muted" />
               <input
                 type="text"
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Jump to section, tool, or kit..."
-                className="w-full bg-transparent text-sm text-[#E7E9EF] focus:outline-none placeholder:text-[#A6ADB9]"
+                className="w-full bg-transparent text-sm text-akg-text focus:outline-none placeholder:text-akg-muted"
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') setSearchOpen(false);
                 }}
               />
               <kbd 
                 onClick={() => setSearchOpen(false)}
-                className="px-2 py-0.5 text-[10px] font-mono text-[#A6ADB9] bg-white/5 border border-white/10 rounded cursor-pointer hover:bg-white/10"
+                className="px-2 py-0.5 text-[10px] font-mono text-akg-muted bg-akg-surfaceElevated border border-akg-hairline rounded cursor-pointer hover:opacity-80"
               >
                 ESC
               </kbd>
             </div>
 
             <div className="p-2 max-h-80 overflow-y-auto space-y-1">
-              <div className="px-3 py-1.5 text-[10px] font-bold text-[#A6ADB9] uppercase tracking-wider">
+              <div className="px-3 py-1.5 text-[10px] font-medium text-akg-muted uppercase tracking-wider">
                 Quick Navigation
               </div>
               {quickSearchItems
@@ -675,13 +689,13 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                       setActiveTab(item.tab);
                       setSearchOpen(false);
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-[#E7E9EF] hover:text-[#F3C653] hover:bg-white/5 transition-colors text-left cursor-pointer group"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-akg-text hover:text-akg-green hover:bg-akg-surface transition-colors text-left cursor-pointer group"
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className="h-4 w-4 text-[#A6ADB9] group-hover:text-[#F3C653] transition-colors" />
+                      <Icon className="h-4 w-4 text-akg-muted group-hover:text-akg-green transition-colors" />
                       <span>{item.label}</span>
                     </div>
-                    <ArrowRight className="h-3.5 w-3.5 text-white/20 group-hover:text-[#F3C653] transition-colors" />
+                    <ArrowRight className="h-3.5 w-3.5 text-akg-muted group-hover:text-akg-green transition-colors" />
                   </button>
                 );
                 })}
@@ -689,7 +703,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                   quickSearchItems.filter((item) =>
                     item.label.toLowerCase().includes(searchQuery.trim().toLowerCase())
                   ).length === 0 && (
-                  <div className="px-3 py-6 text-center text-xs text-[#A6ADB9]">
+                  <div className="px-3 py-6 text-center text-xs text-akg-muted">
                     No matches for "{searchQuery.trim()}"
                   </div>
                 )}

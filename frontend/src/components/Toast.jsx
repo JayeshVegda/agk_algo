@@ -14,48 +14,48 @@ export function ToastContainer({ toasts, onDismiss }) {
         return (
           <div
             key={toast.id}
-            className={`pointer-events-auto p-3.5 rounded-2xl border backdrop-blur-md shadow-2xl transition-all duration-300 transform translate-y-0 flex items-start gap-3 text-xs font-mono ${
+            className={`pointer-events-auto p-3.5 rounded-xl border backdrop-blur-md shadow-xl transition-all duration-300 transform translate-y-0 flex items-start gap-3 text-xs font-mono bg-akg-card text-akg-text ${
               isSuccess
-                ? 'border-emerald-500/30 bg-[#07130F]/95 text-emerald-300'
+                ? 'border-emerald-500/40'
                 : isError
-                ? 'border-rose-500/30 bg-[#16080B]/95 text-rose-300'
+                ? 'border-rose-500/40'
                 : isWarning
-                ? 'border-amber-500/30 bg-[#170E04]/95 text-amber-300'
-                : 'border-blue-500/30 bg-[#070E1A]/95 text-blue-300'
+                ? 'border-amber-500/40'
+                : 'border-akg-hairline'
             }`}
           >
             <div className="shrink-0 mt-0.5">
               {toast.type === 'copy' ? (
-                <Copy className="h-4 w-4 text-emerald-400" />
+                <Copy className="h-4 w-4 text-akg-green" />
               ) : isSuccess ? (
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <CheckCircle2 className="h-4 w-4 text-akg-green" />
               ) : isError ? (
-                <XCircle className="h-4 w-4 text-rose-400" />
+                <XCircle className="h-4 w-4 text-rose-500" />
               ) : isWarning ? (
-                <AlertTriangle className="h-4 w-4 text-amber-400" />
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
               ) : (
-                <Info className="h-4 w-4 text-blue-400" />
+                <Info className="h-4 w-4 text-akg-accent" />
               )}
             </div>
 
             <div className="flex-1 min-w-0">
               {toast.title && (
-                <div className="font-bold text-white text-[11px] mb-0.5">{toast.title}</div>
+                <div className="font-bold text-akg-text text-[11px] mb-0.5">{toast.title}</div>
               )}
-              <div className="text-[11px] leading-relaxed text-slate-300 break-words">{toast.message}</div>
+              <div className="text-[11px] leading-relaxed text-akg-muted break-words font-sans">{toast.message}</div>
             </div>
 
             {toast.action && (
               <button
                 onClick={() => { toast.action.onClick?.(); onDismiss(toast.id); }}
-                className="shrink-0 rounded-full border border-current px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide transition-opacity hover:opacity-75"
+                className="shrink-0 rounded-md border border-akg-hairline bg-akg-raised px-2.5 py-1 text-[10px] font-mono font-semibold uppercase tracking-wide transition-opacity hover:opacity-80 cursor-pointer"
               >
                 {toast.action.label}
               </button>
             )}
             <button
               onClick={() => onDismiss(toast.id)}
-              className="shrink-0 text-slate-400 hover:text-white p-0.5 rounded cursor-pointer"
+              className="shrink-0 text-akg-muted hover:text-akg-text p-0.5 rounded cursor-pointer"
             >
               <X className="h-3.5 w-3.5" />
             </button>

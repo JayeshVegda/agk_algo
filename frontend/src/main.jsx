@@ -4,7 +4,7 @@ import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
-// Surface async / uncaught errors too — anything that used to die silently.
+// Surface async / uncaught errors too - anything that used to die silently.
 window.addEventListener('error', (e) => {
   if (import.meta.env.DEV) console.error('[akg] window error:', e.message, e.filename, e.lineno);
   window.__akgLastError = `${e.message} @ ${e.filename}:${e.lineno}`;

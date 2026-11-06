@@ -197,7 +197,7 @@ export default function App() {
     : null;
 
   return (
-    <div className="min-h-screen bg-[#07090D] text-[#E7E9EF] flex flex-col justify-between selection:bg-[#F3C653]/20 selection:text-[#F3C653] font-sans">
+    <div className="min-h-screen bg-akg-bg text-[var(--akg-text)] flex flex-col justify-between selection:bg-emerald-500/20 selection:text-akg-accent font-sans transition-colors">
       <div>
         <Navbar
           activeTab={activeTab}
@@ -323,11 +323,11 @@ export default function App() {
       />
 
       {/* Mobile Bottom Navigation Dock for Android & Mobile Web */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#07090D]/95 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-pb">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-akg-card/95 backdrop-blur-xl border-t border-[var(--akg-hairline)] px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-pb">
         <button
           onClick={() => switchTab('home')}
           className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all ${
-            activeTab === 'home' ? 'text-[#F3C653]' : 'text-[#A6ADB9] hover:text-white'
+            activeTab === 'home' ? 'text-akg-accent' : 'text-akg-muted hover:text-[var(--akg-text)]'
           }`}
         >
           <Compass className="h-5 w-5" />
@@ -337,12 +337,12 @@ export default function App() {
         <button
           onClick={() => switchTab('signals')}
           className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all relative ${
-            activeTab === 'signals' ? 'text-[#00D878]' : 'text-[#A6ADB9] hover:text-white'
+            activeTab === 'signals' ? 'text-akg-accent' : 'text-akg-muted hover:text-[var(--akg-text)]'
           }`}
         >
           <div className="relative">
             <Zap className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#00D878] animate-pulse" />
+            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-akg-accent" />
           </div>
           <span className="text-[10px] font-bold">Signals</span>
         </button>
@@ -350,7 +350,7 @@ export default function App() {
         <button
           onClick={() => switchTab('bots')}
           className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all ${
-            activeTab === 'bots' ? 'text-[#F3C653]' : 'text-[#A6ADB9] hover:text-white'
+            activeTab === 'bots' ? 'text-akg-accent' : 'text-akg-muted hover:text-[var(--akg-text)]'
           }`}
         >
           <Cpu className="h-5 w-5" />
@@ -360,7 +360,7 @@ export default function App() {
         <button
           onClick={() => switchTab('connector')}
           className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all ${
-            activeTab === 'connector' ? 'text-purple-400' : 'text-[#A6ADB9] hover:text-white'
+            activeTab === 'connector' ? 'text-purple-400' : 'text-akg-muted hover:text-[var(--akg-text)]'
           }`}
         >
           <Network className="h-5 w-5" />
@@ -376,13 +376,13 @@ export default function App() {
             }
           }}
           className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all relative ${
-            activeTab === 'account' && user ? 'text-[#00D878]' : 'text-[#A6ADB9] hover:text-white'
+            activeTab === 'account' && user ? 'text-akg-accent' : 'text-akg-muted hover:text-[var(--akg-text)]'
           }`}
         >
           <div className="relative">
             <User className="h-5 w-5" />
             {user && (
-              <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#00D878]" />
+              <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-akg-accent" />
             )}
           </div>
           <span className="text-[10px] font-bold truncate max-w-[55px]">

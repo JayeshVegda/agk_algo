@@ -66,7 +66,7 @@ export default function Settings() {
     }
   };
 
-  if (!loaded) return <div className="py-20 text-center text-sm text-akg-muted">Loading settings…</div>;
+  if (!loaded) return <div className="py-20 text-center text-sm text-akg-muted">Loading settings...</div>;
 
   if (!record) {
     return <EmptyState icon={Cog} title="Settings record missing" hint="Run migrations; the site_settings collection should hold exactly one record." />;
@@ -80,8 +80,8 @@ export default function Settings() {
       />
 
       {/* Crypto wallets */}
-      <section className="rounded-2xl border border-white/10 bg-akg-surface p-5">
-        <h2 className="mb-4 font-data text-[10px] uppercase tracking-[0.16em] text-akg-gold">USDT wallets</h2>
+      <section className="rounded-2xl border border-[var(--akg-hairline)] bg-akg-card p-5">
+        <h2 className="mb-4 font-data text-[10px] uppercase tracking-[0.16em] text-akg-accent">USDT wallets</h2>
         <div className="space-y-3">
           {[
             ['wallet_trc20', 'TRC-20 wallet (Tron)'],
@@ -101,15 +101,15 @@ export default function Settings() {
       </section>
 
       {/* UPI / GPay */}
-      <section className="rounded-2xl border border-white/10 bg-akg-surface p-5">
+      <section className="rounded-2xl border border-[var(--akg-hairline)] bg-akg-card p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-data text-[10px] uppercase tracking-[0.16em] text-akg-green">GPay / UPI</h2>
+          <h2 className="font-data text-[10px] uppercase tracking-[0.16em] text-akg-accent">GPay / UPI</h2>
           <label className="flex cursor-pointer items-center gap-2 text-xs text-akg-silver">
             <input
               type="checkbox"
               checked={form.inr_enabled}
               onChange={(e) => setForm({ ...form, inr_enabled: e.target.checked })}
-              className="h-4 w-4 accent-[#00D878]"
+              className="h-4 w-4 accent-[var(--akg-accent)]"
             />
             Offer UPI at checkout
           </label>
@@ -124,7 +124,7 @@ export default function Settings() {
             <input value={form.payee_name} onChange={set('payee_name')} className={inputCls} placeholder="JAYESH V" />
           </div>
           <div>
-            <label className={labelCls}>USDT → INR rate (₹ per $1)</label>
+            <label className={labelCls}>USDT to INR rate (₹ per $1)</label>
             <input value={form.usdt_inr_rate} onChange={set('usdt_inr_rate')} type="number" className={`${inputCls} font-data`} placeholder="e.g. 92" />
           </div>
           <div>
@@ -142,11 +142,11 @@ export default function Settings() {
                 }
                 e.target.value = '';
               }}
-              className="w-full text-xs text-akg-muted file:mr-2.5 file:rounded-full file:border-0 file:bg-[#F3C653]/15 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-akg-gold"
+              className="w-full text-xs text-akg-muted file:mr-2.5 file:cursor-pointer file:rounded-md file:border-0 file:bg-emerald-500/15 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-akg-accent hover:file:bg-emerald-500/25 transition-colors"
             />
             {form.upi_qr_url && (
               <div className="mt-2 flex items-center gap-3">
-                <img src={form.upi_qr_url} alt="UPI QR" className="h-20 w-20 rounded-lg border border-white/10 bg-white object-contain p-1" />
+                <img src={form.upi_qr_url} alt="UPI QR" className="h-20 w-20 rounded-lg border border-[var(--akg-hairline)] bg-white object-contain p-1" />
                 <button onClick={() => setForm({ ...form, upi_qr_url: '' })} className="text-[11px] font-semibold text-rose-300 hover:underline">remove</button>
               </div>
             )}
@@ -155,8 +155,8 @@ export default function Settings() {
       </section>
 
       {/* Support */}
-      <section className="rounded-2xl border border-white/10 bg-akg-surface p-5">
-        <h2 className="mb-4 font-data text-[10px] uppercase tracking-[0.16em] text-sky-300">Support contacts (shown at checkout)</h2>
+      <section className="rounded-2xl border border-[var(--akg-hairline)] bg-akg-card p-5">
+        <h2 className="mb-4 font-data text-[10px] uppercase tracking-[0.16em] text-sky-400">Support contacts (shown at checkout)</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className={labelCls}>Support email</label>
@@ -164,7 +164,7 @@ export default function Settings() {
           </div>
           <div>
             <label className={labelCls}>Support Telegram / phone</label>
-            <input value={form.support_phone} onChange={set('support_phone')} className={`${inputCls} font-data text-xs`} placeholder="@akgalgo_support or +91…" />
+            <input value={form.support_phone} onChange={set('support_phone')} className={`${inputCls} font-data text-xs`} placeholder="@akgalgo_support or +91..." />
           </div>
         </div>
       </section>
@@ -172,10 +172,10 @@ export default function Settings() {
       <button
         onClick={save}
         disabled={saving}
-        className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] text-sm font-bold text-[#1C1403] active:scale-[0.98] disabled:opacity-50"
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-akg-cta text-sm font-bold text-akg-cta-text shadow-sm transition-opacity hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
       >
         <Save className="h-4 w-4" />
-        {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save Settings'}
+        {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save Settings'}
       </button>
     </div>
   );

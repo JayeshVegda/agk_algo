@@ -58,14 +58,13 @@ export function ResourcesTab({ notify, onNavigate }) {
     navigator.clipboard.writeText(absolute);
     setCopiedId(item.id);
     if (notify) {
-      notify({ type: 'copy', title: 'Link Copied', message: absolute });
+      notify({ type: 'copy', title: 'Link copied', message: absolute });
     }
     setTimeout(() => setCopiedId(null), 2000);
   };
 
   const openItem = (item) => {
     const u = item.url || '';
-    // App routes navigate inside the SPA; backend files open at the PocketBase origin.
     if (u.startsWith('/') && !u.startsWith('/downloads') && !u.startsWith('/api')) {
       if (onNavigate) {
         onNavigate(u.replace(/^\//, '') === 'bots' ? 'bots' : 'resources');
@@ -79,7 +78,6 @@ export function ResourcesTab({ notify, onNavigate }) {
 
   const isDownload = (item) => item.category === 'software' && /\.(txt|zip|ex4|ex5|set)$/i.test(item.url || '');
 
-  // Featured card: the setup guide (first active .txt file)
   const featured = resources.find((r) => isDownload(r) && r.url?.endsWith('.txt')) || null;
   const grouped = CATEGORIES.map((cat) => ({
     ...cat,
@@ -95,10 +93,10 @@ export function ResourcesTab({ notify, onNavigate }) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl font-sans text-akg-silver">
+    <div className="mx-auto max-w-5xl font-sans text-akg-text">
       {/* Header */}
       <div className="max-w-2xl">
-        <h1 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+        <h1 className="font-display text-2xl font-extrabold tracking-tight text-akg-text sm:text-3xl">
           Traders Kit
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-akg-muted">
@@ -107,11 +105,11 @@ export function ResourcesTab({ notify, onNavigate }) {
       </div>
 
       {resources.length === 0 ? (
-        <div className="mt-12 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-akg-surface px-6 py-16 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/[0.03]">
+        <div className="mt-12 flex flex-col items-center justify-center rounded-xl border border-akg-hairline bg-akg-card px-6 py-16 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-akg-hairline bg-akg-raised">
             <Globe className="h-5 w-5 text-akg-muted" />
           </div>
-          <h3 className="mt-4 font-display text-base font-bold text-white">The kit is being packed</h3>
+          <h3 className="mt-4 font-display text-base font-bold text-akg-text">The kit is being packed</h3>
           <p className="mt-1 text-sm text-akg-muted">Official files and links will appear here.</p>
         </div>
       ) : (
@@ -119,21 +117,20 @@ export function ResourcesTab({ notify, onNavigate }) {
           {/* Featured: setup guide */}
           {featured && (
             <section>
-              <article className="relative overflow-hidden rounded-2xl border border-[#F3C653]/30 bg-gradient-to-b from-[#171208]/80 to-akg-surface p-6 shadow-gold ring-1 ring-[#F3C653]/15 sm:p-8">
-                <div className="pointer-events-none absolute -top-16 right-10 h-40 w-40 rounded-full bg-[#F3C653]/10 blur-3xl" />
+              <article className="relative overflow-hidden rounded-xl border border-akg-hairline bg-akg-card p-6 shadow-sm sm:p-8">
                 <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#F3C653]/30 bg-[#F3C653]/10">
-                      <FileText className="h-6 w-6 text-akg-gold" strokeWidth={1.75} />
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/10">
+                      <FileText className="h-6 w-6 text-akg-accent" strokeWidth={1.75} />
                     </div>
                     <div>
                       <div className="flex items-center gap-2.5">
-                        <Badge variant="gold">{featured.badge || 'Official'}</Badge>
-                        <span className="font-data text-[10px] uppercase text-akg-muted">
+                        <Badge variant="emerald">{featured.badge || 'Official'}</Badge>
+                        <span className="font-mono text-[10px] uppercase text-akg-muted">
                           {(featured.url || '').split('.').pop()} file
                         </span>
                       </div>
-                      <h2 className="mt-2 font-display text-xl font-bold text-white">{featured.title}</h2>
+                      <h2 className="mt-2 font-display text-xl font-bold text-akg-text">{featured.title}</h2>
                       <p className="mt-1.5 max-w-xl text-xs leading-relaxed text-akg-muted">
                         {featured.description}
                       </p>
@@ -143,14 +140,14 @@ export function ResourcesTab({ notify, onNavigate }) {
                     <a
                       href={pbUrl(featured.url)}
                       download
-                      className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] px-5 py-2.5 text-sm font-bold text-[#1C1403] shadow-md shadow-[#F3C653]/20 transition hover:brightness-[1.07]"
+                      className="inline-flex items-center gap-2 rounded-lg bg-akg-cta px-5 py-2.5 text-sm font-semibold text-akg-cta-text transition-opacity hover:opacity-90 shadow-sm"
                     >
                       <Download className="h-4 w-4" />
                       <span>Download</span>
                     </a>
                     <button
                       onClick={() => handleCopy(featured)}
-                      className="rounded-full border border-white/10 p-2.5 text-akg-muted transition-colors hover:border-white/25 hover:text-akg-silver"
+                      className="rounded-lg border border-akg-hairline bg-akg-raised p-2.5 text-akg-muted transition-colors hover:text-akg-text cursor-pointer"
                       title="Copy link"
                     >
                       {copiedId === featured.id ? <Check className="h-4 w-4 text-akg-green" /> : <Copy className="h-4 w-4" />}
@@ -166,8 +163,8 @@ export function ResourcesTab({ notify, onNavigate }) {
             const GIcon = groupIcon[group.id] || Globe;
             return (
               <section key={group.id}>
-                <h2 className="flex items-center gap-2.5 font-data text-[11px] uppercase tracking-[0.16em] text-akg-muted">
-                  <GIcon className="h-3.5 w-3.5 text-akg-gold" />
+                <h2 className="flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-wider text-akg-muted">
+                  <GIcon className="h-3.5 w-3.5 text-akg-accent" />
                   {group.label}
                 </h2>
 
@@ -179,42 +176,42 @@ export function ResourcesTab({ notify, onNavigate }) {
                       <article
                         key={item.id}
                         onClick={() => openItem(item)}
-                        className="group flex cursor-pointer flex-col rounded-2xl border border-white/10 bg-akg-surface p-5 transition-all hover:border-[#F3C653]/40 hover:shadow-gold"
+                        className="group flex cursor-pointer flex-col rounded-xl border border-akg-hairline bg-akg-card p-5 transition-all hover:border-akg-accent/40 hover:-translate-y-0.5"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#F3C653]/25 bg-[#F3C653]/[0.07]">
-                            <Icon className="h-5 w-5 text-akg-gold" strokeWidth={1.75} />
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-akg-hairline bg-akg-raised">
+                            <Icon className="h-5 w-5 text-akg-accent" strokeWidth={1.75} />
                           </div>
                           {item.badge && (
-                            <Badge variant="secondary" className="font-data text-[9px] uppercase">
+                            <Badge variant="secondary" className="font-mono text-[9px] uppercase">
                               {item.badge}
                             </Badge>
                           )}
                         </div>
 
-                        <h3 className="mt-4 text-sm font-bold text-white group-hover:text-akg-gold transition-colors">
+                        <h3 className="mt-4 text-sm font-bold text-akg-text group-hover:text-akg-accent transition-colors">
                           {item.title}
                         </h3>
                         <p className="mt-1.5 line-clamp-3 flex-1 text-xs leading-relaxed text-akg-muted">
                           {item.description}
                         </p>
 
-                        <div className="mt-4 flex items-center justify-between border-t border-white/[0.06] pt-3.5">
+                        <div className="mt-4 flex items-center justify-between border-t border-akg-hairline pt-3.5">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleCopy(item); }}
-                            className="rounded-lg p-1.5 text-akg-muted transition-colors hover:bg-white/5 hover:text-akg-silver"
+                            className="rounded-md p-1.5 text-akg-muted transition-colors hover:text-akg-text cursor-pointer"
                             title="Copy link"
                           >
                             {copiedId === item.id ? <Check className="h-3.5 w-3.5 text-akg-green" /> : <Copy className="h-3.5 w-3.5" />}
                           </button>
 
                           {isDownload(item) ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-akg-green/15 px-3 py-1 text-[11px] font-bold text-akg-green">
+                            <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2.5 py-1 font-mono text-[11px] font-semibold text-akg-green">
                               <Download className="h-3 w-3" />
                               Download
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-akg-muted group-hover:text-akg-gold transition-colors">
+                            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-akg-muted group-hover:text-akg-accent transition-colors">
                               {internal ? 'Open in site' : 'Open link'}
                               <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                             </span>

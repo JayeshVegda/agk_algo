@@ -5,28 +5,28 @@ const UPDATED = '25 October 2026';
 
 function LegalLayout({ icon: Icon, title, intro, sections }) {
   return (
-    <div className="mx-auto max-w-3xl font-sans text-akg-silver">
+    <div className="mx-auto max-w-3xl font-sans text-akg-text">
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#F3C653]/25 bg-[#F3C653]/[0.07]">
-          <Icon className="h-5 w-5 text-akg-gold" strokeWidth={1.75} />
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-akg-hairline bg-akg-raised">
+          <Icon className="h-5 w-5 text-akg-accent" strokeWidth={1.75} />
         </div>
         <div>
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{title}</h1>
-          <p className="font-data text-[10px] uppercase tracking-wider text-akg-muted">Last updated: {UPDATED}</p>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-akg-text sm:text-3xl">{title}</h1>
+          <p className="font-mono text-[10px] uppercase tracking-wider text-akg-muted">Last updated: {UPDATED}</p>
         </div>
       </div>
       <p className="mt-5 text-sm leading-relaxed text-akg-muted">{intro}</p>
       <div className="mt-8 space-y-8 pb-4">
         {sections.map(([h, ...paras]) => (
           <section key={h}>
-            <h2 className="font-display text-base font-bold text-white">{h}</h2>
+            <h2 className="font-display text-base font-bold text-akg-text">{h}</h2>
             {paras.map((p, i) => (
               typeof p === 'string'
                 ? <p key={i} className="mt-2.5 text-[13px] leading-relaxed text-akg-muted">{p}</p>
                 : <ul key={i} className="mt-2.5 space-y-1.5">
                     {p.map((li) => (
                       <li key={li} className="flex gap-2 text-[13px] leading-relaxed text-akg-muted">
-                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-akg-gold" />{li}
+                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-akg-accent" />{li}
                       </li>
                     ))}
                   </ul>

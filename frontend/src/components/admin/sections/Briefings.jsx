@@ -49,8 +49,8 @@ export default function Briefings() {
       />
 
       {/* Fast dispatch */}
-      <div className="rounded-2xl border border-white/10 bg-akg-surface p-4 sm:p-5">
-        <h2 className="mb-3 flex items-center gap-2 font-data text-[10px] uppercase tracking-wider text-akg-gold">
+      <div className="rounded-2xl border border-[var(--akg-hairline)] bg-akg-card p-4 sm:p-5">
+        <h2 className="mb-3 flex items-center gap-2 font-data text-[10px] uppercase tracking-wider text-akg-accent">
           <Send className="h-3.5 w-3.5" /> Quick dispatch
         </h2>
         <div className="space-y-3">
@@ -72,14 +72,14 @@ export default function Briefings() {
                 {AUTHORS.map((a) => <option key={a}>{a}</option>)}
               </select>
               <label className="flex cursor-pointer items-center gap-2 text-xs text-akg-silver">
-                <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} className="h-4 w-4 accent-[#F3C653]" />
+                <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} className="h-4 w-4 accent-[var(--akg-accent)]" />
                 Pin to member dashboards
               </label>
             </div>
             <button
               onClick={dispatch}
               disabled={!canSend || busy}
-              className="flex h-10 items-center gap-2 rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] px-5 text-sm font-bold text-[#1C1403] active:scale-[0.98] disabled:opacity-40"
+              className="flex h-10 items-center gap-2 rounded-lg bg-akg-cta px-5 text-sm font-bold text-akg-cta-text shadow-sm transition-opacity hover:opacity-90 active:scale-[0.98] disabled:opacity-40"
             >
               <Send className="h-4 w-4" /> {busy ? 'Dispatching...' : 'Dispatch'}
             </button>
@@ -98,19 +98,19 @@ export default function Briefings() {
               className={cn(
                 'rounded-2xl border p-4 transition-colors',
                 b.pinned
-                  ? 'border-[#F3C653]/35 bg-gradient-to-b from-[#171208]/70 to-akg-surface'
-                  : 'border-white/10 bg-akg-surface'
+                  ? 'border-akg-accent/40 bg-emerald-500/5 ring-1 ring-akg-accent/20'
+                  : 'border-[var(--akg-hairline)] bg-akg-card'
               )}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     {b.pinned && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#F3C653]/15 px-2 py-0.5 font-data text-[9px] font-bold uppercase tracking-wider text-akg-gold">
+                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/15 px-2 py-0.5 font-data text-[9px] font-bold uppercase tracking-wider text-akg-accent">
                         <Pin className="h-2.5 w-2.5" /> Pinned
                       </span>
                     )}
-                    <h3 className="text-sm font-bold text-white">{b.title}</h3>
+                    <h3 className="text-sm font-bold text-[var(--akg-text)]">{b.title}</h3>
                   </div>
                   <div className="mt-0.5 font-data text-[10px] text-akg-muted">
                     {b.author || 'Desk'} · {fmtRelative(b.created)}
@@ -119,12 +119,12 @@ export default function Briefings() {
                 <div className="flex shrink-0 items-center gap-1.5">
                   <button
                     onClick={() => togglePinBroadcast(b)}
-                    className={cn('rounded-lg p-1.5 transition-colors', b.pinned ? 'text-akg-gold hover:bg-[#F3C653]/10' : 'text-akg-muted hover:bg-white/5 hover:text-white')}
+                    className={cn('rounded-lg p-1.5 transition-colors', b.pinned ? 'text-akg-accent hover:bg-emerald-500/10' : 'text-akg-muted hover:bg-white/5 hover:text-[var(--akg-text)]')}
                     title={b.pinned ? 'Unpin' : 'Pin'}
                   >
                     <Pin className="h-3.5 w-3.5" />
                   </button>
-                  <button onClick={() => setEditing(b)} className="rounded-lg p-1.5 text-akg-muted hover:bg-white/5 hover:text-white" title="Edit">
+                  <button onClick={() => setEditing(b)} className="rounded-lg p-1.5 text-akg-muted hover:bg-white/5 hover:text-[var(--akg-text)]" title="Edit">
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button onClick={() => setDeleting(b)} className="rounded-lg p-1.5 text-akg-muted hover:bg-rose-500/10 hover:text-rose-300" title="Delete">
@@ -178,7 +178,7 @@ function EditBriefing({ briefing, onClose, onSave }) {
         <button
           onClick={() => onSave({ title, body, pinned: Boolean(pinned) })}
           disabled={!title.trim() || !body.trim()}
-          className="h-11 w-full rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] text-sm font-bold text-[#1C1403] disabled:opacity-40"
+          className="h-11 w-full rounded-lg bg-akg-cta text-sm font-bold text-akg-cta-text shadow-sm transition-opacity hover:opacity-90 disabled:opacity-40"
         >
           Save Changes
         </button>
@@ -194,7 +194,7 @@ function EditBriefing({ briefing, onClose, onSave }) {
           <textarea value={body} onChange={(e) => setBody(e.target.value)} className={textareaCls} />
         </div>
         <label className="flex cursor-pointer items-center gap-2 text-xs text-akg-silver">
-          <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} className="h-4 w-4 accent-[#F3C653]" />
+          <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} className="h-4 w-4 accent-[var(--akg-accent)]" />
           Pinned directive
         </label>
       </div>

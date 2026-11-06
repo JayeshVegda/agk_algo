@@ -15,7 +15,7 @@ import { fmtRelative, fmtDateTime } from '../lib/format';
 import { cn } from '../../../lib/utils';
 
 /**
- * Money Queue — server-paginated table. Pending is oldest-first (fair);
+ * Money Queue - server-paginated table. Pending is oldest-first (fair);
  * history sorts newest-first by default. Row = one line; click expands the
  * payment proof; J/K moves, A approves, R rejects. State lives in the URL:
  * ?f= | ?q= | ?page= | ?sort=&dir= | ?id= (dossier) | ?exp= (expanded row).
@@ -149,7 +149,7 @@ export default function Payments() {
       label: 'Trader',
       cell: (p) => (
         <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-xs font-semibold text-white">{p.user_email || '—'}</span>
+          <span className="truncate text-xs font-semibold text-[var(--akg-text)]">{p.user_email || '-'}</span>
           {p.status === 'pending' && purchaseLabel(priorMap[p.user_email] || 0) && (
             <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-px font-data text-[9px] font-semibold text-akg-muted">{purchaseLabel(priorMap[p.user_email] || 0)} purchase</span>
           )}
@@ -167,7 +167,7 @@ export default function Payments() {
       label: 'Method',
       cell: (p) => (
         <span className={cn('inline-block whitespace-nowrap rounded px-1.5 py-px font-data text-[9px] font-bold',
-          p.method === 'upi' ? 'bg-akg-green/15 text-akg-green' : 'bg-[#F3C653]/15 text-akg-gold')}
+          p.method === 'upi' ? 'bg-akg-green/15 text-akg-green' : 'bg-emerald-500/15 text-akg-accent')}
         >
           {p.method === 'upi' ? 'UPI' : p.network?.replace('USDT-', '') || 'USDT'}
         </span>
@@ -194,14 +194,14 @@ export default function Payments() {
           <button
             onClick={() => setConfirming(p)}
             title="Approve (A)"
-            className="flex h-7 items-center gap-1 rounded-full bg-[linear-gradient(120deg,#E8BC4F,#F3C653,#DFAE3E)] px-2.5 font-data text-[10px] font-bold text-[#1C1403] transition-transform active:scale-95"
+            className="flex h-7 items-center gap-1 rounded-md bg-akg-cta px-2.5 font-mono text-[10px] font-bold text-akg-cta-text transition-transform active:scale-95 hover:opacity-90 cursor-pointer shadow-sm"
           >
             ✓ Approve
           </button>
           <button
             onClick={() => openReject(p)}
             title="Reject with reason (R)"
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-rose-500/30 text-xs font-bold text-rose-300 transition-colors hover:bg-rose-500/10 active:scale-95"
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-rose-500/30 text-xs font-bold text-rose-300 transition-colors hover:bg-rose-500/10 active:scale-95 cursor-pointer"
           >
             ✕
           </button>
@@ -233,7 +233,7 @@ export default function Payments() {
           clear();
           afterAction();
         }}
-        className="rounded-full bg-[linear-gradient(120deg,#E8BC4F,#F3C653,#DFAE3E)] px-3 py-1.5 text-[11px] font-bold text-[#1C1403] disabled:opacity-40"
+        className="rounded-lg bg-akg-cta px-3 py-1.5 text-[11px] font-bold text-akg-cta-text disabled:opacity-40 hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
       >
         Approve {rows.filter((r) => r.status === 'pending').length || ''}
       </button>
@@ -248,7 +248,7 @@ export default function Payments() {
         actions={
           <button
             onClick={() => exportPaymentsCsv({ search, items: page.items }, filter)}
-            className="flex h-9 items-center gap-2 rounded-full border border-white/15 px-4 text-xs font-bold text-akg-silver transition-colors hover:border-[#F3C653]/40 hover:text-akg-gold"
+            className="flex h-9 items-center gap-2 rounded-lg border border-akg-hairline bg-akg-card px-4 text-xs font-bold text-akg-text transition-colors hover:border-akg-accent/40 hover:text-akg-accent cursor-pointer"
           >
             <Download className="h-3.5 w-3.5" /> Export CSV
           </button>
@@ -310,13 +310,13 @@ export default function Payments() {
               <div className="mb-2 font-data text-[9px] uppercase tracking-wider text-akg-muted">Timeline</div>
               <div className="space-y-1 text-[11px] text-akg-silver">
                 <div>Submitted {fmtDateTime(p.created)}</div>
-                {p.license_key && <div className="font-data text-[10px] text-akg-gold">key {p.license_key}</div>}
+                {p.license_key && <div className="font-mono text-[10px] text-akg-accent">key {p.license_key}</div>}
                 {p.admin_notes && <div className="text-akg-muted">note: {p.admin_notes}</div>}
               </div>
             </div>
             <button
               onClick={(e) => { e.stopPropagation(); replaceParams({ id: p.id, exp: '' }); }}
-              className="justify-self-start rounded-full border border-[#F3C653]/40 bg-[#F3C653]/10 px-3.5 py-1.5 text-[11px] font-bold text-akg-gold hover:bg-[#F3C653]/20"
+              className="justify-self-start rounded-lg border border-akg-accent/40 bg-emerald-500/10 px-3.5 py-1.5 text-[11px] font-bold text-akg-accent hover:bg-emerald-500/20 cursor-pointer"
             >
               Open dossier →
             </button>
@@ -337,7 +337,7 @@ export default function Payments() {
                 <span className={cn('font-data text-[10px]', p.status === 'pending' ? 'font-bold text-amber-300' : 'text-akg-muted')}>
                   {p.status === 'pending' ? timeWaiting(p.created) : fmtRelative(p.created)}
                 </span>
-                <span className="truncate text-xs font-semibold text-white">{p.user_email || '—'}</span>
+                <span className="truncate text-xs font-semibold text-[var(--akg-text)]">{p.user_email || '-'}</span>
                 {p.status === 'pending' && purchaseLabel(priorMap[p.user_email] || 0) && (
                   <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-px font-data text-[9px] text-akg-muted">{purchaseLabel(priorMap[p.user_email] || 0)}</span>
                 )}
@@ -355,7 +355,7 @@ export default function Payments() {
                   <button
                     onClick={() => setConfirming(p)}
                     aria-label="Approve (A)"
-                    className="flex h-7 items-center rounded-full bg-[linear-gradient(120deg,#E8BC4F,#F3C653,#DFAE3E)] px-2.5 font-data text-[10px] font-bold text-[#1C1403]"
+                    className="flex h-7 items-center rounded-md bg-akg-cta px-2.5 font-mono text-[10px] font-bold text-akg-cta-text hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
                   >
                     ✓
                   </button>
@@ -465,7 +465,7 @@ function Kpi({ k, v, gold }) {
   return (
     <span className="flex items-baseline gap-1.5">
       <span className="text-[10px] uppercase tracking-wider text-akg-muted/70">{k}</span>
-      <span className={cn('font-bold tabular-nums', gold ? 'text-akg-gold' : 'text-white')}>{v}</span>
+      <span className={cn('font-bold tabular-nums', gold ? 'text-akg-accent font-mono' : 'text-akg-text')}>{v}</span>
     </span>
   );
 }

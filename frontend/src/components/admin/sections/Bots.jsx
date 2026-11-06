@@ -106,7 +106,7 @@ export default function Bots() {
         actions={
           <button
             onClick={() => setEditing({ ...EMPTY_BOT })}
-            className="flex h-10 items-center gap-2 rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] px-4 text-sm font-bold text-[#1C1403] active:scale-[0.98]"
+            className="flex h-10 items-center gap-2 rounded-lg bg-akg-cta px-4 text-sm font-bold text-akg-cta-text active:scale-[0.98] hover:opacity-90 shadow-sm transition-opacity cursor-pointer"
           >
             <Plus className="h-4 w-4" /> Add Bot
           </button>
@@ -158,7 +158,7 @@ export default function Bots() {
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className="font-data text-sm font-bold text-akg-gold">${b.price}</span>
+                      <span className="font-mono text-sm font-bold text-akg-accent">${b.price}</span>
                       <span className="ml-1 text-[10px] text-akg-muted">USDT</span>
                     </td>
                     <td className="px-4 py-3.5">
@@ -310,7 +310,7 @@ function BotEditor({ bot, onClose, onSave }) {
             setBusy(false);
           }}
           disabled={!valid || busy}
-          className="h-11 w-full rounded-full bg-[linear-gradient(120deg,#E8BC4F_0%,#F3C653_38%,#FFE9A8_58%,#DFAE3E_100%)] text-sm font-bold text-[#1C1403] disabled:opacity-40"
+          className="h-11 w-full rounded-lg bg-akg-cta text-sm font-bold text-akg-cta-text disabled:opacity-40 hover:opacity-90 shadow-sm transition-opacity cursor-pointer"
         >
           {busy ? 'Saving...' : 'Save Bot'}
         </button>
@@ -436,7 +436,7 @@ function BotEditor({ bot, onClose, onSave }) {
                   <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
-                    className="flex shrink-0 items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-akg-gold hover:bg-white/5"
+                    className="flex shrink-0 items-center gap-1.5 rounded-lg border border-akg-hairline px-3 py-2 text-xs font-semibold text-akg-accent hover:bg-akg-raised cursor-pointer"
                   >
                     <ImageIcon className="h-4 w-4" /> Upload
                   </button>

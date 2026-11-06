@@ -5,7 +5,7 @@ let rosterCache = { at: 0, data: [] };
 
 /**
  * The `users` collection list rule hides other records from the SPA (only
- * /api/akg/traders — an admin-gated hook route — returns the full roster).
+ * /api/akg/traders - an admin-gated hook route - returns the full roster).
  * Shared + cached so the palette, dossier and sections reuse one fetch.
  */
 export async function loadRoster() {

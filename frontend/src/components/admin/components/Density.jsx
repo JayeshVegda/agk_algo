@@ -29,7 +29,7 @@ export function DensityToggle({ className }) {
   return (
     <button
       onClick={() => setDensity(density === 'compact' ? 'comfortable' : 'compact')}
-      className={cn('rounded-full border border-white/10 p-2.5 text-akg-muted transition-colors hover:border-[#F3C653]/40 hover:text-akg-gold', className)}
+      className={cn('rounded-lg border border-akg-hairline bg-akg-card p-2 text-akg-muted transition-colors hover:border-akg-accent/40 hover:text-akg-accent cursor-pointer', className)}
       title={density === 'compact' ? 'Density: Compact (switch to roomy rows)' : 'Density: Roomy rows (switch to compact)'}
       aria-label="Toggle table density"
     >

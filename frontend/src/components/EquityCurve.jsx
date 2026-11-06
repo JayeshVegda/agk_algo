@@ -1,13 +1,5 @@
 import { useMemo } from 'react';
 
-/**
- * Deterministic equity-curve renderer built from a bot's real published stats
- * (win rate, profit factor, max drawdown). When no verified track record is
- * attached to a bot, this renders an ILLUSTRATIVE profile and every usage must
- * label it as such - it is a shape of the strategy's statistics, not trade data.
- *
- * Seeded PRNG keeps each bot's curve stable across renders and reloads.
- */
 function mulberry32(seed) {
   return function () {
     seed |= 0;
@@ -26,16 +18,11 @@ function hashCode(str) {
   return Math.abs(h);
 }
 
-/**
- * Build the series: an upward random walk whose drift comes from the profit
- * factor and whose dip depth comes from the max drawdown.
- */
 function buildSeries({ seed, points = 90, profitFactor = 2.5, drawdownPct = 5 }) {
   const rand = mulberry32(seed);
   const pf = Math.max(1.1, Math.min(parseFloat(profitFactor) || 2.5, 5));
   const dd = Math.max(1, Math.min(parseFloat(drawdownPct) || 5, 20));
 
-  // Stronger edge -> steadier drift; deeper drawdown -> deeper, longer dips.
   const drift = 0.55 + (pf - 1) * 0.22;
   const noise = 0.5 + dd * 0.075;
 
@@ -45,7 +32,6 @@ function buildSeries({ seed, points = 90, profitFactor = 2.5, drawdownPct = 5 })
 
   for (let i = 1; i < points; i++) {
     sinceDip += 1;
-    // Occasionally roll into a drawdown leg, then recover.
     const drawdownLeg = sinceDip > 12 && rand() < dd / 45;
     if (drawdownLeg) {
       sinceDip = 0;
@@ -56,16 +42,12 @@ function buildSeries({ seed, points = 90, profitFactor = 2.5, drawdownPct = 5 })
     series.push(value);
   }
 
-  // Normalize to a consistent visual range.
   const min = Math.min(...series);
   const max = Math.max(...series);
   const span = max - min || 1;
-  return series.map((v) => 8 + ((v - min) / span) * 84); // 0-100 padded
+  return series.map((v) => 8 + ((v - min) / span) * 84);
 }
 
-/**
- * <EquityCurve seed="AKG Gold Trap EA" profitFactor="2.64" drawdown="5.8%" height={} />
- */
 export default function EquityCurve({
   seed = 'akg',
   profitFactor,
@@ -107,18 +89,18 @@ export default function EquityCurve({
     >
       <defs>
         <linearGradient id={`${gid}-fill`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#F3C653" stopOpacity="0.28" />
-          <stop offset="100%" stopColor="#F3C653" stopOpacity="0.02" />
+          <stop offset="0%" stopColor="var(--akg-accent, #00D878)" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="var(--akg-accent, #00D878)" stopOpacity="0.01" />
         </linearGradient>
         <linearGradient id={`${gid}-line`} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#A87927" />
-          <stop offset="55%" stopColor="#F3C653" />
-          <stop offset="100%" stopColor="#FFE58A" />
+          <stop offset="0%" stopColor="#059669" />
+          <stop offset="55%" stopColor="var(--akg-accent, #00D878)" />
+          <stop offset="100%" stopColor="#34D399" />
         </linearGradient>
       </defs>
 
       {showGrid && (
-        <g stroke="rgba(255,255,255,0.06)" strokeWidth="1">
+        <g stroke="currentColor" strokeOpacity="0.08" strokeWidth="1">
           <line x1="0" y1="25" x2="600" y2="25" />
           <line x1="0" y1="50" x2="600" y2="50" />
           <line x1="0" y1="75" x2="600" y2="75" />
@@ -135,8 +117,7 @@ export default function EquityCurve({
         strokeLinecap="round"
         vectorEffect="non-scaling-stroke"
       />
-      {/* end-point marker */}
-      <circle cx="600" cy={lastY} r="3" fill="#FFE58A" />
+      <circle cx="600" cy={lastY} r="3" fill="var(--akg-accent, #00D878)" />
     </svg>
   );
 }

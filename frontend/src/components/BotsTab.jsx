@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { pb, pbUrl } from '../lib/pocketbase';
 import {
   Cpu, Download, CheckCircle2, KeyRound, Copy, Check,
@@ -79,7 +79,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
     navigator.clipboard.writeText(text);
     setCopiedKey(true);
     if (notify) {
-      notify({ type: 'copy', title: 'Copied to Clipboard', message: text });
+      notify({ type: 'copy', title: 'Copied to clipboard', message: text });
     }
     setTimeout(() => setCopiedKey(false), 2000);
   };
@@ -96,14 +96,12 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
     return myPurchases.find((p) => p.status === 'confirmed' && p.plan?.includes(botName));
   };
 
-  // Direct checkout flow — NO account prompt modal
   const startPurchase = (bot) => {
     if (!user) {
       if (onOpenAuth) onOpenAuth();
       return;
     }
 
-    // Already owned: view license modal
     const existing = getOwnedPurchase(bot.name);
     if (existing) {
       setLicenseModalBot({ bot, payment: existing });
@@ -114,14 +112,13 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
       if (notify) {
         notify({
           type: 'info',
-          title: 'Verification in Progress',
+          title: 'Verification in progress',
           message: `Your payment for ${bot.name} is being verified by the desk.`
         });
       }
       return;
     }
 
-    // Flow: Bot page -> Purchase -> Checkout (pay + TXID)
     sessionStorage.setItem('akg_order', JSON.stringify({
       kind: 'bot',
       id: bot.id,
@@ -132,7 +129,6 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
     if (onNavigate) onNavigate('checkout');
   };
 
-  // Only Live bots show publicly
   const liveBots = useMemo(() => bots.filter((b) => b.is_live !== false), [bots]);
 
   const filteredBots = useMemo(() => {
@@ -146,8 +142,8 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
 
   if (botSlug && botsLoading) {
     return (
-      <div className="flex justify-center items-center py-24 font-data text-xs text-akg-muted">
-        Loading Expert Advisor specifications…
+      <div className="flex justify-center items-center py-24 font-mono text-xs text-akg-muted">
+        Loading Expert Advisor specifications...
       </div>
     );
   }
@@ -155,8 +151,8 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
   if (botSlug && !selectedBot && liveBots.length > 0) {
     return (
       <div className="max-w-3xl mx-auto text-center py-24 space-y-4">
-        <AlertCircle className="h-10 w-10 mx-auto text-akg-gold" />
-        <h1 className="font-display text-2xl font-extrabold text-white">Expert Advisor not found</h1>
+        <AlertCircle className="h-10 w-10 mx-auto text-akg-accent" />
+        <h1 className="font-display text-2xl font-bold text-akg-text">Expert Advisor not found</h1>
         <p className="text-sm text-akg-muted">The system may be unpublished or the link is outdated.</p>
         <Button variant="outline" onClick={() => onNavigate && onNavigate('bots')}>
           Back to Expert Advisors
@@ -172,7 +168,6 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
     const bot = selectedBot;
     const owned = isBotOwned(bot.name);
     const pending = isBotPending(bot.name);
-    const ownedPayment = getOwnedPurchase(bot.name);
     const pairs = pairsOf(bot);
     const features = featuresOf(bot);
     const timeframes = timeframesOf(bot);
@@ -180,23 +175,22 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
     const cat = botCategory(bot);
     const CatIcon = cat.icon;
 
-    // Stat tiles: only render if filled
     const statItems = [
-      { label: 'Win rate', value: statNumOrNull(bot.win_rate) !== null ? pctStat(bot.win_rate) : null, tone: 'text-white' },
-      { label: 'Profit factor', value: statNumOrNull(bot.profit_factor) !== null ? `${bot.profit_factor}` : null, tone: 'text-akg-gold' },
-      { label: 'Max drawdown', value: statNumOrNull(bot.drawdown) !== null ? pctStat(bot.drawdown) : null, tone: 'text-rose-400' },
-      { label: 'Min capital', value: bot.recommended_deposit || null, tone: 'text-white' },
+      { label: 'Win rate', value: statNumOrNull(bot.win_rate) !== null ? pctStat(bot.win_rate) : null, tone: 'text-akg-text' },
+      { label: 'Profit factor', value: statNumOrNull(bot.profit_factor) !== null ? `${bot.profit_factor}` : null, tone: 'text-akg-accent' },
+      { label: 'Max drawdown', value: statNumOrNull(bot.drawdown) !== null ? pctStat(bot.drawdown) : null, tone: 'text-rose-500' },
+      { label: 'Min capital', value: bot.recommended_deposit || null, tone: 'text-akg-text' },
     ].filter((s) => Boolean(s.value));
 
     const hasBacktestImg = Boolean(bot.image_url && bot.image_url.trim());
 
     return (
-      <div className="max-w-5xl mx-auto font-sans text-akg-silver w-full space-y-8 pb-12">
+      <div className="max-w-5xl mx-auto font-sans text-akg-text w-full space-y-8 pb-12">
         {/* Navigation & Admin Deep-link */}
         <div className="flex items-center justify-between gap-4">
           <button
             onClick={() => onNavigate && onNavigate('bots')}
-            className="group inline-flex items-center gap-1.5 text-xs font-semibold text-akg-muted hover:text-akg-gold transition-colors cursor-pointer"
+            className="group inline-flex items-center gap-1.5 text-xs font-semibold text-akg-muted hover:text-akg-accent transition-colors cursor-pointer"
           >
             <ChevronLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
             All Expert Advisors
@@ -205,7 +199,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
           {user?.role === 'admin' && (
             <button
               onClick={() => onNavigateAdmin?.(`/admin?s=bots&edit=${bot?.id || ''}`)}
-              className="flex h-7 items-center gap-1.5 rounded-full border border-[#F3C653]/40 px-3 font-data text-[10px] font-bold text-akg-gold hover:bg-[#F3C653]/10"
+              className="flex h-7 items-center gap-1.5 rounded-md border border-akg-accent/40 bg-akg-card px-3 font-mono text-[10px] font-semibold text-akg-accent hover:bg-akg-accent/10 transition-colors"
             >
               <FlaskConical className="h-3 w-3" /> Admin: Edit Bot
             </button>
@@ -217,12 +211,12 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
           <div className="flex flex-col justify-center space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary" className="font-mono">{bot.platform}</Badge>
-              <Badge variant="gold" className="font-mono">{bot.version || 'v1.0'}</Badge>
-              {owned && <Badge variant="positive">Licensed</Badge>}
-              {pending && <Badge variant="gold">Verification in progress</Badge>}
+              <Badge variant="emerald" className="font-mono">{bot.version || 'v1.0'}</Badge>
+              {owned && <Badge variant="emerald">Licensed</Badge>}
+              {pending && <Badge variant="outline">Verification in progress</Badge>}
             </div>
 
-            <h1 className="font-display text-3xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-4xl">
+            <h1 className="font-display text-3xl font-extrabold leading-[1.08] tracking-tight text-akg-text sm:text-4xl">
               {bot.name}
             </h1>
 
@@ -231,7 +225,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                 {pairs.map((p) => (
                   <span
                     key={p}
-                    className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 font-data text-[10px] font-semibold uppercase tracking-wider text-akg-gold"
+                    className="rounded-md border border-akg-hairline bg-akg-raised px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-akg-accent"
                   >
                     {p}
                   </span>
@@ -241,16 +235,16 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
 
             <div className="pt-3 flex flex-wrap items-center gap-5">
               <div>
-                <div className="font-display text-3xl font-extrabold text-white tabular-nums">
+                <div className="font-display text-3xl font-extrabold text-akg-text tabular-nums">
                   ${bot.price}
-                  <span className="ml-1.5 text-sm font-bold text-akg-gold">USDT</span>
+                  <span className="ml-1.5 text-sm font-bold text-akg-accent">USDT</span>
                 </div>
                 <div className="text-[11px] text-akg-muted">One-time perpetual license</div>
               </div>
 
               <Button
                 size="lg"
-                variant={owned ? 'positive' : 'default'}
+                variant={owned ? 'outline' : 'default'}
                 className="gap-2 px-6"
                 onClick={() => startPurchase(bot)}
               >
@@ -275,7 +269,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
           </div>
 
           {/* Right Hero Media: Backtest Image (if uploaded) or Category Card */}
-          <div className="relative min-h-[220px] overflow-hidden rounded-3xl border border-white/10 bg-[#0A0D13] flex items-center justify-center">
+          <div className="relative min-h-[220px] overflow-hidden rounded-xl border border-akg-hairline bg-akg-raised flex items-center justify-center">
             {hasBacktestImg ? (
               <div className="relative h-full w-full">
                 <img
@@ -284,19 +278,19 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                   className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-                <span className="absolute bottom-3 left-3 rounded-md border border-white/10 bg-black/70 px-2.5 py-1 font-data text-[9.5px] uppercase tracking-wider text-akg-gold backdrop-blur">
+                <span className="absolute bottom-3 left-3 rounded-md border border-akg-hairline bg-akg-card/90 px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wider text-akg-accent backdrop-blur">
                   Backtest, not live results
                 </span>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center gap-2 p-8 text-center">
-                <div className="h-12 w-12 rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center">
-                  <CatIcon className="h-6 w-6 text-akg-gold" />
+                <div className="h-12 w-12 rounded-lg border border-akg-hairline bg-akg-card flex items-center justify-center">
+                  <CatIcon className="h-6 w-6 text-akg-accent" />
                 </div>
-                <div className="font-data text-xs uppercase tracking-wider text-white">
+                <div className="font-mono text-xs uppercase tracking-wider text-akg-text">
                   {cat.label} Strategy
                 </div>
-                <div className="font-data text-[10px] text-akg-muted">
+                <div className="font-mono text-[10px] text-akg-muted">
                   {pairs.join(', ') || 'All Pairs'} · {bot.platform}
                 </div>
               </div>
@@ -308,58 +302,57 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
         {statItems.length > 0 && (
           <div className={`grid gap-3 grid-cols-2 sm:grid-cols-${Math.min(statItems.length, 4)}`}>
             {statItems.map((s) => (
-              <div key={s.label} className="rounded-2xl border border-white/10 bg-akg-surface p-4 text-center">
-                <div className={`font-data text-xl font-bold ${s.tone}`}>{s.value}</div>
-                <div className="mt-1 font-data text-[10px] uppercase tracking-wider text-akg-muted">{s.label}</div>
+              <div key={s.label} className="rounded-xl border border-akg-hairline bg-akg-card p-4 text-center">
+                <div className={`font-mono text-xl font-bold ${s.tone}`}>{s.value}</div>
+                <div className="mt-1 font-mono text-[10px] uppercase tracking-wider text-akg-muted">{s.label}</div>
               </div>
             ))}
           </div>
         )}
 
         {/* Strategy Text & Details */}
-        <section className="space-y-4 rounded-2xl border border-white/10 bg-akg-surface p-6">
-          <h2 className="font-display text-lg font-bold text-white">Strategy Architecture</h2>
+        <section className="space-y-4 rounded-xl border border-akg-hairline bg-akg-card p-6">
+          <h2 className="font-display text-lg font-bold text-akg-text">Strategy Architecture</h2>
           {bot.description && (
-            <p className="font-body text-sm leading-relaxed text-akg-silver whitespace-pre-line">
+            <p className="font-sans text-sm leading-relaxed text-akg-muted whitespace-pre-line">
               {bot.description}
             </p>
           )}
 
           {bot.strategy_type && (
-            <div className="pt-1 font-data text-xs text-akg-silver">
-              Core logic: <span className="text-akg-gold font-semibold">{bot.strategy_type}</span>
+            <div className="pt-1 font-mono text-xs text-akg-muted">
+              Core logic: <span className="text-akg-accent font-semibold">{bot.strategy_type}</span>
             </div>
           )}
 
-          {/* Running specifications (only if fields have data) */}
           {(timeframes.length > 0 || bot.min_lot != null || bot.leverage || bot.trading_style) && (
             <div className="grid gap-2.5 pt-3 sm:grid-cols-2 md:grid-cols-4">
               {timeframes.length > 0 && (
-                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
-                  <div className="font-data text-[9.5px] uppercase text-akg-muted">Timeframes</div>
+                <div className="rounded-lg border border-akg-hairline bg-akg-raised p-3">
+                  <div className="font-mono text-[9.5px] uppercase text-akg-muted">Timeframes</div>
                   <div className="mt-1 flex flex-wrap gap-1">
                     {timeframes.map((tf) => (
-                      <span key={tf} className="font-data text-xs text-akg-gold">{tf}</span>
+                      <span key={tf} className="font-mono text-xs text-akg-accent">{tf}</span>
                     ))}
                   </div>
                 </div>
               )}
               {bot.trading_style && (
-                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
-                  <div className="font-data text-[9.5px] uppercase text-akg-muted">Style</div>
-                  <div className="mt-1 font-data text-xs text-white">{bot.trading_style}</div>
+                <div className="rounded-lg border border-akg-hairline bg-akg-raised p-3">
+                  <div className="font-mono text-[9.5px] uppercase text-akg-muted">Style</div>
+                  <div className="mt-1 font-mono text-xs text-akg-text">{bot.trading_style}</div>
                 </div>
               )}
               {bot.min_lot != null && bot.min_lot !== '' && (
-                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
-                  <div className="font-data text-[9.5px] uppercase text-akg-muted">Min Lot</div>
-                  <div className="mt-1 font-data text-xs text-white">{bot.min_lot}</div>
+                <div className="rounded-lg border border-akg-hairline bg-akg-raised p-3">
+                  <div className="font-mono text-[9.5px] uppercase text-akg-muted">Min Lot</div>
+                  <div className="mt-1 font-mono text-xs text-akg-text">{bot.min_lot}</div>
                 </div>
               )}
               {bot.leverage && (
-                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
-                  <div className="font-data text-[9.5px] uppercase text-akg-muted">Leverage</div>
-                  <div className="mt-1 font-data text-xs text-white">{bot.leverage}</div>
+                <div className="rounded-lg border border-akg-hairline bg-akg-raised p-3">
+                  <div className="font-mono text-[9.5px] uppercase text-akg-muted">Leverage</div>
+                  <div className="mt-1 font-mono text-xs text-akg-text">{bot.leverage}</div>
                 </div>
               )}
             </div>
@@ -367,16 +360,16 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
 
           {bot.broker_note && (
             <p className="text-xs text-akg-muted leading-relaxed pt-2">
-              <span className="font-semibold text-akg-silver">Broker Note:</span> {bot.broker_note}
+              <span className="font-semibold text-akg-text">Broker note:</span> {bot.broker_note}
             </p>
           )}
 
           {features.length > 0 && (
             <div className="pt-3">
-              <h3 className="font-data text-xs uppercase tracking-wider text-akg-muted mb-3">Key Features</h3>
+              <h3 className="font-mono text-xs uppercase tracking-wider text-akg-muted mb-3">Key Features</h3>
               <div className="grid gap-2 sm:grid-cols-2">
                 {features.map((f) => (
-                  <div key={f} className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-xs text-akg-silver">
+                  <div key={f} className="flex items-center gap-2 rounded-lg border border-akg-hairline bg-akg-raised p-3 text-xs text-akg-text">
                     <CheckCircle2 className="h-4 w-4 shrink-0 text-akg-green" />
                     <span>{f}</span>
                   </div>
@@ -388,33 +381,33 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
 
         {/* What You Get */}
         <section className="space-y-4">
-          <h2 className="font-display text-lg font-bold text-white">What You Get</h2>
+          <h2 className="font-display text-lg font-bold text-akg-text">What You Get</h2>
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-akg-surface p-5 space-y-2">
-              <div className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-akg-gold">
+            <div className="rounded-xl border border-akg-hairline bg-akg-card p-5 space-y-2">
+              <div className="h-9 w-9 rounded-lg border border-akg-hairline bg-akg-raised flex items-center justify-center text-akg-accent">
                 <Download className="h-4 w-4" />
               </div>
-              <h3 className="font-bold text-sm text-white">EA Binary File</h3>
+              <h3 className="font-bold text-sm text-akg-text">EA Binary File</h3>
               <p className="text-xs text-akg-muted leading-relaxed">
                 Compiled .{bot.platform.toLowerCase().includes('mt4') ? 'ex4' : 'ex5'} executable file, ready to attach to your charts.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-akg-surface p-5 space-y-2">
-              <div className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-akg-green">
+            <div className="rounded-xl border border-akg-hairline bg-akg-card p-5 space-y-2">
+              <div className="h-9 w-9 rounded-lg border border-akg-hairline bg-akg-raised flex items-center justify-center text-akg-green">
                 <FileText className="h-4 w-4" />
               </div>
-              <h3 className="font-bold text-sm text-white">Setup Guide</h3>
+              <h3 className="font-bold text-sm text-akg-text">Setup Guide</h3>
               <p className="text-xs text-akg-muted leading-relaxed">
                 Step-by-step setup documentation with WebRequest URL allowlisting instructions.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-akg-surface p-5 space-y-2">
-              <div className="h-9 w-9 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-sky-400">
+            <div className="rounded-xl border border-akg-hairline bg-akg-card p-5 space-y-2">
+              <div className="h-9 w-9 rounded-lg border border-akg-hairline bg-akg-raised flex items-center justify-center text-emerald-500">
                 <RefreshCw className="h-4 w-4" />
               </div>
-              <h3 className="font-bold text-sm text-white">Version Updates</h3>
+              <h3 className="font-bold text-sm text-akg-text">Version Updates</h3>
               <p className="text-xs text-akg-muted leading-relaxed">
                 Perpetual license covers all future version releases and optimizations for this system.
               </p>
@@ -423,19 +416,19 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
 
           {/* Drive package link if owned */}
           {owned && bot.download_url && (
-            <div className="rounded-2xl border border-sky-400/30 bg-sky-400/[0.06] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.06] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <HardDrive className="h-5 w-5 text-sky-400 shrink-0" />
+                <HardDrive className="h-5 w-5 text-akg-accent shrink-0" />
                 <div>
-                  <div className="text-sm font-bold text-white">Google Drive Distribution Package</div>
-                  <div className="text-xs text-sky-300/80">Contains full presets, historical set files, and release archives.</div>
+                  <div className="text-sm font-bold text-akg-text">Google Drive Distribution Package</div>
+                  <div className="text-xs text-akg-muted">Contains full presets, historical set files, and release archives.</div>
                 </div>
               </div>
               <a
                 href={bot.download_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full bg-sky-400 px-4 py-2 font-data text-xs font-bold text-black hover:bg-sky-300 transition-colors"
+                className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-1.5 rounded-lg bg-akg-cta px-4 py-2 font-mono text-xs font-bold text-akg-cta-text hover:opacity-90 transition-opacity"
               >
                 <span>Open Drive</span>
                 <ExternalLink className="h-3.5 w-3.5" />
@@ -446,16 +439,16 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
 
         {/* Release History (if present) */}
         {selectedChanges.length > 0 && (
-          <section className="space-y-3 rounded-2xl border border-white/10 bg-akg-surface p-6">
-            <h2 className="font-display text-lg font-bold text-white">Release History</h2>
-            <ol className="mt-3 space-y-3 border-l border-white/10 pl-4">
+          <section className="space-y-3 rounded-xl border border-akg-hairline bg-akg-card p-6">
+            <h2 className="font-display text-lg font-bold text-akg-text">Release History</h2>
+            <ol className="mt-3 space-y-3 border-l border-akg-hairline pl-4">
               {selectedChanges.map((ch) => (
                 <li key={ch.id} className="relative">
-                  <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-akg-gold" />
+                  <span className="absolute -left-[21px] top-1.5 h-2 w-2 rounded-full bg-akg-accent" />
                   <div className="flex items-baseline gap-2">
-                    <span className="font-data text-xs font-bold text-akg-gold">{ch.version}</span>
+                    <span className="font-mono text-xs font-bold text-akg-accent">{ch.version}</span>
                     {ch.released && (
-                      <span className="font-data text-[10px] text-akg-muted">
+                      <span className="font-mono text-[10px] text-akg-muted">
                         {new Date(ch.released).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}
                       </span>
                     )}
@@ -467,57 +460,57 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
           </section>
         )}
 
-        {/* One-line demo-account reminder & Risk Disclosure */}
+        {/* Demo reminder & Risk Disclosure */}
         <div className="space-y-3 pt-2">
-          <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-4 text-xs text-akg-silver">
-            <FlaskConical className="h-4 w-4 shrink-0 text-akg-gold" />
+          <div className="flex items-center gap-3 rounded-lg border border-akg-hairline bg-akg-raised p-4 text-xs text-akg-text">
+            <FlaskConical className="h-4 w-4 shrink-0 text-akg-accent" />
             <span>
-              <strong className="text-white">Demo account reminder:</strong> Always run the EA on a demo account first to validate execution and slippage on your broker's live feed before committing live capital.
+              <strong className="text-akg-text">Demo account reminder:</strong> Always run the EA on a demo account first to validate execution and slippage on your broker's live feed before committing live capital.
             </span>
           </div>
 
           <p className="text-[11px] leading-relaxed text-akg-muted">
-            <strong className="text-akg-silver">Risk Disclosure:</strong> Backtested results do not represent actual trading and cannot account for impact of financial risk or market liquidity. Algorithmic trading carries risk of substantial loss.
+            <strong className="text-akg-text">Risk Disclosure:</strong> Backtested results do not represent actual trading and cannot account for impact of financial risk or market liquidity. Algorithmic trading carries risk of substantial loss.
           </p>
         </div>
 
         {/* License Viewer Modal for Owners */}
         {licenseModalBot && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-akg-surface p-6 shadow-2xl space-y-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-xl border border-akg-hairline bg-akg-card p-6 shadow-2xl space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-akg-green" />
-                  <h3 className="font-bold text-white text-base">Active License</h3>
+                  <h3 className="font-bold text-akg-text text-base">Active License</h3>
                 </div>
                 <button
                   onClick={() => setLicenseModalBot(null)}
-                  className="rounded-lg p-1 text-akg-muted hover:text-white"
+                  className="rounded-lg p-1 text-akg-muted hover:text-akg-text cursor-pointer"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
               <div>
-                <div className="font-bold text-sm text-white">{licenseModalBot.bot.name}</div>
-                <div className="font-data text-xs text-akg-muted">Platform: {licenseModalBot.bot.platform}</div>
+                <div className="font-bold text-sm text-akg-text">{licenseModalBot.bot.name}</div>
+                <div className="font-mono text-xs text-akg-muted">Platform: {licenseModalBot.bot.platform}</div>
               </div>
 
-              <div className="rounded-xl border border-akg-green/30 bg-akg-green/10 p-4 space-y-2 font-mono">
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 space-y-2 font-mono">
                 <div className="flex items-center justify-between text-[11px] font-bold text-akg-green">
                   <span>License Key:</span>
                   <button
                     onClick={() => handleCopy(licenseModalBot.payment.license_key)}
-                    className="flex items-center gap-1 hover:underline"
+                    className="flex items-center gap-1 hover:underline cursor-pointer"
                   >
                     {copiedKey ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                     <span>{copiedKey ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
-                <div className="rounded-lg bg-black/60 border border-white/10 p-2.5 text-xs text-white font-bold break-all select-all">
+                <div className="rounded-md bg-akg-bg border border-akg-hairline p-2.5 text-xs text-akg-text font-bold break-all select-all">
                   {licenseModalBot.payment.license_key}
                 </div>
-                <p className="text-[10px] text-akg-silver font-sans">
+                <p className="text-[10px] text-akg-muted font-sans">
                   Paste this key into the EA inputs dialog. It binds silently to your account on first run.
                 </p>
               </div>
@@ -528,7 +521,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                     key={l.path}
                     href={l.path}
                     download
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-akg-green px-3.5 py-2 font-data text-xs font-bold text-black hover:bg-emerald-400 transition-colors"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-akg-cta px-3.5 py-2 font-mono text-xs font-bold text-akg-cta-text hover:opacity-90 transition-opacity"
                   >
                     <Download className="h-3.5 w-3.5" />
                     <span>Download .{l.ext}</span>
@@ -539,7 +532,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                     href={licenseModalBot.bot.download_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-sky-400/40 bg-sky-400/10 px-3.5 py-2 font-data text-xs font-semibold text-sky-300 hover:bg-sky-400/20"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-akg-hairline bg-akg-raised px-3.5 py-2 font-mono text-xs font-semibold text-akg-text hover:border-akg-accent/40"
                   >
                     <HardDrive className="h-3.5 w-3.5" />
                     <span>Drive Package</span>
@@ -557,28 +550,28 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
   // CATALOG GRID: /bots
   // ==========================================================================
   return (
-    <div className="space-y-8 font-sans text-akg-silver w-full">
+    <div className="space-y-8 font-sans text-akg-text w-full">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2">
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-akg-text sm:text-3xl">
             Expert Advisors
           </h1>
           <p className="max-w-2xl text-sm text-akg-muted">
-            Rule-based MT4 & MT5 systems with hard stop-loss risk parameters and zero martingale exposure. One-time USDT payment with automatic silent first-run binding.
+            Rule-based MT4 and MT5 systems with hard stop-loss risk parameters and zero martingale exposure. One-time USDT payment with automatic silent first-run binding.
           </p>
         </div>
 
         {/* Platform Filter */}
-        <div className="flex items-center gap-2 bg-[#0A0D13] p-1.5 rounded-full border border-white/10 shrink-0 self-start">
+        <div className="flex items-center gap-1 bg-akg-raised p-1 rounded-lg border border-akg-hairline shrink-0 self-start">
           {['all', 'MT4', 'MT5'].map((p) => (
             <button
               key={p}
               onClick={() => setPlatformFilter(p)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                 platformFilter === p
-                  ? 'bg-[#F3C653] text-[#1C1403] font-bold shadow-md'
-                  : 'text-akg-muted hover:text-white hover:bg-white/5'
+                  ? 'bg-akg-cta text-akg-cta-text shadow-sm'
+                  : 'text-akg-muted hover:text-akg-text hover:bg-akg-card/60'
               }`}
             >
               {p === 'all' ? 'All Platforms' : p}
@@ -596,12 +589,12 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
           return (
             <article
               key={bot.id}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-akg-surface transition-all hover:border-[#F3C653]/35 hover:shadow-gold cursor-pointer"
+              className="group flex flex-col overflow-hidden rounded-xl border border-akg-hairline bg-akg-card transition-all hover:border-akg-accent/50 hover:-translate-y-0.5 cursor-pointer"
               onClick={() => onOpenBot && onOpenBot(slugify(bot.name))}
             >
               {/* Card Header: Backtest Image if available, else clean category header */}
               {bot.image_url ? (
-                <div className="relative h-32 w-full overflow-hidden border-b border-white/[0.06] bg-[#0A0D13]">
+                <div className="relative h-32 w-full overflow-hidden border-b border-akg-hairline bg-akg-raised">
                   <img
                     src={pbUrl(bot.image_url.trim())}
                     alt={bot.name}
@@ -610,39 +603,39 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
                   <div className="absolute top-3 left-3 flex items-center gap-2">
                     <Badge variant="secondary" className="font-mono text-[10px]">{bot.platform}</Badge>
-                    <span className="font-data text-[10px] text-white/70">{bot.version || 'v1.0'}</span>
+                    <span className="font-mono text-[10px] text-white/90">{bot.version || 'v1.0'}</span>
                   </div>
                   {owned ? (
-                    <Badge variant="positive" className="absolute top-3 right-3 text-[10px]">Licensed</Badge>
+                    <Badge variant="emerald" className="absolute top-3 right-3 text-[10px]">Licensed</Badge>
                   ) : pending ? (
-                    <Badge variant="gold" className="absolute top-3 right-3 text-[10px]">Pending</Badge>
+                    <Badge variant="outline" className="absolute top-3 right-3 text-[10px]">Pending</Badge>
                   ) : null}
-                  <span className="absolute bottom-2 left-3 font-data text-[9px] uppercase tracking-wider text-akg-gold">
+                  <span className="absolute bottom-2 left-3 font-mono text-[9px] uppercase tracking-wider text-akg-accent">
                     Backtest Preview
                   </span>
                 </div>
               ) : (
-                <div className="border-b border-white/[0.06] bg-[#0A0D13] p-4 flex items-center justify-between">
+                <div className="border-b border-akg-hairline bg-akg-raised p-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="font-mono text-[10px]">{bot.platform}</Badge>
-                    <span className="font-data text-[10px] text-akg-muted">{bot.version || 'v1.0'}</span>
+                    <span className="font-mono text-[10px] text-akg-muted">{bot.version || 'v1.0'}</span>
                   </div>
                   {owned ? (
-                    <Badge variant="positive" className="text-[10px]">Licensed</Badge>
+                    <Badge variant="emerald" className="text-[10px]">Licensed</Badge>
                   ) : pending ? (
-                    <Badge variant="gold" className="text-[10px]">Pending</Badge>
+                    <Badge variant="outline" className="text-[10px]">Pending</Badge>
                   ) : (
-                    <span className="font-data text-[10px] uppercase text-akg-muted">{pairsOf(bot)[0] || 'FX'}</span>
+                    <span className="font-mono text-[10px] uppercase text-akg-muted">{pairsOf(bot)[0] || 'FX'}</span>
                   )}
                 </div>
               )}
 
               <div className="flex flex-1 flex-col p-5">
-                <h3 className="font-display text-base font-bold text-white group-hover:text-akg-gold transition-colors">
+                <h3 className="font-display text-base font-bold text-akg-text group-hover:text-akg-accent transition-colors">
                   {bot.name}
                 </h3>
                 {bot.strategy_type && (
-                  <p className="mt-1 font-data text-[11px] uppercase tracking-wide text-akg-muted">
+                  <p className="mt-1 font-mono text-[11px] uppercase tracking-wide text-akg-muted">
                     {bot.strategy_type}
                   </p>
                 )}
@@ -650,25 +643,25 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                   {bot.description}
                 </p>
 
-                {/* Only display stats if filled */}
+                {/* Stats */}
                 {(bot.win_rate != null || bot.profit_factor != null || bot.drawdown != null) && (
-                  <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 font-data text-[11px]">
-                    {statNumOrNull(bot.win_rate) !== null && <span className="text-akg-green">{pctStat(bot.win_rate)} win</span>}
+                  <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px]">
+                    {statNumOrNull(bot.win_rate) !== null && <span className="text-akg-green font-semibold">{pctStat(bot.win_rate)} win</span>}
                     {statNumOrNull(bot.profit_factor) !== null && <span className="text-akg-muted">PF {bot.profit_factor}</span>}
                     {statNumOrNull(bot.drawdown) !== null && <span className="text-akg-muted">DD {pctStat(bot.drawdown)}</span>}
                   </div>
                 )}
 
-                <div className="mt-auto flex items-center justify-between pt-5 border-t border-white/[0.04]">
+                <div className="mt-auto flex items-center justify-between pt-5 border-t border-akg-hairline">
                   <div>
-                    <div className="font-display text-lg font-extrabold text-white tabular-nums">
+                    <div className="font-display text-lg font-extrabold text-akg-text tabular-nums">
                       ${bot.price}
-                      <span className="ml-1 text-[10px] font-bold text-akg-gold">USDT</span>
+                      <span className="ml-1 text-[10px] font-bold text-akg-accent">USDT</span>
                     </div>
                     <div className="text-[10px] text-akg-muted">Perpetual license</div>
                   </div>
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -685,9 +678,9 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
       </div>
 
       {filteredBots.length === 0 && (
-        <div className="rounded-2xl border border-white/10 bg-akg-surface p-12 text-center">
+        <div className="rounded-xl border border-akg-hairline bg-akg-card p-12 text-center">
           <Cpu className="h-8 w-8 mx-auto text-akg-muted" />
-          <h3 className="mt-3 text-sm font-bold text-white">No systems on this platform yet</h3>
+          <h3 className="mt-3 text-sm font-bold text-akg-text">No systems on this platform yet</h3>
           <p className="mt-1 text-xs text-akg-muted">Switch the platform filter to see the full catalog.</p>
         </div>
       )}

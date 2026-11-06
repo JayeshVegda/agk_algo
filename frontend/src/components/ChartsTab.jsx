@@ -18,6 +18,8 @@ export function ChartsTab() {
     if (!containerRef.current) return;
     containerRef.current.innerHTML = '';
 
+    const isDark = document.documentElement.classList.contains('dark');
+
     const script = document.createElement('script');
     script.src = 'https://s3.tradingview.com/tv.js';
     script.async = true;
@@ -28,10 +30,10 @@ export function ChartsTab() {
           symbol: selectedSymbol,
           interval: '60',
           timezone: 'Etc/UTC',
-          theme: 'dark',
+          theme: isDark ? 'dark' : 'light',
           style: '1',
           locale: 'en',
-          toolbar_bg: '#07090D',
+          toolbar_bg: isDark ? '#0B0D14' : '#F5F7FA',
           enable_publishing: false,
           allow_symbol_change: true,
           container_id: 'tradingview_widget_container',
@@ -45,15 +47,15 @@ export function ChartsTab() {
   const activeSymbol = SYMBOLS.find((s) => s.id === selectedSymbol);
 
   return (
-    <div className="space-y-6 font-sans text-akg-silver">
+    <div className="space-y-6 font-sans text-akg-text">
       {/* Page Header */}
       <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <span className="inline-flex items-center gap-2 font-data text-[11px] uppercase tracking-[0.18em] text-akg-gold">
+          <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-akg-accent">
             <BarChart3 className="h-3.5 w-3.5" />
             Market Charts
           </span>
-          <h1 className="mt-3 font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+          <h1 className="mt-3 font-display text-2xl font-extrabold tracking-tight text-akg-text sm:text-3xl">
             Multi-Asset Terminal
           </h1>
           <p className="mt-2 text-sm text-akg-muted">
@@ -62,21 +64,21 @@ export function ChartsTab() {
         </div>
 
         {/* Symbol Switcher Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 bg-akg-raised p-1 rounded-lg border border-akg-hairline">
           {SYMBOLS.map((s) => (
             <button
               key={s.id}
               onClick={() => setSelectedSymbol(s.id)}
-              className={`flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${
+              className={`flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${
                 selectedSymbol === s.id
-                  ? 'border-[#F3C653] bg-[#F3C653] text-[#1C1403] shadow-md shadow-[#F3C653]/20'
-                  : 'border-white/10 bg-white/[0.03] text-akg-muted hover:border-[#F3C653]/40 hover:text-akg-silver'
+                  ? 'bg-akg-cta text-akg-cta-text shadow-sm'
+                  : 'text-akg-muted hover:text-akg-text hover:bg-akg-card/50'
               }`}
             >
               <span>{s.label}</span>
               <span
-                className={`rounded px-1 py-px font-data text-[9px] tracking-wide ${
-                  selectedSymbol === s.id ? 'bg-black/20 text-[#1C1403]' : 'bg-white/5 text-akg-muted'
+                className={`rounded px-1 py-px font-mono text-[9px] tracking-wide ${
+                  selectedSymbol === s.id ? 'bg-black/20 text-akg-cta-text' : 'bg-akg-card text-akg-muted border border-akg-hairline'
                 }`}
               >
                 {s.tag}
@@ -87,18 +89,18 @@ export function ChartsTab() {
       </div>
 
       {/* Embedded Chart Viewport */}
-      <div className="w-full overflow-hidden rounded-2xl border border-white/10 bg-akg-surface shadow-card transition-colors duration-200 hover:border-white/20">
-        <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-3">
+      <div className="w-full overflow-hidden rounded-xl border border-akg-hairline bg-akg-card shadow-sm transition-colors duration-200">
+        <div className="flex items-center justify-between border-b border-akg-hairline px-5 py-3">
           <div className="flex items-center gap-2.5">
             <span className="live-dot" />
-            <span className="font-data text-[11px] uppercase tracking-[0.16em] text-akg-silver">
+            <span className="font-mono text-[11px] uppercase tracking-wider text-akg-text">
               Chart feed
             </span>
           </div>
-          <span className="font-data text-xs text-akg-muted">{activeSymbol?.label}</span>
+          <span className="font-mono text-xs text-akg-muted">{activeSymbol?.label}</span>
         </div>
         <div className="relative h-[650px] w-full">
-          <div id="tradingview_widget_container" className="h-full w-full" ref={containerRef} />
+          <div id="tradingview_widget_container" ref={containerRef} className="h-full w-full" />
         </div>
       </div>
     </div>

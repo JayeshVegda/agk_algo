@@ -9,7 +9,7 @@ import { pb } from '../../../lib/pocketbase';
  * pb.filter). searchKeys are matched with `~` against the search box.
  *
  * Fully controlled mode: pass both `search`+`onSearch` and `page`+`onPage`
- * (e.g. URL-backed from urlState) — the caller also owns resetting to page 1.
+ * (e.g. URL-backed from urlState) - the caller also owns resetting to page 1.
  */
 export function usePagedList(collection, {
   filter = '', params = null, sort = '-created', searchKeys = [], perPage = 20,

@@ -88,8 +88,8 @@ export default function CommandPalette({ go, open, setOpen }) {
   return (
     <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Command palette">
       <div className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} />
-      <div className="absolute left-1/2 top-[12vh] w-full max-w-lg -translate-x-1/2 overflow-hidden rounded-2xl border border-white/10 bg-[#0B0E14] shadow-2xl">
-        <div className="flex items-center gap-2.5 border-b border-white/[0.07] px-4">
+      <div className="absolute left-1/2 top-[12vh] w-full max-w-lg -translate-x-1/2 overflow-hidden rounded-2xl border border-[var(--akg-hairline)] bg-akg-card text-[var(--akg-text)] shadow-2xl">
+        <div className="flex items-center gap-2.5 border-b border-[var(--akg-hairline)] px-4">
           <Search className="h-4 w-4 shrink-0 text-akg-muted" />
           <input
             ref={inputRef}
@@ -97,10 +97,10 @@ export default function CommandPalette({ go, open, setOpen }) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Jump to section, trader, or pending deposit…"
-            className="h-12 w-full bg-transparent text-sm text-white placeholder:text-akg-muted/70 focus:outline-none"
+            placeholder="Jump to section, trader, or pending deposit..."
+            className="h-12 w-full bg-transparent text-sm text-[var(--akg-text)] placeholder:text-akg-muted/70 focus:outline-none"
           />
-          <kbd className="rounded border border-white/10 px-1.5 py-0.5 font-data text-[10px] text-akg-muted">esc</kbd>
+          <kbd className="rounded border border-[var(--akg-hairline)] px-1.5 py-0.5 font-data text-[10px] text-akg-muted">esc</kbd>
         </div>
         <div className="max-h-[52vh] overflow-y-auto py-1.5">
           {items.length === 0 && (
@@ -115,7 +115,7 @@ export default function CommandPalette({ go, open, setOpen }) {
                 onClick={() => { setOpen(false); it.run(); }}
                 className={cn(
                   'flex w-full items-center gap-3 px-4 py-2 text-left text-xs',
-                  i === idx ? 'bg-[#F3C653]/10 text-white' : 'text-akg-silver',
+                  i === idx ? 'bg-emerald-500/10 text-[var(--akg-text)]' : 'text-akg-silver',
                 )}
               >
                 {Icon ? <Icon className="h-3.5 w-3.5 shrink-0 text-akg-muted" /> : (
@@ -124,12 +124,12 @@ export default function CommandPalette({ go, open, setOpen }) {
                 <span className="flex-1 truncate">{it.label}</span>
                 {it.sub && <span className="font-data text-[10px] text-akg-muted">{it.sub}</span>}
                 {it.hint && <span className="font-data text-[10px] text-akg-muted/70">{it.hint}</span>}
-                {i === idx && <CornerDownLeft className="h-3 w-3 text-akg-gold" />}
+                {i === idx && <CornerDownLeft className="h-3 w-3 text-akg-accent" />}
               </button>
             );
           })}
         </div>
-        <div className="flex items-center justify-between border-t border-white/[0.07] px-4 py-2 font-data text-[10px] text-akg-muted">
+        <div className="flex items-center justify-between border-t border-[var(--akg-hairline)] px-4 py-2 font-data text-[10px] text-akg-muted">
           <span>↑↓ navigate · enter open</span>
           <span>{roster.length} traders · {deposits.length} pending deposits</span>
         </div>
