@@ -4,16 +4,16 @@ import { cn } from '../../../lib/utils';
 import { explorerUrl } from '../lib/format';
 
 const STATUS_STYLES = {
-  pending: 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-500/15 dark:text-amber-600 dark:text-amber-400 dark:border-amber-500/30',
-  pending_review: 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-500/15 dark:text-amber-600 dark:text-amber-400 dark:border-amber-500/30',
-  confirmed: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-600 dark:text-emerald-400 dark:border-emerald-500/30',
-  approved: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-600 dark:text-emerald-400 dark:border-emerald-500/30',
-  active: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-600 dark:text-emerald-400 dark:border-emerald-500/30',
-  connected: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-600 dark:text-emerald-400 dark:border-emerald-500/30',
-  closed: 'bg-slate-100 dark:bg-akg-raised text-slate-700 dark:text-akg-muted border-slate-200 dark:border-akg-hairline',
-  settled: 'bg-slate-100 dark:bg-akg-raised text-slate-700 dark:text-akg-muted border-slate-200 dark:border-akg-hairline',
-  rejected: 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-500/15 dark:text-rose-600 dark:text-rose-400 dark:border-rose-500/30',
-  in_progress: 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-500/15 dark:text-sky-600 dark:text-sky-400 dark:border-sky-500/30',
+  pending: 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30',
+  pending_review: 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30',
+  confirmed: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
+  approved: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
+  active: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
+  connected: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30',
+  closed: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-white/10',
+  settled: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-white/10',
+  rejected: 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-500/15 dark:text-rose-400 dark:border-rose-500/30',
+  in_progress: 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-500/15 dark:text-sky-400 dark:border-sky-500/30',
 };
 
 export function StatusPill({ status, className }) {
@@ -149,7 +149,7 @@ export function SearchInput({ value, onChange, placeholder = 'Search...', id = '
   );
 }
 
-export const labelCls = 'mb-1.5 block text-xs font-semibold text-slate-900 dark:text-akg-text';
+export const labelCls = 'mb-1.5 block text-xs font-semibold text-slate-800 dark:text-slate-200';
 export const inputCls =
-  'w-full rounded-xl border border-slate-300 dark:border-akg-hairline bg-slate-50 dark:bg-akg-raised px-3.5 py-2.5 text-sm font-medium text-slate-900 dark:text-akg-text placeholder:text-slate-400 dark:placeholder:text-akg-muted/60 focus:bg-white dark:focus:bg-akg-raised focus:border-emerald-500 focus:outline-none';
+  'w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/80 px-3.5 py-2.5 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all';
 export const textareaCls = cn(inputCls, 'min-h-[90px] leading-relaxed');

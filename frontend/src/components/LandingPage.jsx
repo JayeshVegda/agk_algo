@@ -165,27 +165,26 @@ function HeroHeadline({ botCount = 8 }) {
         <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
         <span className="font-bold text-slate-900 dark:text-white whitespace-nowrap">
           <span className="sm:hidden">{botCount} robots</span>
-          <span className="hidden sm:inline">{botCount} active robots</span>
+          <span className="hidden sm:inline">{botCount} automated robots</span>
         </span>
         <span className="text-slate-400">·</span>
         <span className="text-emerald-600 dark:text-emerald-400 font-bold whitespace-nowrap">
-          <span className="sm:hidden">33 live</span>
-          <span className="hidden sm:inline">33 verified accounts</span>
+          MT4 &amp; MT5 native
         </span>
         <span className="text-slate-400">·</span>
-        <span className="text-slate-600 dark:text-slate-300 whitespace-nowrap">MyFxBook verified</span>
+        <span className="text-slate-600 dark:text-slate-300 whitespace-nowrap">Instant lifetime access</span>
       </div>
 
       <h1 className="mt-6 font-display text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.08]">
         <span className="text-slate-900 dark:text-white">Forex Trading Robots &amp; Expert Advisors,</span>
         <br />
         <span className="bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-500 dark:from-emerald-400 dark:via-teal-300 dark:to-emerald-400 bg-clip-text text-transparent font-bold">
-          verified on our live trading accounts.
+          built for automated trading.
         </span>
       </h1>
 
       <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
-        Every algorithm runs on our proprietary capital. Inspect drawdown curves, win rates, and execution stats before purchasing a lifetime license.
+        Buy production-ready MetaTrader 4 and 5 algorithmic trading robots with verified track records, hard stop-losses, and one-time lifetime activation. Also explore real-time Signal Room broadcasts and automated execution tools.
       </p>
     </div>
   );
@@ -711,7 +710,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
             <div className="mt-8 pt-6 relative min-h-[170px] flex items-end justify-center">
               <div className="w-full space-y-[-14px]">
                 {/* Layer 3 (Back) */}
-                <div className="mx-4 rounded-xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-slate-800/80 p-2.5 flex items-center justify-between text-xs opacity-75 shadow-xs">
+                <div className="mx-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-800/60 p-2.5 flex items-center justify-between text-xs opacity-75 shadow-xs">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[10px] font-bold text-slate-500 dark:text-slate-400">03</span>
                     <div>
@@ -722,7 +721,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                 </div>
 
                 {/* Layer 2 (Middle) */}
-                <div className="mx-2 rounded-xl border border-slate-200 dark:border-white/15 bg-white/95 dark:bg-slate-800/95 p-2.5 flex items-center justify-between text-xs opacity-90 shadow-xs">
+                <div className="mx-2 rounded-xl border border-slate-200 dark:border-white/15 bg-slate-50 dark:bg-slate-800/90 p-2.5 flex items-center justify-between text-xs opacity-90 shadow-xs">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400">02</span>
                     <div>
@@ -733,7 +732,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                 </div>
 
                 {/* Layer 1 (Front, prominent) */}
-                <div className="relative z-10 rounded-xl border border-slate-200 dark:border-white/20 bg-white dark:bg-slate-850 p-3.5 flex items-center justify-between text-xs shadow-md">
+                <div className="relative z-10 rounded-xl border border-slate-200 dark:border-white/20 bg-white dark:bg-slate-900 p-3.5 flex items-center justify-between text-xs shadow-md">
                   <div className="flex items-center gap-2.5">
                     <div className="h-7 w-7 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
                       01

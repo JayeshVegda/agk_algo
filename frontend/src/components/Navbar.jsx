@@ -41,20 +41,20 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
 
   const tradingSystems = [
     {
+      id: 'bots',
+      title: 'Trading Robots & EAs',
+      description: 'Battle-tested MT4 and MT5 automated robots with verified drawdown caps and instant licensing.',
+      icon: Cpu,
+      badge: 'STORE',
+      badgeClass: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 font-bold',
+    },
+    {
       id: 'signals',
       title: 'Signal Room',
       description: 'Real-time trade broadcasts with strict tier gating and live desk updates.',
       icon: Zap,
       badge: 'LIVE',
       badgeClass: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
-    },
-    {
-      id: 'bots',
-      title: 'Expert Advisors (MT4 / MT5)',
-      description: 'Automated Expert Advisors with audited drawdown caps and dynamic lot algorithms.',
-      icon: Cpu,
-      badge: 'v4.2',
-      badgeClass: 'bg-akg-surfaceElevated text-akg-muted border border-akg-hairline',
     },
     {
       id: 'connector',
