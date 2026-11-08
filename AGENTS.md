@@ -56,6 +56,14 @@ docs/                 product docs (see Status note above)
 - Money is displayed as `USDT` strings/numbers, one-time or per-cycle. Never invent tax/fee logic client-side; checkout flows through `CheckoutPage.jsx` → hook endpoints.
 - New tabs are added as components to `App.jsx`'s `TAB_ROUTES` map; the mobile bottom dock and the desktop navigation menu must both get the new entry.
 
+## Agent Skills & Specialized Workflows
+The project has specialized agent skills installed in `.agents/skills/` (and globally in `~/.agents/skills/`). Consult [SKILLS.md](./SKILLS.md) for full instructions:
+- **UI and Layout Design:** Use `design-taste-frontend` and `scroll-craft` whenever building, restyling, or reviewing pages to eliminate generic AI templates, maintain equal padding, and construct dimensional hero sections.
+- **Copywriting and Voice:** Use `humanizer` to eliminate AI tells, sales clichés, and forced triads from headlines and user-facing text. Never use em-dashes.
+- **Micro-Interactions and Motion:** Use `animate`, `emil-design-eng`, `choreograph`, and `animation-performance` for fluid spring physics, tactile press states, and 60fps/120fps GPU performance.
+- **Browser Testing and Visual Audits:** Use `playwright-cli` and `browser-testing-with-devtools` to capture screenshots across both Light and Dark modes and verify zero visual regressions.
+- **Architecture and Quality:** Use `frontend-ui-engineering`, `code-simplification`, and `debugging-and-error-recovery` for clean component separation, state isolation, and disciplined error handling.
+
 ## Working method
 1. Make the smallest change that completes the task, in the file that already owns that behavior.
 2. Run `npm run build` from the root; fix errors before claiming done.
