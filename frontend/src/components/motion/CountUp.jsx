@@ -9,14 +9,14 @@ import { useInView, useReducedMotion } from 'motion/react';
  */
 export default function CountUp({
   value = 0,
-  duration = 1.5,
+  duration = 1.2,
   format = (v) => Math.round(v).toLocaleString('en-US'),
   className = '',
 }) {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.5 });
+  const inView = useInView(ref, { once: true, amount: 0.05, margin: '40px 0px' });
   const reduce = useReducedMotion();
-  const [display, setDisplay] = useState(reduce ? value : 0);
+  const [display, setDisplay] = useState(value);
 
   useEffect(() => {
     if (reduce) {

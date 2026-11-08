@@ -208,7 +208,7 @@ export default function Settings() {
               </div>
               <p className="mt-3 flex items-start gap-1.5 text-[11px] text-akg-muted">
                 <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                Fixed plan ids (SR_SIGNAL_BOX / PERFECT_SIGNAL_BOX) gate access everywhere — renaming here only changes what members see.
+                Fixed plan ids (SR_SIGNAL_BOX / PERFECT_SIGNAL_BOX) gate access everywhere: renaming here only changes what members see.
               </p>
             </section>
           ))}
@@ -308,7 +308,7 @@ export default function Settings() {
                 </div>
               ))}
               {walletRows.length === 0 && (
-                <p className="py-4 text-center text-xs text-akg-muted">No wallets yet — add one so customers can pay in crypto.</p>
+                <p className="py-4 text-center text-xs text-akg-muted">No wallets yet: add one so customers can pay in crypto.</p>
               )}
               <p className="flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-300/90">
                 <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />

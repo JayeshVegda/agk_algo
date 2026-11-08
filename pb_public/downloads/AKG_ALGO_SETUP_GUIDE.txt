@@ -1,5 +1,5 @@
 ================================================================================
-AKG ALGO — EXPERT ADVISOR (EA) INSTALLATION & ACTIVATION GUIDE
+AKG ALGO: EXPERT ADVISOR (EA) INSTALLATION & ACTIVATION GUIDE
 ================================================================================
 
 1. PREREQUISITES

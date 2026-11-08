@@ -26,8 +26,8 @@ export default function Reveal({
       className={className}
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.05, margin: '80px 0px' }}
-      transition={{ duration: 0.45, delay, ease: [0.16, 1, 0.3, 1] }}
+      viewport={{ once: true, amount: 0.01, margin: '140px 0px' }}
+      transition={{ duration: 0.35, delay, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
     </Comp>

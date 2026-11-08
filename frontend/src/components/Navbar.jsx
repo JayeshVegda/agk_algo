@@ -26,6 +26,7 @@ import { Button } from './ui/Button';
 import { NotificationBell } from './NotificationBell';
 import { useTheme } from '../lib/theme';
 import { cn } from '../lib/utils';
+import { motion } from 'motion/react';
 
 export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNavigateAdmin, onOpenAccount }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -131,7 +132,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
           </div>
         </div>
 
-        {/* Desktop Navigation Links — centered group, flush with header border */}
+        {/* Desktop Navigation Links: centered group, flush with header border */}
         <nav className="hidden lg:flex h-full items-stretch">
             {[
               { id: 'home', label: 'Overview' },
@@ -147,7 +148,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                   key={link.id}
                   onClick={() => setActiveTab(link.id)}
                   className={cn(
-                    'relative flex items-center px-3 xl:px-4 text-[13px] font-medium transition-colors cursor-pointer',
+                    'relative flex items-center px-3 xl:px-4 text-[13px] font-medium transition-colors cursor-pointer select-none active:scale-[0.98]',
                     isActive
                       ? 'text-emerald-700 dark:text-emerald-400 font-semibold'
                       : 'text-akg-muted hover:text-akg-text'
@@ -158,7 +159,11 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                     <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   )}
                   {isActive && (
-                    <span className="absolute bottom-0 left-3 right-3 h-[2.5px] bg-emerald-500 rounded-t-full shadow-[0_0_8px_rgba(16,185,129,0.35)]" />
+                    <motion.span
+                      layoutId="navActiveIndicator"
+                      className="absolute bottom-0 left-3 right-3 h-[2.5px] bg-emerald-500 rounded-t-full shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    />
                   )}
                 </button>
               );
