@@ -22,6 +22,7 @@ import EquityCurve from './EquityCurve';
 import { useSiteSettings, getPlans } from '../lib/wallets';
 import { SpotlightCard } from './ui/SpotlightCard';
 import FluidCursorCanvas from './ui/FluidCursorCanvas';
+import InstitutionalTerminalHero from './InstitutionalTerminalHero';
 
 const botSlug = (name) =>
   String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -161,19 +162,27 @@ function TerminalBotCardPreview({ bot, cat }) {
 function HeroHeadline({ botCount = 8 }) {
   return (
     <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 text-center select-none py-2">
-      <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-akg-card/95 px-4 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-xs backdrop-blur-md">
-        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-        <span className="font-bold text-slate-900 dark:text-white">{botCount} active robots</span>
+      <div className="inline-flex max-w-full items-center gap-1.5 sm:gap-2 rounded-full border border-emerald-500/25 dark:border-emerald-500/35 bg-white/95 dark:bg-slate-900/95 px-3 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-md backdrop-blur-md">
+        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+        <span className="font-bold text-slate-900 dark:text-white whitespace-nowrap">
+          <span className="sm:hidden">{botCount} robots</span>
+          <span className="hidden sm:inline">{botCount} active robots</span>
+        </span>
         <span className="text-slate-400">·</span>
-        <span className="text-emerald-700 dark:text-emerald-400 font-semibold">33 running live</span>
+        <span className="text-emerald-600 dark:text-emerald-400 font-bold whitespace-nowrap">
+          <span className="sm:hidden">33 live</span>
+          <span className="hidden sm:inline">33 verified accounts</span>
+        </span>
         <span className="text-slate-400">·</span>
-        <span className="text-slate-600 dark:text-slate-300">MyFxBook verified</span>
+        <span className="text-slate-600 dark:text-slate-300 whitespace-nowrap">MyFxBook verified</span>
       </div>
 
       <h1 className="mt-6 font-display text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.08]">
         <span className="text-slate-900 dark:text-white">Forex Trading Robots &amp; Expert Advisors,</span>
         <br />
-        <span className="text-slate-500 dark:text-slate-400 font-bold">verified on our live trading accounts.</span>
+        <span className="bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-500 dark:from-emerald-400 dark:via-teal-300 dark:to-emerald-400 bg-clip-text text-transparent font-bold">
+          verified on our live trading accounts.
+        </span>
       </h1>
 
       <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
@@ -299,14 +308,14 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
 
         <HeroHeadline botCount={botCount} />
 
-        <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 text-center">
+        <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 text-center">
           <div className="mt-8 flex flex-col items-center justify-center">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
               <Button
                 variant="gradient"
                 size="lg"
                 onClick={() => onNavigate('bots')}
-                className="px-8 shadow-md font-bold text-sm"
+                className="px-8 shadow-md font-bold text-sm active:scale-[0.98] transition-transform"
               >
                 <span>Browse forex trading robots</span>
                 <ArrowRight className="h-4 w-4 ml-2" />
@@ -315,48 +324,16 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                 variant="outline"
                 size="lg"
                 onClick={() => onNavigate('signals')}
-                className="px-7 font-bold text-sm"
+                className="px-7 font-bold text-sm active:scale-[0.98] transition-transform"
               >
                 <Terminal className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mr-2" />
                 <span>Signal Room</span>
               </Button>
             </div>
-
-            {/* Breadcrumb matching Image 0 */}
-            <div className="mt-6 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 font-medium">
-              <span className="hover:text-slate-900 dark:hover:text-white cursor-pointer transition-colors" onClick={() => onNavigate('home')}>Home</span>
-              <span className="text-slate-400">/</span>
-              <span className="hover:text-slate-900 dark:hover:text-white cursor-pointer transition-colors" onClick={() => onNavigate('bots')}>Trading robots</span>
-              <span className="text-slate-400">/</span>
-              <span className="text-slate-900 dark:text-white font-semibold">Forex Trading Robots</span>
-            </div>
           </div>
 
-          {/* Minimal 4-Metric Strip with tactile unified card matching reference Image 0 */}
-          <div className="mt-10 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-akg-card shadow-sm overflow-hidden text-left">
-            <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-white/10">
-              <div className="p-5 sm:p-6 flex flex-col justify-between">
-                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">Robots</div>
-                <div className="mt-2 font-mono text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white"><CountUp value={botCount} /></div>
-                <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">2 free included</div>
-              </div>
-              <div className="p-5 sm:p-6 flex flex-col justify-between">
-                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">On our own accounts</div>
-                <div className="mt-2 font-mono text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400"><CountUp value={33} /></div>
-                <div className="mt-1.5 text-xs text-emerald-600 font-semibold">Live verified</div>
-              </div>
-              <div className="p-5 sm:p-6 flex flex-col justify-between">
-                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">Drawdown published</div>
-                <div className="mt-2 font-mono text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white"><CountUp value={36} /></div>
-                <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">Max peak-to-valley</div>
-              </div>
-              <div className="p-5 sm:p-6 flex flex-col justify-between">
-                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">Symbols traded</div>
-                <div className="mt-2 font-mono text-3xl sm:text-4xl font-extrabold text-sky-600 dark:text-sky-400"><CountUp value={37} /></div>
-                <div className="mt-1.5 text-xs text-sky-600 font-semibold">Forex, Gold &amp; Indices</div>
-              </div>
-            </div>
-          </div>
+          {/* Institutional Interactive Execution Terminal */}
+          <InstitutionalTerminalHero botCount={botCount} onNavigate={onNavigate} />
         </div>
       </section>
 
