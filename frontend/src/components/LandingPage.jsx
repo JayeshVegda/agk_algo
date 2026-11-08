@@ -22,7 +22,6 @@ import EquityCurve from './EquityCurve';
 import { useSiteSettings, getPlans } from '../lib/wallets';
 import { SpotlightCard } from './ui/SpotlightCard';
 import FluidCursorCanvas from './ui/FluidCursorCanvas';
-import InstitutionalTerminalHero from './InstitutionalTerminalHero';
 
 const botSlug = (name) =>
   String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -308,7 +307,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
 
         <HeroHeadline botCount={botCount} />
 
-        <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 text-center">
+        <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 text-center">
           <div className="mt-8 flex flex-col items-center justify-center">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
               <Button
@@ -330,10 +329,77 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                 <span>Signal Room</span>
               </Button>
             </div>
+
+            {/* Breadcrumb matching Image 0 */}
+            <div className="mt-6 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-center gap-2 font-medium select-none">
+              <span className="hover:text-slate-900 dark:hover:text-white cursor-pointer transition-colors" onClick={() => onNavigate('home')}>Home</span>
+              <span className="text-slate-400 dark:text-slate-600">/</span>
+              <span className="hover:text-slate-900 dark:hover:text-white cursor-pointer transition-colors" onClick={() => onNavigate('bots')}>Trading robots</span>
+              <span className="text-slate-400 dark:text-slate-600">/</span>
+              <span className="text-slate-900 dark:text-white font-semibold">Forex Trading Robots</span>
+            </div>
           </div>
 
-          {/* Institutional Interactive Execution Terminal */}
-          <InstitutionalTerminalHero botCount={botCount} onNavigate={onNavigate} />
+          {/* Elevated 4-Metric Strip with Glassmorphism matching reference Image 0 */}
+          <div className="relative mt-8 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl shadow-lg shadow-emerald-950/5 dark:shadow-black/40 overflow-hidden text-left">
+            {/* Top hairline accent highlight */}
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" />
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-slate-200/90 dark:divide-white/10">
+              <div className="group p-5 sm:p-6 flex flex-col justify-between hover:bg-slate-50/60 dark:hover:bg-white/[0.02] transition-colors">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wide">Robots</span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-700 group-hover:bg-emerald-500 transition-colors" />
+                </div>
+                <div className="mt-2.5 font-mono text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  <CountUp value={botCount} />
+                </div>
+                <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  2 free included
+                </div>
+              </div>
+
+              <div className="group p-5 sm:p-6 flex flex-col justify-between hover:bg-slate-50/60 dark:hover:bg-white/[0.02] transition-colors">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wide">On our own accounts</span>
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                </div>
+                <div className="mt-2.5 font-mono text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">
+                  <CountUp value={33} />
+                </div>
+                <div className="mt-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span>Live verified</span>
+                </div>
+              </div>
+
+              <div className="group p-5 sm:p-6 flex flex-col justify-between hover:bg-slate-50/60 dark:hover:bg-white/[0.02] transition-colors">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wide">Drawdown published</span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-700 group-hover:bg-emerald-500 transition-colors" />
+                </div>
+                <div className="mt-2.5 font-mono text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  <CountUp value={36} />
+                </div>
+                <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Max peak-to-valley
+                </div>
+              </div>
+
+              <div className="group p-5 sm:p-6 flex flex-col justify-between hover:bg-slate-50/60 dark:hover:bg-white/[0.02] transition-colors">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wide">Symbols traded</span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+                </div>
+                <div className="mt-2.5 font-mono text-3xl sm:text-4xl font-extrabold text-sky-600 dark:text-sky-400 tracking-tight">
+                  <CountUp value={37} />
+                </div>
+                <div className="mt-1.5 text-xs text-sky-600 dark:text-sky-400 font-semibold">
+                  Forex, Gold &amp; Indices
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
