@@ -9,6 +9,7 @@ import { Badge } from './ui/Badge';
 export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,11 +21,17 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    const phoneNumber = phone.trim().replace(/[\s().-]/g, '');
+    if (isRegister && !/^\+[1-9]\d{7,14}$/.test(phoneNumber)) {
+      setError('Enter your phone number with a country code, such as +91 98765 43210.');
+      return;
+    }
     setLoading(true);
     try {
       if (isRegister) {
         await pb.collection('users').create({
           email,
+          phone_number: phoneNumber,
           password,
           passwordConfirm: password,
           name: name || email.split('@')[0]
@@ -141,6 +148,26 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                     placeholder="trader@example.com"
                   />
                 </div>
+
+                {isRegister && (
+                  <div>
+                    <label htmlFor="auth-phone" className="mb-1 block font-semibold text-akg-text">Phone number</label>
+                    <input
+                      type="tel"
+                      name="phone_number"
+                      id="auth-phone"
+                      autoComplete="tel"
+                      aria-describedby="auth-phone-hint"
+                      maxLength={40}
+                      required
+                      value={phone}
+                      onChange={(event) => setPhone(event.target.value)}
+                      className="w-full rounded-lg border border-akg-hairline bg-akg-raised px-3 py-2 text-akg-text placeholder:text-akg-muted/60 focus:border-akg-accent focus:outline-none"
+                      placeholder="+91 98765 43210"
+                    />
+                    <p id="auth-phone-hint" className="mt-1 text-akg-muted">Include your country code.</p>
+                  </div>
+                )}
 
                 <div>
                   <div className="flex justify-between items-center mb-1">

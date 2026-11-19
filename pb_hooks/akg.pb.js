@@ -29,6 +29,12 @@ onRecordCreateRequest((e) => {
   // and the ledger key on the exact email string, and PocketBase's index is
   // case-sensitive. Lowercase + trim prevents duplicate-looking accounts.
   if (isFirstRegistration) {
+    // The collection field is hidden, so take the value from the signup body.
+    const phone = String((e.requestInfo().body || {}).phone_number || "").trim().replace(/[\s().-]/g, "");
+    if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
+      throw new BadRequestError("Enter a phone number with its country code, such as +91 98765 43210.");
+    }
+    e.record.set("phone_number", phone);
     const rawEmail = String(e.record.get("email") || "").trim().toLowerCase();
     if (rawEmail) {
       let existing = null;
@@ -611,6 +617,7 @@ routerAdd("GET", "/api/akg/traders", (e) => {
     const rows = $app.findRecordsByFilter("users", "", "-created", 5000, 0).map((u) => ({
       id: u.id,
       email: String(u.get("email") || ""),
+      phone_number: u.getString("phone_number"),
       name: String(u.get("name") || ""),
       verified: !!u.get("verified"),
       role: String(u.get("role") || ""),
@@ -618,6 +625,7 @@ routerAdd("GET", "/api/akg/traders", (e) => {
       cycle_expires_at: String(u.get("cycle_expires_at") || ""),
       created: String(u.get("created") || ""),
     }));
+    e.response.header().set("Cache-Control", "private, no-store");
     e.json(200, rows);
   } catch (err) {
     e.json(500, { message: String(err) });

@@ -517,6 +517,16 @@ function TraderDossier({ user, payments, bots, botsOf, sigOf }) {
 
   return (
     <div className="space-y-4">
+      <dl className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.07] dark:bg-akg-raised sm:grid-cols-2">
+        <div className="min-w-0">
+          <dt className="text-xs text-akg-muted">Email address</dt>
+          <dd className="break-all text-sm text-akg-text">{user.email}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-akg-muted">Phone number</dt>
+          <dd className="text-sm text-akg-text">{user.phone_number || 'Not provided'}</dd>
+        </div>
+      </dl>
       <div className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/[0.07] bg-slate-50 dark:bg-akg-raised px-4 py-3">
         <span className="text-xs text-akg-muted">Current access</span>
         <div className="flex items-center gap-2.5">
