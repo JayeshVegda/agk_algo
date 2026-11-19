@@ -26,13 +26,14 @@ export default function Cycles() {
   const [form, setForm] = useState(empty);
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [loadState, setLoadState] = useState('loading');
   const set = (field, value) => setForm((previous) => ({ ...previous, [field]: value }));
 
   useEffect(() => {
     let active = true;
     pb.collection('signal_cycles').getFullList({ sort: '-starts_at' }).then((records) => {
-      if (active) setCycles(records);
-    }).catch((error) => { if (active) setFeedback(error.message); });
+      if (active) { setCycles(records); setLoadState('ready'); }
+    }).catch((error) => { if (active) { setFeedback(error.message); setLoadState('error'); } });
     return () => { active = false; };
   }, []);
 
@@ -46,11 +47,11 @@ export default function Cycles() {
     setBusy(true);
     setFeedback('');
     const payload = {
-      name: form.name.trim(), sr_price: Number(form.sr_price), vip_price: Number(form.vip_price),
+      name: form.name.trim() || `Signal cycle ${form.starts_at}`, sr_price: Number(form.sr_price), vip_price: Number(form.vip_price),
       allow_late_join: form.allow_late_join,
     };
     for (const [field] of dates) {
-      const value = form[field];
+      const value = field === 'renewals_at' ? (form.renewals_at || new Date(Date.parse(form.starts_at + 'T00:00:00Z') - 7 * 86400000).toISOString().slice(0, 10)) : form[field];
       payload[field] = value ? new Date(Date.parse(value + 'T00:00:00+05:30') + (exclusive(field) ? 86400000 : 0)).toISOString() : '';
     }
     try {
@@ -75,19 +76,17 @@ export default function Cycles() {
       </header>
       <div className="grid items-start gap-5 xl:grid-cols-[1fr_1fr]">
         <form onSubmit={save} className="space-y-4 rounded-xl border border-akg-hairline bg-akg-card p-4 sm:p-5">
-          <h2 className="font-semibold">{form.id ? 'Edit cycle' : 'Schedule a cycle'}</h2>
-          <label className="block space-y-1 text-sm">
-            <span>Cycle name</span>
-            <input required maxLength={100} className={inputClass} value={form.name} onChange={(event) => set('name', event.target.value)} />
-          </label>
+          <h2 className="font-semibold">{form.id ? 'Edit cycle' : 'Create a signal cycle'}</h2>
+          <p className="text-sm text-akg-muted">Choose the dates and prices for this cycle. All dates use India time.</p>
           <div className="grid gap-3 sm:grid-cols-2">
-            {dates.map(([field, label], index) => (
-              <label key={field} className="space-y-1 text-sm">
-                <span>{label}{index > 2 && ' (optional)'}</span>
-                <input type="date" required={index < 3} className={inputClass} value={form[field]} onChange={(event) => set(field, event.target.value)} />
+            {[['starts_at', 'Start date'], ['ends_at', 'Last day']].map(([field, label]) => (
+              <label key={field} className="block space-y-1 text-sm">
+                <span>{label}</span>
+                <input type="date" required min={field === 'ends_at' ? form.starts_at || undefined : undefined} className={inputClass} value={form[field]} onChange={(event) => set(field, event.target.value)} />
               </label>
             ))}
           </div>
+          <p className="text-xs leading-relaxed text-akg-muted">Members have access through the last day. Leave a gap before the next cycle to pause between cycles.</p>
           <div className="grid grid-cols-2 gap-3">
             {[['sr_price', 'SR price (USDT)'], ['vip_price', 'Perfect price (USDT)']].map(([field, label]) => (
               <label key={field} className="space-y-1 text-sm">
@@ -96,23 +95,51 @@ export default function Cycles() {
               </label>
             ))}
           </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={form.allow_late_join} onChange={(event) => set('allow_late_join', event.target.checked)} />
-            Allow joining after the cycle starts
-          </label>
+          <details className="rounded-lg border border-akg-hairline bg-akg-raised p-3">
+            <summary className="cursor-pointer text-sm font-semibold">More options</summary>
+            <div className="mt-4 space-y-4">
+              <label className="block space-y-1 text-sm">
+                <span>Cycle name (optional)</span>
+                <input maxLength={100} className={inputClass} value={form.name} onChange={(event) => set('name', event.target.value)} placeholder="e.g. December signals" />
+              </label>
+              <label className="block space-y-1 text-sm">
+                <span>Open payments early (optional)</span>
+                <input type="date" max={form.starts_at || undefined} className={inputClass} value={form.renewals_at} onChange={(event) => set('renewals_at', event.target.value)} />
+                <span className="block text-xs text-akg-muted">Leave blank to open payments 7 days before the start date.</span>
+              </label>
+              <div>
+                <p className="text-sm font-medium">Pause during this cycle (optional)</p>
+                <p className="mt-1 text-xs text-akg-muted">Members cannot read paid signals during the pause. The last day stays the same.</p>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  {[['pause_from', 'Pause starts'], ['pause_until', 'Last paused day']].map(([field, label]) => (
+                    <label key={field} className="block space-y-1 text-sm">
+                      <span>{label}</span>
+                      <input type="date" min={form.starts_at || undefined} max={form.ends_at || undefined} required={Boolean(form[field === 'pause_from' ? 'pause_until' : 'pause_from'])} className={inputClass} value={form[field]} onChange={(event) => set(field, event.target.value)} />
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <label className="flex items-start gap-2 text-sm">
+                <input type="checkbox" checked={form.allow_late_join} onChange={(event) => set('allow_late_join', event.target.checked)} />
+                <span>Allow customers to join after the cycle starts</span>
+              </label>
+            </div>
+          </details>
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save cycle'}</Button>
             {form.id && <Button type="button" variant="outline" onClick={() => setForm(empty)}>Cancel</Button>}
           </div>
           {feedback && <p role="status" className="text-sm text-akg-muted">{feedback}</p>}
         </form>
-        <ul className="space-y-2">
-          {cycles.length === 0 && <li className="rounded-xl border border-akg-hairline p-4 text-sm text-akg-muted">No scheduled cycles yet.</li>}
+        <ul className="space-y-2" aria-label="Scheduled signal cycles">
+          {loadState === 'loading' && <li className="p-4 text-sm text-akg-muted">Loading cycles…</li>}
+          {loadState === 'ready' && cycles.length === 0 && <li className="rounded-xl border border-akg-hairline p-4 text-sm text-akg-muted">No scheduled cycles yet.</li>}
           {cycles.map((cycle) => (
             <li key={cycle.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-akg-hairline bg-akg-card px-4 py-3">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 font-semibold"><CalendarDays className="h-4 w-4 text-akg-accent" />{cycle.name}</div>
                 <p className="text-xs text-akg-muted">{cycleDay(cycle.starts_at)} – {cycleDay(cycle.ends_at, true)}</p>
+                <p className="text-xs text-akg-muted">SR {cycle.sr_price} USDT · Perfect {cycle.vip_price} USDT</p>
                 {cycle.pause_from && <p className="text-xs text-akg-muted">Pause {cycleDay(cycle.pause_from)} – {cycleDay(cycle.pause_until, true)}</p>}
               </div>
               <Button type="button" variant="outline" size="sm" onClick={() => edit(cycle)}>Edit</Button>

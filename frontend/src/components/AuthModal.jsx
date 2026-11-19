@@ -10,6 +10,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,9 +22,10 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    const phoneNumber = phone.trim().replace(/[\s().-]/g, '');
+    const entered = phone.trim().replace(/[\s().-]/g, '');
+    const phoneNumber = entered.startsWith('+') ? entered : countryCode + entered.replace(/^0+/, '');
     if (isRegister && !/^\+[1-9]\d{7,14}$/.test(phoneNumber)) {
-      setError('Enter your phone number with a country code, such as +91 98765 43210.');
+      setError('Enter a valid phone number. You can choose your country code or enter the full number starting with +.');
       return;
     }
     setLoading(true);
@@ -152,20 +154,38 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 {isRegister && (
                   <div>
                     <label htmlFor="auth-phone" className="mb-1 block font-semibold text-akg-text">Phone number</label>
-                    <input
-                      type="tel"
-                      name="phone_number"
-                      id="auth-phone"
-                      autoComplete="tel"
-                      aria-describedby="auth-phone-hint"
-                      maxLength={40}
-                      required
-                      value={phone}
-                      onChange={(event) => setPhone(event.target.value)}
-                      className="w-full rounded-lg border border-akg-hairline bg-akg-raised px-3 py-2 text-akg-text placeholder:text-akg-muted/60 focus:border-akg-accent focus:outline-none"
-                      placeholder="+91 98765 43210"
-                    />
-                    <p id="auth-phone-hint" className="mt-1 text-akg-muted">Include your country code.</p>
+                    <div className="flex gap-2">
+                      <select aria-label="Country calling code" value={countryCode} onChange={(event) => setCountryCode(event.target.value)}
+                        className="w-32 shrink-0 rounded-lg border border-akg-hairline bg-akg-raised px-2 py-2 text-akg-text">
+                        <option value="+91">India +91</option>
+                        <option value="+1">US / Canada +1</option>
+                        <option value="+44">UK +44</option>
+                        <option value="+971">UAE +971</option>
+                        <option value="+966">Saudi Arabia +966</option>
+                        <option value="+61">Australia +61</option>
+                        <option value="+65">Singapore +65</option>
+                        <option value="+92">Pakistan +92</option>
+                        <option value="+880">Bangladesh +880</option>
+                        <option value="+977">Nepal +977</option>
+                        <option value="+94">Sri Lanka +94</option>
+                        <option value="+27">South Africa +27</option>
+                      </select>
+                      <input
+                        type="tel"
+                        name="phone_number"
+                        id="auth-phone"
+                        autoComplete="tel-national"
+                        inputMode="tel"
+                        aria-describedby="auth-phone-hint"
+                        maxLength={40}
+                        required
+                        value={phone}
+                        onChange={(event) => setPhone(event.target.value)}
+                        className="min-w-0 flex-1 rounded-lg border border-akg-hairline bg-akg-raised px-3 py-2 text-akg-text placeholder:text-akg-muted/60 focus:border-akg-accent focus:outline-none"
+                        placeholder="98765 43210"
+                      />
+                    </div>
+                    <p id="auth-phone-hint" className="mt-1 text-akg-muted">Choose a country code, or enter a full number starting with +.</p>
                   </div>
                 )}
 
