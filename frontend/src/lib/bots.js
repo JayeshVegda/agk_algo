@@ -33,3 +33,28 @@ export const statNumOrNull = (v) => {
   const n = parseFloat(String(v).replace('%', ''));
   return Number.isFinite(n) ? n : null;
 };
+
+export function performanceReport(bot) {
+  const type = bot.performance_type === 'backtest' ? 'Backtest' : bot.performance_type === 'live' ? 'Live account' : null;
+  const start = bot.performance_start;
+  const end = bot.performance_end;
+  const isDate = (value) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return false;
+    const date = new Date(value);
+    return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  };
+  if (!type || !isDate(start) || !isDate(end) || start > end) return null;
+  try {
+    const source = new URL(bot.performance_source);
+    if (source.protocol === 'https:' || source.protocol === 'http:') return { type, start, end, source: source.href };
+  } catch {
+    // A report without a usable link is incomplete.
+  }
+  return null;
+}
+
+
+export function matchesBotPurchase(plan, botName) {
+  const prefix = `BOT: ${botName}`;
+  return plan === prefix || Boolean(plan?.startsWith(prefix + ' ('));
+}

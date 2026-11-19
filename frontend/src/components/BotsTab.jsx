@@ -8,8 +8,8 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
-import { downloadLicensedFile, downloadLinksFor } from '../lib/utils';
-import { pairsOf, featuresOf, timeframesOf, pctStat, statNumOrNull } from '../lib/bots';
+import { downloadLicensedFile, downloadLinksFor, formatUsdt } from '../lib/utils';
+import { pairsOf, featuresOf, timeframesOf, pctStat, statNumOrNull, performanceReport, matchesBotPurchase } from '../lib/bots';
 
 const slugify = (name) =>
   String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -22,9 +22,10 @@ const botCategory = (bot) => {
   return { label: 'Forex', icon: LineChart };
 };
 
-export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, onOpenAuth, onNavigateAdmin, notify }) {
+export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onNavigateAdmin, notify }) {
   const [bots, setBots] = useState([]);
   const [botsLoading, setBotsLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState(false);
   const [platformFilter, setPlatformFilter] = useState('all');
   const [myPurchases, setMyPurchases] = useState([]);
   const [allBotChanges, setAllBotChanges] = useState([]);
@@ -32,11 +33,14 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
   const [copiedKey, setCopiedKey] = useState(false);
 
   const loadBots = async () => {
+    setCatalogError(false);
+    setBotsLoading(true);
     try {
       const records = await pb.collection('bots').getFullList({ sort: '-created' });
       setBots(records);
     } catch (err) {
       console.error('Failed to load bots:', err);
+      setCatalogError(true);
     } finally {
       setBotsLoading(false);
     }
@@ -46,7 +50,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
     if (!user?.email) return;
     try {
       const records = await pb.collection('payments').getFullList({
-        filter: `user_email = "${user.email}"`,
+        filter: pb.filter("user_email = {:email}", { email: user.email }),
         sort: '-created'
       });
       setMyPurchases(records);
@@ -60,6 +64,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
   }, []);
 
   useEffect(() => {
+    setMyPurchases([]);
     if (user?.email) {
       loadUserPurchases();
       const unsub = pb.collection('payments').subscribe('*', () => loadUserPurchases()).catch(() => {});
@@ -85,23 +90,18 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
   };
 
   const isBotOwned = (botName) => {
-    return myPurchases.some((p) => p.status === 'confirmed' && p.plan?.includes(botName));
+    return myPurchases.some((p) => p.status === 'confirmed' && matchesBotPurchase(p.plan, botName));
   };
 
   const isBotPending = (botName) => {
-    return myPurchases.some((p) => p.status === 'pending' && p.plan?.includes(botName));
+    return myPurchases.some((p) => p.status === 'pending' && matchesBotPurchase(p.plan, botName));
   };
 
   const getOwnedPurchase = (botName) => {
-    return myPurchases.find((p) => p.status === 'confirmed' && p.plan?.includes(botName));
+    return myPurchases.find((p) => p.status === 'confirmed' && matchesBotPurchase(p.plan, botName));
   };
 
   const startPurchase = (bot) => {
-    if (!user) {
-      if (onOpenAuth) onOpenAuth();
-      return;
-    }
-
     const existing = getOwnedPurchase(bot.name);
     if (existing) {
       setLicenseModalBot({ bot, payment: existing });
@@ -140,22 +140,31 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
 
   const selectedBot = botSlug ? liveBots.find((b) => slugify(b.name) === botSlug) : null;
 
-  if (botSlug && botsLoading) {
+  if (botsLoading) {
     return (
-      <div className="flex justify-center items-center py-24 font-mono text-xs text-akg-muted">
-        Loading Expert Advisor specifications...
+      <div role="status" className="flex justify-center items-center py-24 font-mono text-xs text-akg-muted">
+        {botSlug ? "Loading robot details…" : "Loading robots…"}
       </div>
     );
   }
 
-  if (botSlug && !selectedBot && liveBots.length > 0) {
+  if (catalogError) {
+    return (
+      <div className="space-y-3 py-16 text-center">
+        <p role="alert" className="text-sm text-akg-muted">Couldn’t load the robot store.</p>
+        <Button variant="outline" onClick={loadBots}>Try again</Button>
+      </div>
+    );
+  }
+
+  if (botSlug && !selectedBot) {
     return (
       <div className="max-w-3xl mx-auto text-center py-24 space-y-4">
         <AlertCircle className="h-10 w-10 mx-auto text-akg-accent" />
-        <h1 className="font-display text-2xl font-bold text-akg-text">Expert Advisor not found</h1>
-        <p className="text-sm text-akg-muted">The system may be unpublished or the link is outdated.</p>
+        <h1 className="font-display text-2xl font-bold text-akg-text">Robot not found</h1>
+        <p className="text-sm text-akg-muted">The robot may be unpublished or the link is outdated.</p>
         <Button variant="outline" onClick={() => onNavigate && onNavigate('bots')}>
-          Back to Expert Advisors
+          Back to Robots
         </Button>
       </div>
     );
@@ -175,14 +184,14 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
     const cat = botCategory(bot);
     const CatIcon = cat.icon;
 
+    const report = performanceReport(bot);
     const statItems = [
       { label: 'Win rate', value: statNumOrNull(bot.win_rate) !== null ? pctStat(bot.win_rate) : null, tone: 'text-akg-text' },
       { label: 'Profit factor', value: statNumOrNull(bot.profit_factor) !== null ? `${bot.profit_factor}` : null, tone: 'text-akg-accent' },
       { label: 'Max drawdown', value: statNumOrNull(bot.drawdown) !== null ? pctStat(bot.drawdown) : null, tone: 'text-rose-500' },
-      { label: 'Min capital', value: bot.recommended_deposit || null, tone: 'text-akg-text' },
     ].filter((s) => Boolean(s.value));
 
-    const hasBacktestImg = Boolean(bot.image_url && bot.image_url.trim());
+    const hasReportImage = Boolean(report && bot.image_url?.trim());
 
     return (
       <div className="max-w-5xl mx-auto font-sans text-akg-text w-full space-y-8 pb-12">
@@ -193,7 +202,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
             className="group inline-flex items-center gap-1.5 text-xs font-semibold text-akg-muted hover:text-akg-accent transition-colors cursor-pointer"
           >
             <ChevronLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
-            All Expert Advisors
+            All Robots
           </button>
 
           {user?.role === 'admin' && (
@@ -236,7 +245,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
             <div className="pt-3 flex flex-wrap items-center gap-5">
               <div>
                 <div className="font-display text-3xl font-extrabold text-akg-text tabular-nums">
-                  ${bot.price}
+                  {formatUsdt(bot.price)}
                   <span className="ml-1.5 text-sm font-bold text-akg-accent">USDT</span>
                 </div>
                 <div className="text-[11px] text-akg-muted">One-time perpetual license</div>
@@ -261,7 +270,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                 ) : (
                   <>
                     <KeyRound className="h-4 w-4" />
-                    <span>Purchase License</span>
+                    <span>Buy License</span>
                   </>
                 )}
               </Button>
@@ -270,16 +279,16 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
 
           {/* Right Hero Media: Backtest Image (if uploaded) or Category Card */}
           <div className="relative min-h-[220px] overflow-hidden rounded-xl border border-akg-hairline bg-akg-raised flex items-center justify-center">
-            {hasBacktestImg ? (
+            {hasReportImage ? (
               <div className="relative h-full w-full">
                 <img
                   src={pbUrl(bot.image_url.trim())}
-                  alt={`${bot.name} Backtest`}
+                  alt={`${bot.name} performance report`}
                   className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
                 <span className="absolute bottom-3 left-3 rounded-md border border-akg-hairline bg-akg-card/90 px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wider text-akg-accent backdrop-blur">
-                  Backtest, not live results
+                  {report.type}
                 </span>
               </div>
             ) : (
@@ -298,21 +307,26 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
           </div>
         </div>
 
-        {/* Stat Tiles: ONLY rendered if at least one stat has data */}
-        {statItems.length > 0 && (
-          <div className={`grid gap-3 grid-cols-2 sm:grid-cols-${Math.min(statItems.length, 4)}`}>
-            {statItems.map((s) => (
-              <div key={s.label} className="rounded-xl border border-akg-hairline bg-akg-card p-4 text-center">
-                <div className={`font-mono text-xl font-bold ${s.tone}`}>{s.value}</div>
-                <div className="mt-1 font-mono text-[10px] uppercase tracking-wider text-akg-muted">{s.label}</div>
-              </div>
-            ))}
-          </div>
+        {report && (
+          <section className="space-y-3 rounded-xl border border-akg-hairline bg-akg-card p-5">
+            <h2 className="font-display text-lg font-bold">Performance report</h2>
+            <p className="text-sm text-akg-muted">{report.type} · {report.start} to {report.end}</p>
+            {statItems.length > 0 && <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {statItems.map((stat) => (
+                <div key={stat.label} className="rounded-lg border border-akg-hairline p-3">
+                  <dt className="text-xs text-akg-muted">{stat.label}</dt>
+                  <dd className={`font-mono text-lg font-semibold ${stat.tone}`}>{stat.value}</dd>
+                </div>
+              ))}
+            </dl>}
+            <a href={report.source} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-akg-accent underline underline-offset-4">Open source report</a>
+            <p className="text-xs text-akg-muted">Past performance does not guarantee future results.</p>
+          </section>
         )}
 
         {/* Strategy Text & Details */}
         <section className="space-y-4 rounded-xl border border-akg-hairline bg-akg-card p-6">
-          <h2 className="font-display text-lg font-bold text-akg-text">Strategy Architecture</h2>
+          <h2 className="font-display text-lg font-bold text-akg-text">How this robot trades</h2>
           {bot.description && (
             <p className="font-sans text-sm leading-relaxed text-akg-muted whitespace-pre-line">
               {bot.description}
@@ -556,10 +570,10 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2">
           <h1 className="font-display text-2xl font-extrabold tracking-tight text-akg-text sm:text-3xl">
-            Expert Advisors
+            Trading Robots
           </h1>
           <p className="max-w-2xl text-sm text-akg-muted">
-            Rule-based MT4 and MT5 systems with hard stop-loss risk parameters and zero martingale exposure. One-time USDT payment with automatic silent first-run binding.
+            Browse ready-made MT4 and MT5 robots. Each robot has a one-time license, with downloads in My Account after payment approval.
           </p>
         </div>
 
@@ -594,7 +608,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
               onClick={() => onOpenBot && onOpenBot(slugify(bot.name))}
             >
               {/* Card Header: Backtest Image if available, else clean category header */}
-              {bot.image_url ? (
+              {performanceReport(bot) && bot.image_url ? (
                 <div className="relative h-32 w-full overflow-hidden border-b border-akg-hairline bg-akg-raised">
                   <img
                     src={pbUrl(bot.image_url.trim())}
@@ -644,22 +658,15 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                   {bot.description}
                 </p>
 
-                {/* Stats */}
-                {(bot.win_rate != null || bot.profit_factor != null || bot.drawdown != null) && (
-                  <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px]">
-                    {statNumOrNull(bot.win_rate) !== null && <span className="text-akg-green font-semibold">{pctStat(bot.win_rate)} win</span>}
-                    {statNumOrNull(bot.profit_factor) !== null && <span className="text-akg-muted">PF {bot.profit_factor}</span>}
-                    {statNumOrNull(bot.drawdown) !== null && <span className="text-akg-muted">DD {pctStat(bot.drawdown)}</span>}
-                  </div>
-                )}
+                {pairsOf(bot).length > 0 && <p className="mt-2 text-xs text-akg-muted">{pairsOf(bot).join(', ')}</p>}
 
                 <div className="mt-auto flex items-center justify-between pt-5 border-t border-akg-hairline">
                   <div>
                     <div className="font-display text-lg font-extrabold text-akg-text tabular-nums">
-                      ${bot.price}
+                      {formatUsdt(bot.price)}
                       <span className="ml-1 text-[10px] font-bold text-akg-accent">USDT</span>
                     </div>
-                    <div className="text-[10px] text-akg-muted">Perpetual license</div>
+                    <div className="text-[10px] text-akg-muted">One-time license</div>
                   </div>
                   <Button
                     variant="outline"
@@ -669,7 +676,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                       onOpenBot && onOpenBot(slugify(bot.name));
                     }}
                   >
-                    View EA
+                    View Robot
                   </Button>
                 </div>
               </div>
@@ -681,8 +688,8 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
       {filteredBots.length === 0 && (
         <div className="rounded-xl border border-akg-hairline bg-akg-card p-12 text-center">
           <Cpu className="h-8 w-8 mx-auto text-akg-muted" />
-          <h3 className="mt-3 text-sm font-bold text-akg-text">No systems on this platform yet</h3>
-          <p className="mt-1 text-xs text-akg-muted">Switch the platform filter to see the full catalog.</p>
+          <h3 className="mt-3 text-sm font-bold text-akg-text">{platformFilter === "all" ? "No robots available yet" : "No robots for this platform"}</h3>
+          {platformFilter !== "all" && <Button variant="outline" className="mt-3" onClick={() => setPlatformFilter("all")}>Show all robots</Button>}
         </div>
       )}
     </div>

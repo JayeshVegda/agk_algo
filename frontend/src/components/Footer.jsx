@@ -6,8 +6,8 @@ const LINK_GROUPS = [
   {
     title: 'Systems',
     links: [
+      { label: 'Trading Robots', tab: 'bots' },
       { label: 'Signal Room', tab: 'signals' },
-      { label: 'Expert Advisors', tab: 'bots' },
       { label: 'Account Management', tab: 'connector' },
       { label: 'Live Charts', tab: 'charts' },
     ],
@@ -22,9 +22,8 @@ const LINK_GROUPS = [
   {
     title: 'Membership',
     links: [
-      { label: 'Plans & Pricing', tab: 'pricing' },
+      { label: 'Signal Plans', tab: 'pricing' },
       { label: 'My Account & Licenses', tab: 'account' },
-      { label: 'Start Checkout', tab: 'checkout' },
     ],
   },
   {
@@ -64,8 +63,7 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
               loading="lazy"
             />
             <p className="mt-4 max-w-sm text-[13px] leading-relaxed text-akg-muted">
-              Rule-based MetaTrader Expert Advisors and live signal desks with hard stop-loss on
-              every trade. Settled in USDT, licensed once, yours to keep.
+              Ready-made trading robots for MetaTrader 4 and 5 with one-time licenses. Signal Room subscriptions are available separately.
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-1.5">
@@ -142,7 +140,7 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
               leveraged instruments carries a high level of risk and can result in the loss of all
               invested capital. Signals, Expert Advisors, and the managed-account service are
               analytical tools, not investment advice. Performance figures shown on this site are
-              illustrative or historical and never guarantee future results. Only trade with
+              historical and do not guarantee future results. Only trade with
               capital you can afford to lose.
             </p>
           </div>

@@ -1,3 +1,4 @@
+import { matchesBotPurchase } from '../lib/bots';
 import React, { useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { ArrowRight, Cpu, X } from 'lucide-react';
@@ -26,7 +27,7 @@ export function NewRobotModal({ enabled, user, onCheckout }) {
             { email: userEmail, name: 'BOT: ' + latest.name }),
           fields: 'plan',
         });
-        if (purchases.some(({ plan }) => plan === 'BOT: ' + latest.name || plan.startsWith('BOT: ' + latest.name + ' ('))) return;
+        if (purchases.some(({ plan }) => matchesBotPurchase(plan, latest.name))) return;
       }
       if (active) setRobot(latest);
     })().catch(() => {});

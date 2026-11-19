@@ -43,8 +43,8 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
   const tradingSystems = [
     {
       id: 'bots',
-      title: 'Trading Robots & EAs',
-      description: 'Battle-tested MT4 and MT5 automated robots with verified drawdown caps and instant licensing.',
+      title: 'Trading Robots',
+      description: 'Ready-made MT4 and MT5 robots with one-time licenses.',
       icon: Cpu,
       badge: 'STORE',
       badgeClass: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 font-bold',
@@ -95,12 +95,12 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
   const quickSearchItems = [
     { label: 'Overview', tab: 'home', icon: Compass },
     { label: 'Signal Room (Live Broadcasts)', tab: 'signals', icon: Zap },
-    { label: 'Expert Advisors', tab: 'bots', icon: Cpu },
+    { label: 'Trading Robots', tab: 'bots', icon: Cpu },
     { label: 'Live Charts', tab: 'charts', icon: BarChart3 },
     { label: 'Bridge Connector Demo', tab: 'connector', icon: Network },
     { label: 'Desk Briefings', tab: 'broadcasts', icon: Bell },
     { label: 'Traders Kit (Downloads & Links)', tab: 'resources', icon: Download },
-    { label: 'Plans & Pricing', tab: 'pricing', icon: CreditCard },
+    { label: 'Signal Plans', tab: 'pricing', icon: CreditCard },
   ];
 
   useEffect(() => {
@@ -141,7 +141,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
               { id: 'bots', label: 'Robots' },
               { id: 'signals', label: 'Signal Room' },
               { id: 'connector', label: 'Terminal Desk' },
-              { id: 'pricing', label: 'Pricing' },
+              { id: 'pricing', label: 'Signal Plans' },
               { id: 'resources', label: 'Traders Kit' },
             ].map((link) => {
               const isActive = activeTab === link.id;
@@ -418,7 +418,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                       >
                         <div className="flex items-center gap-3">
                           <CreditCard className="h-4 w-4 text-akg-green" />
-                          <span>Plans & Pricing</span>
+                          <span>Signal Plans</span>
                         </div>
                         <span className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-mono">
                           USDT

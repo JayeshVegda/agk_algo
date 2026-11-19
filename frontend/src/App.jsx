@@ -219,8 +219,6 @@ export default function App() {
             <LandingPage
               schedule={schedule}
               onNavigate={switchTab}
-              onOpenAuth={() => setAuthOpen(true)}
-              notify={notify}
             />
           )}
 
@@ -240,8 +238,6 @@ export default function App() {
               botSlug={botSlug}
               onOpenBot={(slug) => switchTab('bots', slug)}
               onNavigate={(tab) => switchTab(tab)}
-              onOpenPricing={() => switchTab('pricing')}
-              onOpenAuth={() => setAuthOpen(true)}
               onNavigateAdmin={(path) => navigateTo(path || '/admin')}
               notify={notify}
             />

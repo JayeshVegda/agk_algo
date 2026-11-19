@@ -198,7 +198,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         className="group mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-akg-muted hover:text-akg-accent cursor-pointer"
       >
         <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
-        Back to {isBot ? 'Expert Advisors' : 'Plans'}
+        Back to {isBot ? 'Robots' : 'Signal Plans'}
       </button>
 
       <h1 className="mt-4 font-display text-2xl font-extrabold tracking-tight text-akg-text sm:text-3xl">Checkout</h1>
@@ -208,7 +208,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
       <section className="mt-6 rounded-xl border border-akg-hairline bg-akg-card p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <Badge variant="emerald">{isBot ? 'Expert Advisor License' : 'Signal Subscription'}</Badge>
+            <Badge variant="emerald">{isBot ? 'Robot License' : 'Signal Subscription'}</Badge>
             <h2 className="mt-2.5 font-display text-lg font-bold text-akg-text">{order.name}</h2>
             <p className="mt-1 font-mono text-[11px] text-akg-muted">
               {isBot

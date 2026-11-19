@@ -39,10 +39,14 @@ const EMPTY_BOT = {
   description: '',
   download_url: '',
   is_live: true,
-  // Stats (optional)
+  // Performance report (optional)
   win_rate: '',
   drawdown: '',
   profit_factor: '',
+  performance_type: '',
+  performance_start: '',
+  performance_end: '',
+  performance_source: '',
   image_url: '',
   // Advanced (optional)
   strategy_type: '',
@@ -253,7 +257,7 @@ function BotEditor({ bot, onClose, onSave }) {
         broker_note: bot.broker_note || '',
       });
       // Expand sections if existing bot already has data in them
-      if (bot.win_rate || bot.profit_factor || bot.drawdown || bot.image_url) {
+      if (bot.win_rate || bot.profit_factor || bot.drawdown || bot.image_url || bot.performance_type) {
         setOpenStats(true);
       }
       if (bot.strategy_type || bot.trading_style || bot.min_lot || bot.leverage || bot.broker_note) {
@@ -398,18 +402,37 @@ function BotEditor({ bot, onClose, onSave }) {
           </p>
         </div>
 
-        {/* Collapsible: Stats (optional) */}
+        {/* Collapsible: Performance report (optional) */}
         <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.015] overflow-hidden">
           <button
             type="button"
             onClick={() => setOpenStats((o) => !o)}
             className="flex w-full items-center justify-between px-4 py-3 text-left font-data text-xs font-semibold text-slate-900 dark:text-akg-silver hover:bg-slate-100/60 dark:hover:bg-white/[0.03] cursor-pointer"
           >
-            <span>Stats (optional)</span>
+            <span>Performance report (optional)</span>
             {openStats ? <ChevronDown className="h-4 w-4 text-akg-muted" /> : <ChevronRight className="h-4 w-4 text-akg-muted" />}
           </button>
           {openStats && (
             <div className="space-y-3 border-t border-slate-200 dark:border-white/10 p-4">
+              <p className="text-xs text-akg-muted">Public performance figures require a result type, date range, and report URL.</p>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className={labelCls}>Result type
+                  <select className={inputCls} value={form.performance_type} onChange={set('performance_type')}>
+                    <option value="">Select result type</option>
+                    <option value="backtest">Backtest</option>
+                    <option value="live">Live account</option>
+                  </select>
+                </label>
+                <label className={labelCls}>First date
+                  <input type="date" className={inputCls} value={form.performance_start} onChange={set('performance_start')} />
+                </label>
+                <label className={labelCls}>Last date
+                  <input type="date" className={inputCls} min={form.performance_start || undefined} value={form.performance_end} onChange={set('performance_end')} />
+                </label>
+              </div>
+              <label className={labelCls}>Public report URL
+                <input type="url" className={inputCls} value={form.performance_source} onChange={set('performance_source')} placeholder="https://" />
+              </label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className={labelCls}>Win rate</label>
@@ -425,7 +448,7 @@ function BotEditor({ bot, onClose, onSave }) {
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Backtest image</label>
+                <label className={labelCls}>Report preview image</label>
                 <div className="flex items-center gap-2">
                   <input
                     value={form.image_url?.startsWith('data:') ? '' : form.image_url}
@@ -459,7 +482,7 @@ function BotEditor({ bot, onClose, onSave }) {
                 />
                 {form.image_url && (
                   <div className="mt-2.5 overflow-hidden rounded-xl border border-slate-200 dark:border-white/10 max-h-36">
-                    <img src={form.image_url} alt="Backtest Preview" className="w-full object-cover" />
+                    <img src={form.image_url} alt="Performance report preview" className="w-full object-cover" />
                   </div>
                 )}
               </div>
