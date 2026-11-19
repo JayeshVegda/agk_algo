@@ -1,3 +1,4 @@
+import { BrandLockup } from './BrandLockup';
 import React, { useState, useEffect } from 'react';
 import { pb } from '../lib/pocketbase';
 import { 
@@ -120,16 +121,17 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
 
         {/* Left: Brand Header Logo */}
         <div className="flex flex-1 items-center">
-          <div
-            onClick={() => setActiveTab('home')}
-            className="flex items-center gap-2 cursor-pointer select-none shrink-0 group"
+          <a
+            href="/"
+            onClick={(event) => {
+              if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+              event.preventDefault();
+              setActiveTab('home');
+            }}
+            className="inline-flex min-h-11 shrink-0 items-center rounded-md transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-akg-accent"
           >
-            <img
-              src="/assets/logos/akg-algo-metallic-nav.png"
-              alt="AKG ALGO"
-              className="h-8 sm:h-9 w-auto group-hover:opacity-90 transition-opacity"
-            />
-          </div>
+            <BrandLockup />
+          </a>
         </div>
 
         {/* Desktop Navigation Links: centered group, flush with header border */}
@@ -304,11 +306,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
               <SheetContent side="right" className="w-[300px] sm:w-[350px] p-0 flex flex-col justify-between bg-akg-bg border-l border-akg-hairline">
                 <div>
                   <SheetHeader className="p-4 pr-12 border-b border-akg-hairline flex flex-row items-center justify-between">
-                    <img
-                      src="/assets/logos/akg-algo-metallic-nav.png"
-                      alt="AKG ALGO"
-                      className="h-7 w-auto max-w-[70%] object-contain"
-                    />
+                    <BrandLockup />
                     <button
                       onClick={toggleTheme}
                       className="p-1.5 rounded-md border border-akg-hairline bg-akg-surface text-akg-muted hover:text-akg-text"

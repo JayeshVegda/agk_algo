@@ -56,9 +56,11 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
           {/* Brand + trust */}
           <div className="md:col-span-4">
             <img
-              src="/assets/logos/akg-algo-metallic-footer.webp"
+              src="/assets/logos/akg-algo-crest-384.webp"
               alt="AKG ALGO"
-              className="h-9 w-auto"
+              width={112}
+              height={112}
+              className="h-24 w-24 object-contain sm:h-28 sm:w-28"
               loading="lazy"
             />
             <p className="mt-4 max-w-sm text-[13px] leading-relaxed text-akg-muted">

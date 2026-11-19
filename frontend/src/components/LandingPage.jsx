@@ -1118,9 +1118,11 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
             <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-400/10 to-emerald-400/15 blur-3xl" />
 
             <img
-              src="/assets/logos/akg-algo-metallic-footer.webp"
+              src="/assets/logos/akg-algo-crest-384.webp"
               alt="AKG ALGO"
-              className="relative z-10 mx-auto h-12 w-auto sm:h-14 opacity-90"
+              width={160}
+              height={160}
+              className="relative z-10 mx-auto h-32 w-32 object-contain sm:h-40 sm:w-40"
               loading="lazy"
             />
 

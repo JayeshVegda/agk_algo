@@ -1,3 +1,4 @@
+import { BrandLockup } from '../BrandLockup';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Command as CommandIcon, Sun, Moon } from 'lucide-react';
 import { pb } from '../../lib/pocketbase';
@@ -76,9 +77,11 @@ export function AdminPortal({ onNavigatePublic, notify }) {
             </button>
 
             <img
-              src="/assets/logos/akg-algo-metallic-nav.png"
+              src="/assets/logos/akg-algo-crest-384.webp"
               alt="AKG ALGO"
-              className="mx-auto h-10 w-auto opacity-95"
+              width={96}
+              height={96}
+              className="mx-auto h-24 w-24 object-contain"
             />
             <h1 className="mt-5 text-center font-display text-xl font-bold text-slate-900 dark:text-white">Admin Console</h1>
             <p className="mt-1 text-center text-xs text-akg-muted">Administrator access only.</p>
@@ -200,7 +203,7 @@ function ConsoleShell({ currentUser, onLogout, notify, onNavigatePublic }) {
       {/* ============ desktop rail ============ */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-akg-hairline bg-akg-card lg:flex">
         <div className="flex items-center gap-2.5 border-b border-akg-hairline px-5 py-4">
-          <img src="/assets/logos/akg-algo-metallic-nav.png" alt="AKG ALGO" className="h-8 w-auto opacity-90" />
+          <BrandLockup />
         </div>
         <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4">
           {GROUPS.map((g) => {
@@ -262,7 +265,7 @@ function ConsoleShell({ currentUser, onLogout, notify, onNavigatePublic }) {
 
       {/* ============ mobile top bar ============ */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-akg-hairline bg-akg-card/90 px-4 backdrop-blur-xl lg:hidden">
-        <img src="/assets/logos/akg-algo-metallic-nav.png" alt="AKG ALGO" className="h-7 w-auto opacity-90" />
+        <BrandLockup />
         <div className="flex items-center gap-1.5">
           <button
             onClick={toggleTheme}

@@ -62,9 +62,11 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
         <CardHeader className="space-y-2 p-4 sm:p-5 pb-2 text-center items-center shrink-0">
           <img
-            src="/assets/logos/akg-algo-metallic-footer.webp"
+            src="/assets/logos/akg-algo-crest-384.webp"
             alt="AKG ALGO"
-            className="h-10 sm:h-12 w-auto mx-auto object-contain mb-1 opacity-90"
+            width={80}
+            height={80}
+            className="h-16 w-16 mx-auto object-contain sm:h-20 sm:w-20"
           />
           <div className="flex justify-center">
             <Badge variant="emerald" className="gap-1.5 py-0.5 px-2.5 text-[11px]">

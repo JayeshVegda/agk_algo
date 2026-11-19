@@ -394,7 +394,7 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
                     try {
                       new Notification('Desk Broadcast (' + record.audience.toUpperCase() + ')', {
                         body: String(row.body || '').slice(0, 100),
-                        icon: '/assets/icons/favicon-32.png',
+                        icon: '/assets/icons/akg-crest-32.png',
                       });
                     } catch {}
                   }
