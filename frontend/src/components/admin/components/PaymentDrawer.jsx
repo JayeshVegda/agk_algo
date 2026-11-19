@@ -128,7 +128,7 @@ export default function PaymentDrawer({ payment, loading = false, onClose, onRej
 
           <div>
             <h3 className="mb-2 font-data text-[10px] uppercase tracking-[0.14em] text-akg-muted">Trader context</h3>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-3">
               {[
                 ['Prior confirmed', history ? String(history.filter((h) => h.status === 'confirmed').length) : '...'],
                 ['Current plan', user ? (user.plan === 'PERFECT_SIGNAL_BOX' ? 'Perfect' : user.plan === 'SR_SIGNAL_BOX' ? 'SR' : 'None') : '...'],

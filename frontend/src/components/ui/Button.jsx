@@ -25,7 +25,7 @@ const buttonVariants = cva(
           'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400 border border-transparent shadow-sm',
       },
       size: {
-        sm: 'h-8 px-3 text-xs gap-1.5 rounded-lg',
+        sm: 'min-h-10 px-3 text-xs gap-1.5 rounded-lg sm:min-h-8',
         md: 'h-10 px-4 py-2 text-sm gap-2 rounded-xl',
         lg: 'h-12 px-6 text-base gap-2.5 rounded-xl',
       },

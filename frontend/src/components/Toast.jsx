@@ -5,7 +5,7 @@ export function ToastContainer({ toasts, onDismiss }) {
   if (!toasts || toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+    <div className="pointer-events-none fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-3 right-3 z-50 flex max-w-sm flex-col gap-2 md:bottom-5 md:left-auto md:right-5 md:w-full">
       {toasts.map((toast) => {
         const isSuccess = toast.type === 'success' || toast.type === 'copy';
         const isError = toast.type === 'error';

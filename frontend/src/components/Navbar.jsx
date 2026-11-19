@@ -117,10 +117,10 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-akg-hairline bg-akg-bg/85 backdrop-blur-xl transition-[background-color,border-color] duration-150">
-      <div className="mx-auto flex h-16 w-full max-w-[1360px] items-center px-4 sm:px-6">
+      <div className="mx-auto flex h-16 w-full max-w-[1360px] items-center gap-2 px-3 sm:px-6">
 
         {/* Left: Brand Header Logo */}
-        <div className="flex flex-1 items-center">
+        <div className="flex min-w-0 flex-1 items-center">
           <a
             href="/"
             onClick={(event) => {
@@ -173,11 +173,11 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
         </nav>
 
         {/* Right: Theme Toggle + Search + Notifications + Profile & Auth */}
-        <div className="flex flex-1 items-center justify-end gap-2 sm:gap-2.5">
+        <div className="flex shrink-0 items-center justify-end gap-2 lg:flex-1 sm:gap-2.5">
           {/* Quick Search Trigger Icon */}
           <button
             onClick={() => setSearchOpen(true)}
-            className="flex items-center justify-center h-8 w-8 rounded-lg border border-akg-hairline bg-akg-surface hover:bg-akg-surfaceElevated text-akg-muted hover:text-akg-text transition-colors cursor-pointer"
+            className="hidden h-10 w-10 items-center justify-center rounded-lg border border-akg-hairline bg-akg-surface text-akg-muted transition-colors hover:bg-akg-surfaceElevated hover:text-akg-text sm:flex"
             title="Search systems (⌘K)"
             aria-label="Search systems"
           >
@@ -187,7 +187,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
           {/* Theme Toggle (Dark / Light) */}
           <button
             onClick={toggleTheme}
-            className="flex items-center justify-center h-8 w-8 rounded-lg border border-akg-hairline bg-akg-surface hover:bg-akg-surfaceElevated text-akg-muted hover:text-akg-text transition-colors cursor-pointer"
+            className="hidden h-10 w-10 items-center justify-center rounded-lg border border-akg-hairline bg-akg-surface text-akg-muted transition-colors hover:bg-akg-surfaceElevated hover:text-akg-text sm:flex"
             title={isDark ? 'Switch to Light theme' : 'Switch to Dark theme'}
             aria-label="Toggle theme"
           >
@@ -201,7 +201,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2.5 p-1 sm:px-2.5 sm:py-1 rounded-lg border border-akg-hairline hover:border-emerald-500/30 hover:bg-akg-surfaceElevated transition-colors cursor-pointer bg-akg-surface shadow-sm focus:outline-none">
+                <button className="hidden sm:flex items-center gap-2.5 p-1 sm:px-2.5 sm:py-1 rounded-lg border border-akg-hairline hover:border-emerald-500/30 hover:bg-akg-surfaceElevated transition-colors cursor-pointer bg-akg-surface shadow-sm focus:outline-none">
                   <Avatar className="h-7 w-7">
                     <AvatarFallback>
                       {(user.name || user.email || 'U')[0].toUpperCase()}
@@ -270,7 +270,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 sm:flex">
               <Button
                 variant="outline"
                 size="sm"
@@ -297,14 +297,14 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
                 <button
-                  className="p-1.5 rounded-lg border border-akg-hairline text-akg-muted hover:text-akg-text hover:bg-akg-surface transition-colors cursor-pointer"
+                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-akg-hairline text-akg-muted hover:text-akg-text hover:bg-akg-surface transition-colors cursor-pointer"
                   aria-label="Open Mobile Menu"
                 >
                   <Menu className="h-5 w-5" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[350px] p-0 flex flex-col justify-between bg-akg-bg border-l border-akg-hairline">
-                <div>
+              <SheetContent side="right" className="w-[min(300px,100vw)] sm:w-[350px] max-w-full p-0 flex h-[100dvh] flex-col bg-akg-bg border-l border-akg-hairline">
+                <div className="flex min-h-0 flex-1 flex-col">
                   <SheetHeader className="p-4 pr-12 border-b border-akg-hairline flex flex-row items-center justify-between">
                     <BrandLockup />
                     <button
@@ -316,7 +316,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                     </button>
                   </SheetHeader>
 
-                  <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-160px)]">
+                  <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4">
                     <div>
                       <div className="text-[10px] font-medium text-akg-muted uppercase tracking-wider mb-2">
                         General
@@ -458,7 +458,7 @@ export function Navbar({ activeTab, setActiveTab, user, notify, onOpenAuth, onNa
                   </div>
                 </div>
 
-                <div className="p-4 border-t border-akg-hairline bg-akg-card">
+                <div className="shrink-0 border-t border-akg-hairline bg-akg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                   {user ? (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">

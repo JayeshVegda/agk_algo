@@ -64,7 +64,7 @@ export function ChartsTab() {
         </div>
 
         {/* Symbol Switcher Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 bg-akg-raised p-1 rounded-lg border border-akg-hairline">
+        <div className="flex w-full min-w-0 max-w-full items-center gap-1.5 overflow-x-auto overscroll-x-contain rounded-lg border border-akg-hairline bg-akg-raised p-1 lg:w-auto">
           {SYMBOLS.map((s) => (
             <button
               key={s.id}

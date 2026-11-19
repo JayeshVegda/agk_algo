@@ -74,7 +74,7 @@ export function NotificationBell({ user }) {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Notifications"
-        className="relative p-2 rounded-lg cursor-pointer transition-colors border border-akg-hairline bg-akg-card text-akg-muted hover:text-akg-text hover:bg-akg-raised"
+        className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-akg-hairline bg-akg-card text-akg-muted transition-colors hover:bg-akg-raised hover:text-akg-text"
       >
         <Bell className="h-4 w-4" />
         {unread.length > 0 && (
@@ -87,7 +87,7 @@ export function NotificationBell({ user }) {
       {open && (
         <>
           <div className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 mt-2 w-[340px] max-w-[92vw] rounded-xl shadow-2xl border border-akg-hairline bg-akg-card z-[70] overflow-hidden text-akg-text">
+          <div className="fixed left-3 right-3 top-[4.5rem] z-[70] max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-xl border border-akg-hairline bg-akg-card text-akg-text shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[340px]">
             <div className="flex items-center justify-between px-4 py-3 border-b border-akg-hairline">
               <div className="text-xs font-bold flex items-center gap-1.5 text-akg-text">
                 <Bell className="h-3.5 w-3.5" />

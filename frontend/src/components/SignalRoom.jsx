@@ -691,7 +691,7 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
                 p.failed ? 'border-rose-500/50 bg-rose-500/5' : 'border-akg-hairline bg-akg-surface ' + (p.failed ? '' : 'opacity-60'),
               )}>
                 {p.failed && <p className="mb-1 font-mono text-[10px] font-medium text-rose-500">Failed to send: draft restored. Press send again.</p>}
-                <pre className="max-w-[400px] whitespace-pre-wrap break-words font-sans text-[13px] leading-relaxed text-akg-text">{p.body}</pre>
+                <pre className="w-full max-w-[400px] whitespace-pre-wrap break-words [overflow-wrap:anywhere] font-sans text-[13px] leading-relaxed text-akg-text">{p.body}</pre>
               </div>
             </div>
           ))}
@@ -829,7 +829,7 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
           <img
             src={(zoom.c.__urls && zoom.c.__urls[zoom.f]) || pb.files.getURL(zoom.c, zoom.f)}
             alt=""
-            className="max-h-[88vh] max-w-full rounded-xl"
+            className="max-h-[88dvh] max-w-full rounded-xl"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

@@ -213,7 +213,7 @@ export default function App() {
           onOpenAccount={() => switchTab('account')}
         />
 
-        <main className="w-[94%] max-w-[1750px] mx-auto px-2 sm:px-4 lg:px-6 py-6 pb-24 md:pb-6">
+        <main className="mx-auto w-full min-w-0 max-w-[1750px] px-4 py-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 md:pb-6 lg:px-6">
           <Suspense fallback={<TabFallback />}>
           {activeTab === 'home' && (
             <LandingPage
@@ -340,10 +340,10 @@ export default function App() {
       />
 
       {/* Mobile Bottom Navigation Dock for Android & Mobile Web */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-akg-card/95 backdrop-blur-xl border-t border-[var(--akg-hairline)] px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-pb">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-akg-card/95 backdrop-blur-xl border-t border-[var(--akg-hairline)] grid grid-cols-5 px-1 py-1.5 shadow-2xl safe-area-pb">
         <button
           onClick={() => switchTab('home')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all ${
+          className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1 cursor-pointer transition-all ${
             activeTab === 'home' ? 'text-akg-accent' : 'text-akg-muted hover:text-[var(--akg-text)]'
           }`}
         >
@@ -353,7 +353,7 @@ export default function App() {
 
         <button
           onClick={() => switchTab('signals')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all relative ${
+          className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1 cursor-pointer transition-all relative ${
             activeTab === 'signals' ? 'text-akg-accent' : 'text-akg-muted hover:text-[var(--akg-text)]'
           }`}
         >
@@ -366,7 +366,7 @@ export default function App() {
 
         <button
           onClick={() => switchTab('bots')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all ${
+          className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1 cursor-pointer transition-all ${
             activeTab === 'bots' ? 'text-akg-accent' : 'text-akg-muted hover:text-[var(--akg-text)]'
           }`}
         >
@@ -376,7 +376,7 @@ export default function App() {
 
         <button
           onClick={() => switchTab('connector')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all ${
+          className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1 cursor-pointer transition-all ${
             activeTab === 'connector' ? 'text-purple-400' : 'text-akg-muted hover:text-[var(--akg-text)]'
           }`}
         >
@@ -392,7 +392,7 @@ export default function App() {
               setAuthOpen(true);
             }
           }}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl cursor-pointer transition-all relative ${
+          className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1 cursor-pointer transition-all relative ${
             activeTab === 'account' && user ? 'text-akg-accent' : 'text-akg-muted hover:text-[var(--akg-text)]'
           }`}
         >

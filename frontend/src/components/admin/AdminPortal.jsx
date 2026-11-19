@@ -414,7 +414,7 @@ function ConsoleShell({ currentUser, onLogout, notify, onNavigatePublic }) {
       {drawerOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setDrawerOpen(false)} />
-          <div className="absolute inset-y-0 right-0 flex w-[290px] flex-col border-l border-akg-hairline bg-akg-card">
+          <div className="absolute inset-y-0 right-0 flex w-[min(290px,100vw)] flex-col border-l border-akg-hairline bg-akg-card">
             <div className="flex items-center justify-between border-b border-akg-hairline px-5 py-4">
               <span className="font-display text-sm font-bold text-akg-text">All sections</span>
               <button onClick={() => setDrawerOpen(false)} className="rounded-lg border border-akg-hairline p-1.5 text-akg-muted cursor-pointer">
