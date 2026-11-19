@@ -1,9 +1,9 @@
-import { getSignalPriceCycle } from '../lib/signalCycles';
+import { cycleDay, getSignalPriceCycle } from '../lib/signalCycles';
 import React, { useState, useEffect, useMemo } from 'react';
 import { pb } from '../lib/pocketbase';
 import { pairsOf } from '../lib/bots';
 import { formatUsdt } from '../lib/utils';
-import { Cpu, ArrowRight, Check, Terminal } from 'lucide-react';
+import { Cpu, ArrowRight, Check, Terminal, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './ui/Accordion';
@@ -65,6 +65,7 @@ export function LandingPage({ onNavigate, schedule }) {
   const [platform, setPlatform] = useState('all');
   const [market, setMarket] = useState('all');
   const [visibleCount, setVisibleCount] = useState(6);
+  const [featuredId, setFeaturedId] = useState(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const settings = useSiteSettings();
   const PLANS = getPlans(settings, getSignalPriceCycle(schedule));
@@ -105,7 +106,9 @@ export function LandingPage({ onNavigate, schedule }) {
     (platform === 'all' || String(bot.platform || '').toUpperCase().includes(platform)) &&
     marketMatches(bot, market)
   ), [catalog.bots, platform, market]);
-  const featured = catalog.bots[0];
+  const featuredIndex = Math.max(0, catalog.bots.findIndex((bot) => bot.id === featuredId));
+  const featured = catalog.bots[featuredIndex];
+  const priceCycle = getSignalPriceCycle(schedule);
 
   return (
     <div className="font-sans text-akg-text w-full -mt-6">
@@ -143,7 +146,7 @@ export function LandingPage({ onNavigate, schedule }) {
                 <span className="text-xs font-semibold uppercase tracking-wider text-akg-muted">Featured robot</span>
                 <span className="rounded-md border border-akg-hairline bg-akg-raised px-2 py-1 font-mono text-xs text-akg-text">{featured.platform}</span>
               </div>
-              <div className="py-6">
+              <div className="py-6" aria-live="polite">
                 <Cpu aria-hidden className="mb-5 h-8 w-8 text-akg-accent" />
                 <h2 className="font-display text-2xl font-bold text-akg-text sm:text-3xl">{featured.name}</h2>
                 {featured.description && <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-akg-muted">{featured.description}</p>}
@@ -151,10 +154,19 @@ export function LandingPage({ onNavigate, schedule }) {
               </div>
               <div className="flex flex-wrap items-end justify-between gap-4 border-t border-akg-hairline pt-4">
                 <div><p className="font-display text-xl font-bold text-akg-text">{formatUsdt(featured.price)} USDT</p><p className="mt-1 text-xs text-akg-muted">One-time license</p></div>
-                <RobotLink bot={featured} onNavigate={onNavigate} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-akg-hairline px-4 text-sm font-semibold text-akg-text hover:border-akg-accent">
+                <RobotLink bot={featured} onNavigate={onNavigate} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-akg-hairline px-4 text-sm font-semibold text-akg-text transition-colors hover:border-akg-accent">
                   View Robot <ArrowRight aria-hidden className="h-4 w-4" />
                 </RobotLink>
               </div>
+              {catalog.bots.length > 1 && (
+                <div className="mt-5 flex items-center justify-between border-t border-akg-hairline pt-4">
+                  <span className="text-xs text-akg-muted">{featuredIndex + 1} of {catalog.bots.length}</span>
+                  <div className="flex gap-2">
+                    <button type="button" aria-label="Previous featured robot" onClick={() => setFeaturedId(catalog.bots[(featuredIndex - 1 + catalog.bots.length) % catalog.bots.length].id)} className="rounded-lg border border-akg-hairline p-2 text-akg-text hover:border-akg-accent"><ChevronLeft aria-hidden className="h-5 w-5" /></button>
+                    <button type="button" aria-label="Next featured robot" onClick={() => setFeaturedId(catalog.bots[(featuredIndex + 1) % catalog.bots.length].id)} className="rounded-lg border border-akg-hairline p-2 text-akg-text hover:border-akg-accent"><ChevronRight aria-hidden className="h-5 w-5" /></button>
+                  </div>
+                </div>
+              )}
             </article>
           )}
         </div>
@@ -175,7 +187,7 @@ export function LandingPage({ onNavigate, schedule }) {
               { label: 'Market', value: market, set: setMarket, options: [['all', 'All'], ['gold', 'Gold'], ['forex', 'Forex'], ['crypto', 'Crypto']] },
             ].map((group) => (
               <fieldset key={group.label} className="min-w-0">
-                <legend className="mb-2 text-xs font-semibold text-akg-muted">{group.label}</legend>
+                <legend className="mb-2 text-xs font-semibold text-akg-muted">{group.label === 'Platform' ? '1. Choose your platform' : '2. Choose a market'}</legend>
                 <div className="flex flex-wrap gap-1.5">
                   {group.options.map(([value, label]) => (
                     <button key={value} type="button" aria-pressed={group.value === value}
@@ -196,7 +208,7 @@ export function LandingPage({ onNavigate, schedule }) {
           <>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {matchingBots.slice(0, visibleCount).map((bot) => (
-                <article key={bot.id} className="flex flex-col rounded-xl border border-akg-hairline bg-akg-card p-5 transition-[transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-akg-accent motion-reduce:transform-none">
+                <article key={bot.id} className="flex flex-col rounded-xl border border-akg-hairline bg-akg-card p-5 transition-[transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-akg-accent active:scale-[0.99] motion-reduce:transform-none">
                   <div className="flex items-center gap-2 text-xs text-akg-muted"><Cpu aria-hidden className="h-4 w-4 text-akg-accent" /> {bot.platform}</div>
                   <h3 className="mt-2 font-display text-lg font-bold text-akg-text">{bot.name}</h3>
                   {pairsOf(bot).length > 0 && <p className="mt-1 text-xs text-akg-muted">{pairsOf(bot).join(', ')}</p>}
@@ -220,16 +232,17 @@ export function LandingPage({ onNavigate, schedule }) {
 
       <section aria-labelledby="buy-robots-title" className="mx-auto max-w-7xl border-t border-akg-hairline px-4 py-14 sm:py-20">
         <h2 id="buy-robots-title" className="font-display text-3xl font-extrabold text-akg-text">How to buy and install a robot</h2>
-        <ol className="mt-6 grid gap-4 md:grid-cols-3">
+        <ol className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {[
             ['Choose a robot', 'Check its supported markets, MetaTrader version, and account requirements.'],
-            ['Buy a one-time license', 'Pay at checkout and submit your payment reference for review.'],
-            ['Download and install', 'After approval, get your license, download, and setup guide from My Account. Install the robot in MetaTrader and test it on a demo account first.'],
+            ['Pay for your license', 'Pay at checkout and submit your payment reference for review.'],
+            ['Download after approval', 'Find your license, download, and setup guide in My Account after the desk approves your payment.'],
+            ['Install in MetaTrader', 'Follow the setup guide and test the robot on a demo account first.'],
           ].map(([title, description], index) => (
-            <li key={title} className="rounded-xl border border-akg-hairline bg-akg-card p-5">
+            <li key={title}><Reveal className="h-full rounded-xl border border-akg-hairline bg-akg-card p-5">
               <h3 className="font-display text-lg font-bold text-akg-text"><span className="mr-2 text-akg-accent">{index + 1}.</span>{title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-akg-muted">{description}</p>
-            </li>
+            </Reveal></li>
           ))}
         </ol>
       </section>
@@ -253,6 +266,11 @@ export function LandingPage({ onNavigate, schedule }) {
             </p>
           </Reveal>
 
+          {priceCycle && (
+            <p className="mx-auto mt-5 w-fit rounded-lg border border-akg-hairline bg-akg-card px-4 py-2 text-center text-sm text-akg-muted">
+              {priceCycle.name} · {cycleDay(priceCycle.startsAt)} to {cycleDay(priceCycle.endsAt, true)}
+            </p>
+          )}
           <RevealGroup className="mt-10 grid gap-6 md:grid-cols-2 sm:mt-12" stagger={0.12}>
             {PLANS.map((plan) => (
               <RevealItem key={plan.id}>

@@ -308,8 +308,8 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onNavigateAdmin,
         </div>
 
         {report && (
-          <section className="space-y-3 rounded-xl border border-akg-hairline bg-akg-card p-5">
-            <h2 className="font-display text-lg font-bold">Performance report</h2>
+          <details className="space-y-3 rounded-xl border border-akg-hairline bg-akg-card p-5">
+            <summary className="cursor-pointer font-display text-lg font-bold">Performance report</summary>
             <p className="text-sm text-akg-muted">{report.type} · {report.start} to {report.end}</p>
             {statItems.length > 0 && <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {statItems.map((stat) => (
@@ -321,7 +321,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onNavigateAdmin,
             </dl>}
             <a href={report.source} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-akg-accent underline underline-offset-4">Open source report</a>
             <p className="text-xs text-akg-muted">Past performance does not guarantee future results.</p>
-          </section>
+          </details>
         )}
 
         {/* Strategy Text & Details */}
