@@ -3,7 +3,7 @@ import { pb, pbUrl } from '../lib/pocketbase';
 import {
   Cpu, Download, CheckCircle2, KeyRound, Copy, Check,
   ExternalLink, HardDrive, Clock, AlertCircle, ChevronLeft,
-  FlaskConical, Coins, Bitcoin, ArrowLeftRight, LineChart,
+  FlaskConical,
   FileText, RefreshCw, X
 } from 'lucide-react';
 import { Button } from './ui/Button';
@@ -14,13 +14,22 @@ import { pairsOf, featuresOf, timeframesOf, pctStat, statNumOrNull, performanceR
 const slugify = (name) =>
   String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-const botCategory = (bot) => {
-  const s = `${bot?.pairs || ''} ${bot?.strategy_type || ''}`.toLowerCase();
-  if (s.includes('gold') || s.includes('xau')) return { label: 'Gold', icon: Coins };
-  if (s.includes('btc') || s.includes('crypto') || s.includes('eth') || s.includes('sol')) return { label: 'Crypto', icon: Bitcoin };
-  if (/us30|nas100|us500|dax40|indices|x\.?1/.test(s)) return { label: 'Indices', icon: ArrowLeftRight };
-  return { label: 'Forex', icon: LineChart };
-};
+const fallbackRobotImage = '/assets/brand/robot-store.webp';
+
+function RobotImage({ bot, className = '' }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => { setFailed(false); }, [bot.id, bot.image_url]);
+  const src = !failed && bot.image_url?.trim() ? pbUrl(bot.image_url.trim()) : fallbackRobotImage;
+  return (
+    <img
+      src={src}
+      alt=""
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className={className}
+    />
+  );
+}
 
 export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onNavigateAdmin, notify }) {
   const [bots, setBots] = useState([]);
@@ -181,8 +190,6 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onNavigateAdmin,
     const features = featuresOf(bot);
     const timeframes = timeframesOf(bot);
     const selectedChanges = allBotChanges.filter((ch) => ch.bot === bot.id);
-    const cat = botCategory(bot);
-    const CatIcon = cat.icon;
 
     const report = performanceReport(bot);
     const statItems = [
@@ -191,7 +198,6 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onNavigateAdmin,
       { label: 'Max drawdown', value: statNumOrNull(bot.drawdown) !== null ? pctStat(bot.drawdown) : null, tone: 'text-rose-500' },
     ].filter((s) => Boolean(s.value));
 
-    const hasReportImage = Boolean(report && bot.image_url?.trim());
 
     return (
       <div className="max-w-5xl mx-auto font-sans text-akg-text w-full space-y-8 pb-12">
@@ -277,33 +283,13 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onNavigateAdmin,
             </div>
           </div>
 
-          {/* Right Hero Media: Backtest Image (if uploaded) or Category Card */}
-          <div className="relative min-h-[220px] overflow-hidden rounded-xl border border-akg-hairline bg-akg-raised flex items-center justify-center">
-            {hasReportImage ? (
-              <div className="relative h-full w-full">
-                <img
-                  src={pbUrl(bot.image_url.trim())}
-                  alt={`${bot.name} performance report`}
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-                <span className="absolute bottom-3 left-3 rounded-md border border-akg-hairline bg-akg-card/90 px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-wider text-akg-accent backdrop-blur">
-                  {report.type}
-                </span>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center gap-2 p-8 text-center">
-                <div className="h-12 w-12 rounded-lg border border-akg-hairline bg-akg-card flex items-center justify-center">
-                  <CatIcon className="h-6 w-6 text-akg-accent" />
-                </div>
-                <div className="font-mono text-xs uppercase tracking-wider text-akg-text">
-                  {cat.label} Strategy
-                </div>
-                <div className="font-mono text-[10px] text-akg-muted">
-                  {pairs.join(', ') || 'All Pairs'} · {bot.platform}
-                </div>
-              </div>
-            )}
+          <div className="relative min-h-[260px] overflow-hidden rounded-2xl border border-akg-hairline bg-[#071a12] sm:min-h-[340px]">
+            <RobotImage bot={bot} className="absolute inset-0 h-full w-full object-cover" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+            <div className="absolute bottom-5 left-5 right-5 flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/20 bg-black/65 px-3 py-1.5 text-xs font-semibold text-white">{bot.platform}</span>
+              {pairs.slice(0, 3).map((pair) => <span key={pair} className="rounded-full border border-white/20 bg-black/65 px-3 py-1.5 text-xs font-semibold text-white">{pair}</span>)}
+            </div>
           </div>
         </div>
 
@@ -565,119 +551,63 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onNavigateAdmin,
   // CATALOG GRID: /bots
   // ==========================================================================
   return (
-    <div className="space-y-8 font-sans text-akg-text w-full">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-2">
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-akg-text sm:text-3xl">
-            Trading Robots
-          </h1>
-          <p className="max-w-2xl text-sm text-akg-muted">
-            Browse ready-made MT4 and MT5 robots. Each robot has a one-time license, with downloads in My Account after payment approval.
-          </p>
+    <div className="mx-auto w-full max-w-7xl space-y-8 pb-12 font-sans text-akg-text">
+      <header className="relative overflow-hidden rounded-2xl border border-emerald-500/25 bg-[#071a12] px-6 py-10 text-white sm:px-10 sm:py-14">
+        <img src={fallbackRobotImage} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-35" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#071a12] via-[#071a12]/90 to-transparent" />
+        <div className="relative max-w-2xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">AKG ALGO · Robot store</p>
+          <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-white sm:text-5xl">Find your trading robot</h1>
+          <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-200 sm:text-base">Explore ready-made robots for MetaTrader 4 and 5. Compare platforms, markets, and one-time license prices.</p>
         </div>
+      </header>
 
-        {/* Platform Filter */}
-        <div className="flex items-center gap-1 bg-akg-raised p-1 rounded-lg border border-akg-hairline shrink-0 self-start">
-          {['all', 'MT4', 'MT5'].map((p) => (
-            <button
-              key={p}
-              onClick={() => setPlatformFilter(p)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                platformFilter === p
-                  ? 'bg-akg-cta text-akg-cta-text shadow-sm'
-                  : 'text-akg-muted hover:text-akg-text hover:bg-akg-card/60'
-              }`}
-            >
-              {p === 'all' ? 'All Platforms' : p}
-            </button>
-          ))}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="font-display text-xl font-bold">Explore robots</h2>
+          <p role="status" className="mt-1 text-sm text-akg-muted">{filteredBots.length} {filteredBots.length === 1 ? 'robot' : 'robots'} available</p>
         </div>
+        <fieldset>
+          <legend className="mb-2 text-xs font-semibold text-akg-muted">Platform</legend>
+          <div className="flex flex-wrap gap-1.5 rounded-xl border border-akg-hairline bg-akg-card p-1">
+            {['all', 'MT4', 'MT5'].map((platform) => (
+              <button key={platform} type="button" aria-pressed={platformFilter === platform}
+                onClick={() => setPlatformFilter(platform)}
+                className={`min-h-10 rounded-lg px-4 text-sm font-semibold transition-colors ${platformFilter === platform ? 'bg-akg-cta text-akg-cta-text' : 'text-akg-muted hover:text-akg-text'}`}>
+                {platform === 'all' ? 'All' : platform}
+              </button>
+            ))}
+          </div>
+        </fieldset>
       </div>
 
-      {/* Bots Grid */}
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {filteredBots.map((bot) => {
           const owned = isBotOwned(bot.name);
           const pending = !owned && isBotPending(bot.name);
-
+          const slug = slugify(bot.name);
           return (
-            <article
-              key={bot.id}
-              className="group flex flex-col overflow-hidden rounded-xl border border-akg-hairline bg-akg-card transition-all hover:border-akg-accent/50 hover:-translate-y-0.5 cursor-pointer"
-              onClick={() => onOpenBot && onOpenBot(slugify(bot.name))}
-            >
-              {/* Card Header: Backtest Image if available, else clean category header */}
-              {performanceReport(bot) && bot.image_url ? (
-                <div className="relative h-32 w-full overflow-hidden border-b border-akg-hairline bg-akg-raised">
-                  <img
-                    src={pbUrl(bot.image_url.trim())}
-                    alt={bot.name}
-                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-                  <div className="absolute top-3 left-3 flex items-center gap-2">
-                    <Badge variant="secondary" className="font-mono text-[10px]">{bot.platform}</Badge>
-                    <span className="font-mono text-[10px] text-white/90">{bot.version || 'v1.0'}</span>
-                  </div>
-                  {owned ? (
-                    <Badge variant="emerald" className="absolute top-3 right-3 text-[10px]">Licensed</Badge>
-                  ) : pending ? (
-                    <Badge variant="outline" className="absolute top-3 right-3 text-[10px]">Pending</Badge>
-                  ) : null}
-                  <span className="absolute bottom-2 left-3 font-mono text-[9px] uppercase tracking-wider text-akg-accent">
-                    Backtest Preview
-                  </span>
-                </div>
-              ) : (
-                <div className="border-b border-akg-hairline bg-akg-raised p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="font-mono text-[10px]">{bot.platform}</Badge>
-                    <span className="font-mono text-[10px] text-akg-muted">{bot.version || 'v1.0'}</span>
-                  </div>
-                  {owned ? (
-                    <Badge variant="emerald" className="text-[10px]">Licensed</Badge>
-                  ) : pending ? (
-                    <Badge variant="outline" className="text-[10px]">Pending</Badge>
-                  ) : (
-                    <span className="font-mono text-[10px] uppercase text-akg-muted">{pairsOf(bot)[0] || 'FX'}</span>
-                  )}
-                </div>
-              )}
-
+            <article key={bot.id} className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-akg-hairline bg-akg-card transition-[transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-akg-accent motion-reduce:transform-none">
+              <a href={`/bots/${slug}`} onClick={(event) => {
+                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                onOpenBot?.(slug);
+              }} aria-label={`View ${bot.name}`} className="relative block aspect-[16/9] overflow-hidden bg-[#071a12]">
+                <RobotImage bot={bot} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transform-none" />
+                <span className="absolute left-3 top-3 rounded-md border border-white/20 bg-black/75 px-2.5 py-1 text-xs font-semibold text-white">{bot.platform}</span>
+                {(owned || pending) && <span className="absolute right-3 top-3 rounded-md bg-black/75 px-2.5 py-1 text-xs font-semibold text-white">{owned ? 'Licensed' : 'Pending'}</span>}
+              </a>
               <div className="flex flex-1 flex-col p-5">
-                <h3 className="font-display text-base font-bold text-akg-text group-hover:text-akg-accent transition-colors">
-                  {bot.name}
-                </h3>
-                {bot.strategy_type && (
-                  <p className="mt-1 font-mono text-[11px] uppercase tracking-wide text-akg-muted">
-                    {bot.strategy_type}
-                  </p>
-                )}
-                <p className="mt-2.5 line-clamp-2 text-xs leading-relaxed text-akg-muted">
-                  {bot.description}
-                </p>
-
-                {pairsOf(bot).length > 0 && <p className="mt-2 text-xs text-akg-muted">{pairsOf(bot).join(', ')}</p>}
-
-                <div className="mt-auto flex items-center justify-between pt-5 border-t border-akg-hairline">
-                  <div>
-                    <div className="font-display text-lg font-extrabold text-akg-text tabular-nums">
-                      {formatUsdt(bot.price)}
-                      <span className="ml-1 text-[10px] font-bold text-akg-accent">USDT</span>
-                    </div>
-                    <div className="text-[10px] text-akg-muted">One-time license</div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenBot && onOpenBot(slugify(bot.name));
-                    }}
-                  >
-                    View Robot
-                  </Button>
+                <h3 className="font-display text-lg font-bold text-akg-text">{bot.name}</h3>
+                {pairsOf(bot).length > 0 && <p className="mt-1 text-xs font-medium text-akg-accent">{pairsOf(bot).join(' · ')}</p>}
+                {bot.description && <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-akg-muted">{bot.description}</p>}
+                <div className="mt-auto flex flex-wrap items-end justify-between gap-3 border-t border-akg-hairline pt-4">
+                  <div><p className="font-display text-xl font-bold">{formatUsdt(bot.price)} <span className="text-xs text-akg-accent">USDT</span></p><p className="mt-1 text-xs text-akg-muted">One-time license</p></div>
+                  <a href={`/bots/${slug}`} onClick={(event) => {
+                    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                    event.preventDefault();
+                    onOpenBot?.(slug);
+                  }} className="inline-flex min-h-10 items-center rounded-lg border border-akg-hairline px-4 text-sm font-semibold hover:border-akg-accent">View Robot<span className="sr-only"> {bot.name}</span></a>
                 </div>
               </div>
             </article>
