@@ -123,8 +123,8 @@ export default function Users() {
   /* ------------------------------ selectors ------------------------------- */
   const stateOf = useCallback((u) => {
     const days = cycleDaysLeft(u);
-    const expiryTs = String(u.cycle_expires_at || '').trim() ? new Date(String(u.cycle_expires_at).replace(' ', 'T')).getTime() : 0;
-    const sig = SIG_PLANS.includes(u.plan);
+    const expiryTs = Date.parse(String(u.effective_cycle_expires_at ?? u.cycle_expires_at ?? '').replace(' ', 'T'));
+    const sig = SIG_PLANS.includes(u.effective_plan ?? u.plan);
     const active = sig && days !== null && days >= 0;
     const expiring = active && days <= 3;
     const lapsed = sig && days === -1 && expiryTs >= Date.now() - 60 * 86400000;
@@ -292,7 +292,7 @@ export default function Users() {
           const buys = sig ? `SR ×${sig.SR_SIGNAL_BOX} · VIP ×${sig.PERFECT_SIGNAL_BOX}` : sigOf.has(keyOf(u.email)) ? '' : 'no purchases';
           return (
             <div className="min-w-0">
-              <div className="whitespace-nowrap text-[11px] font-semibold text-slate-900 dark:text-akg-silver">{PLAN_LABELS[u.plan] || u.plan || 'None'}</div>
+              <div className="whitespace-nowrap text-[11px] font-semibold text-slate-900 dark:text-akg-silver">{PLAN_LABELS[u.effective_plan ?? u.plan] || 'None'}</div>
               {tab === 'signal' && buys && <div className="font-data text-[10px] text-akg-muted">{buys}</div>}
             </div>
           );
@@ -440,7 +440,7 @@ export default function Users() {
             <div className="min-w-0">
               <div className="truncate text-xs font-semibold text-slate-900 dark:text-white">{u.name || (u.email || '').split('@')[0]}</div>
               <div className="mt-0.5 flex items-center gap-2 font-data text-[10px] text-akg-muted">
-                <span className="text-slate-800 dark:text-akg-silver font-medium">{PLAN_LABELS[u.plan] || u.plan || 'No plan'}</span>
+                <span className="text-slate-800 dark:text-akg-silver font-medium">{PLAN_LABELS[u.effective_plan ?? u.plan] || 'No plan'}</span>
                 {tab === 'bot' && botsOf.get(keyOf(u.email))
                   ? <span>· {botsOf.get(keyOf(u.email)).licenses.length} lic</span>
                   : sigOf.get(keyOf(u.email)) ? <span>· ${sigOf.get(keyOf(u.email)).spend}</span> : null}
@@ -531,7 +531,7 @@ function TraderDossier({ user, payments, bots, botsOf, sigOf }) {
         <span className="text-xs text-akg-muted">Current access</span>
         <div className="flex items-center gap-2.5">
           <span className="text-sm font-bold text-slate-900 dark:text-white">
-            {PLAN_LABELS[user.plan] || user.plan || 'None'}
+            {PLAN_LABELS[user.effective_plan ?? user.plan] || 'None'}
             {sig ? <span className="ml-2 font-data text-[10px] font-normal text-akg-muted">${sig.spend} lifetime</span> : null}
           </span>
           <ExpiryBadge days={cycleDaysLeft(user)} />

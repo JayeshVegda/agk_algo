@@ -23,7 +23,13 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     e.preventDefault();
     setError(null);
     const entered = phone.trim().replace(/[\s().-]/g, '');
-    const phoneNumber = entered.startsWith('+') ? entered : countryCode + entered.replace(/^0+/, '');
+    const national = entered.replace(/^0+/, '');
+    const localLength = { '+91': 10, '+1': 10, '+44': 10, '+971': 9, '+966': 9, '+61': 9, '+65': 8, '+92': 10, '+880': 10, '+977': 10, '+94': 9, '+27': 9 }[countryCode];
+    const digits = countryCode.slice(1);
+    const includesSelectedCode = national.startsWith(digits) && national.length === localLength + digits.length;
+    let phoneNumber = includesSelectedCode ? '+' + national : countryCode + national;
+    if (entered.startsWith('+')) phoneNumber = entered;
+    else if (entered.startsWith('00')) phoneNumber = '+' + entered.slice(2);
     if (isRegister && !/^\+[1-9]\d{7,14}$/.test(phoneNumber)) {
       setError('Enter a valid phone number. You can choose your country code or enter the full number starting with +.');
       return;

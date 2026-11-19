@@ -89,8 +89,13 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onNavigateAdmin,
     return () => { stale = true; };
   }, [botSlug]);
 
-  const handleCopy = (text) => {
-    navigator.clipboard.writeText(text);
+  const handleCopy = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      notify?.({ type: 'error', title: 'Could not copy', message: 'Select the text and copy it manually.' });
+      return;
+    }
     setCopiedKey(true);
     if (notify) {
       notify({ type: 'copy', title: 'Copied to clipboard', message: text });

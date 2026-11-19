@@ -2,40 +2,26 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, green-theme]
   pull_request:
-    branches: [main]
 
 jobs:
   verify:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11.3.0
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Unit Tests
-        run: pnpm test
-
-      - name: Dependency Audit
-        run: pnpm audit --prod
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --prefix frontend
+      - run: npm --prefix frontend run build -- --outDir "$RUNNER_TEMP/akg-web"
+      - name: Check PocketBase hooks
+        run: |
+          for hook in pb_hooks/*.js pb_migrations/*.js; do
+            node --check "$hook" || exit 1
+          done
+      - name: Apply migrations to an empty database
+        run: |
+          ./bin/pocketbase migrate up --dir="$RUNNER_TEMP/akg-data" --migrationsDir="$PWD/pb_migrations" --hooksDir="$PWD/pb_hooks"

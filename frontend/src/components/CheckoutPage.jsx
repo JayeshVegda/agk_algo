@@ -25,6 +25,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
   const { data: schedule, status: scheduleStatus, retry: retrySchedule } = useSignalSchedule(user?.id || '', order?.kind === 'plan');
   const [method, setMethod] = useState('crypto');
   const [network, setNetwork] = useState('');
+  const [recoveryNetwork, setRecoveryNetwork] = useState(null);
   const [ref, setRef] = useState('');
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState('');
@@ -75,6 +76,11 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
     );
   }
 
+  const cycle = schedule?.checkout;
+  const currentPrice = order.id === 'SR_SIGNAL_BOX' ? cycle?.srPrice : cycle?.vipPrice;
+  const needsReview = order.kind === 'plan' && Boolean(order.cycleId) &&
+    scheduleStatus === 'ready' && (cycle?.id !== order.cycleId || currentPrice !== order.price);
+
   if (!done && order.kind === 'plan') {
     if (scheduleStatus === 'loading') {
       return <p role="status" className="mx-auto max-w-lg py-16 text-center text-sm text-akg-muted">Checking your signal cycle and price…</p>;
@@ -87,12 +93,10 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         </div>
       );
     }
-    const cycle = schedule?.checkout;
-    const currentPrice = order.id === 'SR_SIGNAL_BOX' ? cycle?.srPrice : cycle?.vipPrice;
-    if (!order.cycleId || cycle?.id !== order.cycleId || currentPrice !== order.price) {
+    if (!order.cycleId) {
       return (
         <div className="mx-auto max-w-lg space-y-4 py-16 text-center">
-          <p role="status" className="text-sm text-akg-muted">This cycle or price is no longer available. Check Pricing before sending payment.</p>
+          <p role="status" className="text-sm text-akg-muted">Choose a signal cycle from Pricing before paying.</p>
           <Button onClick={() => onNavigate('pricing')}>Back to Pricing</Button>
         </div>
       );
@@ -109,7 +113,10 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
     ? `upi://pay?pa=${encodeURIComponent(settings.upi_id)}${settings.payee_name ? `&pn=${encodeURIComponent(settings.payee_name)}` : ''}${inr ? `&am=${inr}&cu=INR` : ''}&tn=${encodeURIComponent('AKG ALGO order')}`
     : '';
   const upiAvailable = Boolean(settings.inr_enabled && settings.upi_id && inr > 0);
-  const canPay = method === 'upi' ? upiAvailable : Boolean(settings.crypto_enabled && walletAddress);
+  const selectedNetwork = method === 'upi' ? 'INR-UPI' : network;
+  const paidNetwork = needsReview ? (recoveryNetwork ?? selectedNetwork) : selectedNetwork;
+  const paidMethod = paidNetwork === 'INR-UPI' ? 'upi' : 'crypto';
+  const canPay = needsReview ? Boolean(paidNetwork) : method === 'upi' ? upiAvailable : Boolean(settings.crypto_enabled && walletAddress);
 
   const copy = async (text, key) => {
     if (!text) return;
@@ -128,14 +135,14 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
       notify?.({ type: 'error', title: 'Reference missing', message: 'Paste your transaction hash or UPI reference (UTR).' });
       return;
     }
-    const refOk = method === 'upi'
+    const refOk = paidMethod === 'upi'
       ? /^[0-9]{8,30}$/.test(ref.trim())
       : /^[a-zA-Z0-9]{20,128}$/.test(ref.trim());
     if (!refOk) {
       notify?.({
         type: 'error',
-        title: method === 'upi' ? 'Invalid UTR' : 'Invalid TXID',
-        message: method === 'upi'
+        title: paidMethod === 'upi' ? 'Invalid UTR' : 'Invalid TXID',
+        message: paidMethod === 'upi'
           ? 'Paste the 12-digit UPI reference number from your payment app.'
           : 'A transaction hash is 64 hexadecimal characters.',
       });
@@ -148,10 +155,10 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         user_email: user.email,
         plan: isBot ? `BOT: ${order.name} (${order.platform || 'EA'})` : order.id,
         amount: order.price,
-        ...(!isBot ? { signal_cycle: order.cycleId } : {}),
-        network: method === 'upi' ? 'INR-UPI' : network,
-        method,
-        ...(method === 'upi' ? { inr_amount: inr } : {}),
+        ...(!isBot ? { signal_cycle: order.cycleId, already_paid: true } : {}),
+        network: paidNetwork,
+        method: paidMethod,
+        ...(paidMethod === 'upi' ? { inr_amount: inr } : {}),
         txid: ref.trim(),
         status: 'pending',
       });
@@ -173,11 +180,11 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         </div>
         <h1 className="mt-5 font-display text-2xl font-bold text-akg-text">Order submitted</h1>
         <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-akg-muted">
-          The desk verifies {method === 'upi' ? 'your UPI payment (UTR)' : 'the blockchain transfer'} manually,
+          The desk verifies {paidMethod === 'upi' ? 'your UPI payment (UTR)' : 'the blockchain transfer'} manually,
           usually within a few hours. {isBot ? 'Your license key is issued automatically on approval.' : `When approved, your access follows the ${order.cycleName} schedule.`}
         </p>
         <div className="mt-4 rounded-xl border border-akg-hairline bg-akg-raised px-4 py-3 font-mono text-xs text-akg-accent break-all">
-          {method === 'upi' ? 'UTR' : 'TXID'}: {ref.trim()}
+          {paidMethod === 'upi' ? 'UTR' : 'TXID'}: {ref.trim()}
         </div>
         <div className="mt-6 flex justify-center gap-2.5">
           <Button variant="outline" onClick={() => onNavigate('account')}>My Orders</Button>
@@ -187,6 +194,34 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         </div>
         <SupportCard settings={settings} />
       </div>
+    );
+  }
+
+  if (needsReview) {
+    return (
+      <form className="mx-auto max-w-lg space-y-4 py-10" onSubmit={(event) => { event.preventDefault(); submit(); }}>
+        <h1 className="font-display text-2xl font-bold">Already paid for {order.cycleName || 'this cycle'}?</h1>
+        <p className="text-sm text-akg-muted">The cycle or price changed. If you already sent a payment, submit your reference so the desk can review it.</p>
+        <label className="block space-y-1 text-sm">
+          <span>How did you pay?</span>
+          <select required value={paidNetwork} onChange={(event) => setRecoveryNetwork(event.target.value)} className="w-full rounded-lg border border-akg-hairline bg-akg-raised p-2">
+            <option value="">Choose a method</option>
+            <option value="USDT-TRC20">USDT · TRC20</option>
+            <option value="USDT-BEP20">USDT · BEP20</option>
+            <option value="USDT-ERC20">USDT · ERC20</option>
+            <option value="INR-UPI">UPI</option>
+          </select>
+        </label>
+        <label className="block space-y-1 text-sm">
+          <span>Payment reference</span>
+          <input required value={ref} onChange={(event) => setRef(event.target.value)} className="w-full rounded-lg border border-akg-hairline bg-akg-raised p-2" />
+        </label>
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" disabled={busy || !canPay}>{busy ? 'Submitting…' : 'Send for review'}</Button>
+          <Button type="button" variant="outline" onClick={() => onNavigate('pricing')}>Back to Pricing</Button>
+        </div>
+        <SupportCard settings={settings} />
+      </form>
     );
   }
 

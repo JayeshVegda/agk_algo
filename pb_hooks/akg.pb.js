@@ -136,54 +136,40 @@ onRecordCreateRequest((e) => {
       );
     }
 
-    // Server-side reference sanity, per method: crypto TXIDs are 20-128
-    // alphanumerics (all three networks use 64-hex); UPI UTRs are 8-30 digits.
-    const refRaw = String(e.record.get("txid") || "").trim();
-    const isUpi = e.record.get("method") === "upi" || e.record.get("network") === "INR-UPI";
-    const refOk = isUpi ? /^[0-9]{8,30}$/.test(refRaw) : /^[a-zA-Z0-9]{20,128}$/.test(refRaw);
-    if (!refOk) {
-      throw new BadRequestError(isUpi
-        ? "Invalid UTR. Paste the 12-digit UPI reference from your payment app."
-        : "Invalid transaction hash. Paste the full TXID from your wallet.");
-    }
+    e.record.set("admin_notes", "");
+  }
 
-    // Duplicate-reference guard: the same TXID/UTR must not already be pending
-    // or confirmed on another payment. Resubmission after a REJECTED payment
-    // is allowed (the trader may fix the amount and reuse the transfer).
-    let dupe = [];
-    try {
-      dupe = $app.findRecordsByFilter(
-        "payments",
-        "txid = {:t} && status != 'rejected'",
-        "-created", 1, 0,
-        { t: refRaw }
-      );
-    } catch {
-      dupe = [];
-    }
-    if (dupe.length > 0) {
-      throw new BadRequestError(
-        "This " + (isUpi ? "UTR" : "TXID") + " was already submitted and is " +
-        dupe[0].get("status") + ". If it was rejected, please contact support before resubmitting."
-      );
-    }
+  const reference = e.record.getString("txid").trim();
+  const isUpi = e.record.getString("method") === "upi" || e.record.getString("network") === "INR-UPI";
+  if (!isManager && !(isUpi ? /^[0-9]{8,30}$/ : /^[a-zA-Z0-9]{20,128}$/).test(reference)) {
+    throw new BadRequestError("Enter the full payment reference from your wallet or UPI app.");
+  }
+  e.record.set("txid", reference);
+  if (isUpi) {
+    e.record.set("method", "upi");
+    e.record.set("network", "INR-UPI");
   }
 
   // Validate plan + amount against server-side prices (clients cannot pay $1 for a $299 bot).
   const plan = e.record.get("plan") || "";
   const amount = Number(e.record.get("amount") || 0);
   let expected = 0;
+  let needsReview = false;
 
   if (membership.SIGNAL_PLANS.includes(plan)) {
     const now = Date.now();
     const id = e.record.getString("signal_cycle");
     const cycle = id ? e.app.findRecordById("signal_cycles", id) :
       isManager ? membership.schedule(e.app, e.record.getString("user_email"), now).checkout : null;
-    if (!cycle || !membership.windowOpen(cycle, now)) {
-      throw new BadRequestError("Select an open signal cycle from Pricing.");
+    if (!cycle || membership.time(cycle, "renewals_at") > now) {
+      throw new BadRequestError("Select a signal cycle that has opened for payments.");
     }
     e.record.set("signal_cycle", cycle.id);
     expected = cycle.getFloat(plan === membership.SIGNAL_PLANS[0] ? "sr_price" : "vip_price");
+    needsReview = !membership.windowOpen(cycle, now) || amount !== expected;
+    if (needsReview && !isManager && (e.requestInfo().body || {}).already_paid !== true) {
+      throw new BadRequestError("This cycle or price changed. If you already paid, submit your reference for review.");
+    }
   } else if (plan.indexOf("BOT:") === 0) {
     e.record.set("signal_cycle", "");
     const m = plan.match(/BOT:\s*(.+?)\s*(?:\(|$)/);
@@ -200,10 +186,30 @@ onRecordCreateRequest((e) => {
     throw new BadRequestError("Unknown plan.");
   }
 
-  if (amount !== expected) {
+  if (amount !== expected && !needsReview) {
     throw new BadRequestError(
       "Amount " + amount + " USDT does not match the price of the selected plan (" + expected + " USDT)."
     );
+  }
+
+  if (needsReview) {
+    e.record.set("status", "pending");
+    e.record.set("admin_notes", "Cycle or price changed. Confirm the actual transfer and resolve any price difference before approving.");
+  }
+  e.record.set("amount", expected);
+  if (isUpi) {
+    const settings = e.app.findRecordsByFilter("site_settings", "", "", 1, 0)[0];
+    const rate = settings ? settings.getFloat("usdt_inr_rate") : 0;
+    if (rate > 0) {
+      e.record.set("inr_amount", Math.round(expected * rate));
+    } else if (needsReview) {
+      e.record.set("inr_amount", 0);
+      e.record.set("admin_notes", e.record.getString("admin_notes") + " The INR rate is unavailable.");
+    } else {
+      throw new BadRequestError("The UPI exchange rate is unavailable. Contact the desk with your payment reference.");
+    }
+  } else {
+    e.record.set("inr_amount", 0);
   }
 
   const confirmed = isManager && e.record.getString("status") === "confirmed";
@@ -211,7 +217,14 @@ onRecordCreateRequest((e) => {
     if (plan.startsWith("BOT:")) e.record.set("license_key", membership.licenseKey(plan));
     else e.app.findFirstRecordByFilter("users", "email = {:email}", { email: e.record.getString("user_email") });
   }
-  e.next();
+  try {
+    e.next();
+  } catch (error) {
+    if (String(error).includes("Payment reference already submitted")) {
+      throw new BadRequestError("This payment reference is already in the ledger.");
+    }
+    throw error;
+  }
   if (confirmed) {
     const notice = plan.startsWith("BOT:")
       ? ["Robot license issued", "Your license key and downloads are available in My Account.", "license_issued"]
@@ -505,23 +518,6 @@ routerAdd("POST", "/api/akg/managed/apply", (e) => {
 });
 
 // ---------------------------------------------------------------------------
-// Payments: UPI/GPay settlement
-// ---------------------------------------------------------------------------
-// A upi-method payment carries the UTR/reference id in `txid`, the rupee
-// amount in `inr_amount`, and still records the USDT-equivalent plan price in
-// `amount` so ledger math stays uniform. Same desk-verification flow.
-onRecordCreateRequest((e) => {
-  if (e.record && e.record.collection().name !== "payments") { e.next(); return; }
-  if (e.record.get("method") === "upi") {
-    e.record.set("network", "INR-UPI");
-  }
-  e.next();
-});
-
-// notifications: self-service updates may only toggle the read flag. The
-// owner could otherwise rewrite title/body or re-address the note to a
-// different user id, so those fields are restored from the stored record
-// for non-manager updates.
 onRecordUpdateRequest((e) => {
   if (e.record && e.record.collection().name !== "notifications") { e.next(); return; }
   const auth = e.auth;
@@ -538,70 +534,6 @@ onRecordUpdateRequest((e) => {
 });
 
 // ---------------------------------------------------------------------------
-// bots: the Google Drive package link is the paid deliverable, so it is
-// stripped from every bots read unless the caller is a manager or holds a
-// confirmed BOT: payment for that exact bot. The public UI already hides the
-// button pre-purchase, but the API rule is what actually gates it.
-// ---------------------------------------------------------------------------
-
-onRecordsListRequest((e) => {
-  if (e.record && e.record.collection().name !== "bots") { e.next(); return; }
-  const auth = e.auth;
-  const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
-  if (isManager) { e.next(); return; }
-
-  let owned = null; // lazy set of lowercased owned bot names
-  if (auth) {
-    try {
-      const recs = $app.findRecordsByFilter(
-        "payments", "user_email = {:e} && status = 'confirmed'", "", 1000, 0,
-        { e: String(auth.get("email") || "").trim().toLowerCase() },
-      );
-      owned = new Set();
-      for (const p of recs) {
-        const m = String(p.get("plan") || "").match(/BOT:\s*(.+?)\s*(?:\(|$)/i);
-        if (m) owned.add(m[1].trim().toLowerCase());
-      }
-    } catch (err) {
-      owned = new Set(); // fail closed: no payments visible -> no links
-    }
-  }
-
-  for (const r of e.records || []) {
-    if (!owned || !owned.has(String(r.get("name") || "").trim().toLowerCase())) {
-      r.set("download_url", "");
-    }
-  }
-  e.next();
-});
-
-onRecordViewRequest((e) => {
-  if (e.record && e.record.collection().name !== "bots") { e.next(); return; }
-  const auth = e.auth;
-  const isManager = auth && (auth.collection().name === "_superusers" || auth.get("role") === "admin");
-  if (isManager) { e.next(); return; }
-
-  let ok = false;
-  if (auth) {
-    try {
-      const recs = $app.findRecordsByFilter(
-        "payments", "user_email = {:e} && status = 'confirmed'", "", 1000, 0,
-        { e: String(auth.get("email") || "").trim().toLowerCase() },
-      );
-      const name = String(e.record.get("name") || "").trim().toLowerCase();
-      ok = recs.some((p) => {
-        const m = String(p.get("plan") || "").match(/BOT:\s*(.+?)\s*(?:\(|$)/i);
-        return m && m[1].trim().toLowerCase() === name;
-      });
-    } catch (err) {
-      ok = false;
-    }
-  }
-  if (!ok) e.record.set("download_url", "");
-  e.next();
-});
-
-// ---------------------------------------------------------------------------
 // Traders roster for the admin console. PocketBase hides user emails from
 // everyone except superusers (emailVisibility), which empties the console's
 // member dossier and payment lookups. This route returns the roster with
@@ -614,17 +546,43 @@ routerAdd("GET", "/api/akg/traders", (e) => {
     return;
   }
   try {
-    const rows = $app.findRecordsByFilter("users", "", "-created", 5000, 0).map((u) => ({
-      id: u.id,
-      email: String(u.get("email") || ""),
-      phone_number: u.getString("phone_number"),
-      name: String(u.get("name") || ""),
-      verified: !!u.get("verified"),
-      role: String(u.get("role") || ""),
-      plan: String(u.get("plan") || ""),
-      cycle_expires_at: String(u.get("cycle_expires_at") || ""),
-      created: String(u.get("created") || ""),
-    }));
+    const now = Date.now();
+    const membership = require(__hooks + "/membership.js");
+    const cycles = new Map();
+    const schedule = new Map();
+    const stamp = new Date(now).toISOString().replace("T", " ");
+    const available = e.app.findRecordsByFilter("signal_cycles", "ends_at > {:now}", "starts_at", 0, 0, { now: stamp });
+    for (const cycle of available) cycles.set(cycle.id, cycle);
+    const enrollments = e.app.findRecordsByFilter("payments",
+      "status = 'confirmed' && signal_cycle.ends_at > {:now}", "", 0, 0, { now: stamp });
+    for (const payment of enrollments) {
+      const cycle = cycles.get(payment.getString("signal_cycle"));
+      if (!cycle || membership.time(cycle, "starts_at") > now || membership.paused(cycle, now)) continue;
+      schedule.set(payment.getString("user_email"), { plan: payment.getString("plan"), ends: cycle.getString("ends_at") });
+    }
+    const rows = $app.findRecordsByFilter("users", "", "-created", 5000, 0).map((u) => {
+      const email = u.getString("email");
+      const enrolled = schedule.get(email);
+      const legacyPlan = u.getString("plan");
+      const legacyEnd = u.getString("cycle_expires_at");
+      const legacyActive = membership.SIGNAL_PLANS.includes(legacyPlan) && membership.time(u, "cycle_expires_at") > now;
+      const useScheduled = enrolled && (!legacyActive || (legacyPlan === enrolled.plan
+        ? Date.parse(enrolled.ends.replace(" ", "T")) > membership.time(u, "cycle_expires_at")
+        : enrolled.plan === "PERFECT_SIGNAL_BOX"));
+      return {
+        id: u.id,
+        effective_plan: useScheduled ? enrolled.plan : legacyPlan,
+        effective_cycle_expires_at: useScheduled ? enrolled.ends : legacyEnd,
+        email: String(u.get("email") || ""),
+        phone_number: u.getString("phone_number"),
+        name: String(u.get("name") || ""),
+        verified: !!u.get("verified"),
+        role: String(u.get("role") || ""),
+        plan: String(u.get("plan") || ""),
+        cycle_expires_at: String(u.get("cycle_expires_at") || ""),
+        created: String(u.get("created") || ""),
+      };
+    });
     e.response.header().set("Cache-Control", "private, no-store");
     e.json(200, rows);
   } catch (err) {

@@ -44,7 +44,7 @@ export function explorerUrl(network, txid) {
 }
 
 export function cycleDaysLeft(user) {
-  const raw = user?.cycle_expires_at;
+  const raw = user?.effective_cycle_expires_at ?? user?.cycle_expires_at;
   if (!raw) return null;
   const t = new Date(String(raw).replace(' ', 'T')).getTime();
   if (Number.isNaN(t) || t < Date.now()) return -1;

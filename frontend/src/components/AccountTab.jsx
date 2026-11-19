@@ -60,8 +60,13 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth, schedule }) {
     );
   }
 
-  const handleCopy = (text, id) => {
-    navigator.clipboard.writeText(text);
+  const handleCopy = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      notify?.({ type: 'error', title: 'Could not copy', message: 'Select the text and copy it manually.' });
+      return;
+    }
     setCopiedId(id);
     if (notify) notify({ type: 'copy', title: 'Copied to clipboard', message: text });
     setTimeout(() => setCopiedId(null), 2000);
