@@ -48,9 +48,9 @@ export function TermsPage() {
         ['1. The service', 'AKG ALGO provides trading-related software and information: real-time trade signals delivered inside the website, Expert Advisor (EA) licenses for MetaTrader 4 and 5, and an optional account-management service. Signals and EAs are analytical and software tools. They are not investment advice, portfolio management (outside the explicit managed-account service), or an offer to buy or sell any financial instrument.'],
         ['2. Accounts', 'You must provide an accurate email address and keep your password secure. Access is personal: sharing credentials or reselling access terminates the service without refund. One subscription covers one person.'],
         ['3. Subscriptions and cycles', [
-          'Signal subscriptions (SR Signal Box, Perfect Signal Box) run in 30-day cycles from the moment the desk approves your payment.',
+          'Signal subscriptions give you access for the dates shown at checkout once the desk approves your payment. The Signal Room shows any scheduled breaks.',
           'Cycles do not auto-renew and no card is ever charged automatically; you renew manually.',
-          'Buying a new cycle while one is active stacks the days on top of your current expiry.',
+          'You can pay for an upcoming cycle when renewals open. Access to that cycle begins on its scheduled start date.',
         ]],
         ['4. Expert Advisor licenses', 'EA licenses are one-time, perpetual, and bound at purchase time to the MetaTrader account number you provide. A license moved to a different account number requires a new purchase or a support request. The software is provided as-is; you run it on your own broker account and remain solely responsible for its use.'],
         ['5. Managed accounts', 'If you apply for account management, you grant the desk read and trade access to the MetaTrader account you nominate, for the purpose of running AKG systems. Profits are split as shown on the application page (default 70% trader / 30% desk) and settled per the statements shown in your account. You may pause or end the arrangement anytime by changing your broker password; open positions will be closed out at the next practical opportunity. The desk never withdraws, deposits, or transfers funds on your account.'],

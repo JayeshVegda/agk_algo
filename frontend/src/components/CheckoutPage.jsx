@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
+import { cycleDay, useSignalSchedule } from '../lib/signalCycles';
 import { cn } from '../lib/utils';
 
 export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
@@ -15,6 +16,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
   const walletList = useWallets();
   const walletMap = walletsToMap(walletList);
   const [order, setOrder] = useState(null);
+  const schedule = useSignalSchedule(user?.id || '', order?.kind === 'plan');
   const [method, setMethod] = useState('crypto');
   const [network, setNetwork] = useState('');
   const [ref, setRef] = useState('');
@@ -66,6 +68,16 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
     );
   }
 
+  if (!done && order.kind === 'plan' && (!order.cycleId || schedule?.checkout?.id !== order.cycleId ||
+    (order.id === 'SR_SIGNAL_BOX' ? schedule.checkout.srPrice : schedule.checkout.vipPrice) !== order.price)) {
+    return (
+      <div className="mx-auto max-w-lg space-y-4 py-16 text-center">
+        <p className="text-sm text-akg-muted">Check Pricing for the current cycle and price before sending payment.</p>
+        <Button onClick={() => onNavigate('pricing')}>Back to Pricing</Button>
+      </div>
+    );
+  }
+
   const inr = settings.inr_enabled && settings.usdt_inr_rate > 0
     ? Math.round(order.price * settings.usdt_inr_rate)
     : 0;
@@ -108,6 +120,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         user_email: user.email,
         plan: isBot ? `BOT: ${order.name} (${order.platform || 'EA'})` : order.id,
         amount: order.price,
+        ...(!isBot ? { signal_cycle: order.cycleId } : {}),
         network: method === 'upi' ? 'INR-UPI' : network,
         method,
         ...(method === 'upi' ? { inr_amount: inr } : {}),
@@ -133,7 +146,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         <h1 className="mt-5 font-display text-2xl font-bold text-akg-text">Order submitted</h1>
         <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-akg-muted">
           The desk verifies {method === 'upi' ? 'your UPI payment (UTR)' : 'the blockchain transfer'} manually,
-          usually within a few hours. {isBot ? 'Your license key is issued automatically on approval.' : 'Your 30-day cycle activates automatically on approval.'}
+          usually within a few hours. {isBot ? 'Your license key is issued automatically on approval.' : `When approved, your access follows the ${order.cycleName} schedule.`}
         </p>
         <div className="mt-4 rounded-xl border border-akg-hairline bg-akg-raised px-4 py-3 font-mono text-xs text-akg-accent break-all">
           {method === 'upi' ? 'UTR' : 'TXID'}: {ref.trim()}
@@ -172,7 +185,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
             <p className="mt-1 font-mono text-[11px] text-akg-muted">
               {isBot
                 ? `${order.platform} · perpetual license · activates automatically on first run`
-                : '30-day member cycle · full signal coordinates'}
+                : `${order.cycleName || 'Signal cycle'} · ${cycleDay(order.startsAt)} to ${cycleDay(order.endsAt, true)}`}
             </p>
           </div>
           <div className="shrink-0 text-right">
@@ -330,7 +343,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
             <>The desk verifies the payment <b className="text-akg-text">manually</b>, usually within a few hours.</>,
             isBot
               ? <>Your <b className="text-akg-text">license key</b> is issued automatically and appears in My Account with the download.</>
-              : <>Your <b className="text-akg-text">30-day cycle</b> activates automatically and the full signals desk unlocks.</>,
+              : <>After approval, your Signal Room access starts on the scheduled date.</>,
           ].map((t, i) => (
             <li key={i} className="flex items-start gap-2.5 text-xs leading-relaxed text-akg-muted">
               <span className="mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-md bg-emerald-500/15 font-mono text-[10px] font-bold text-akg-accent">{i + 1}</span>

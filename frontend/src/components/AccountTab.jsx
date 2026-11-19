@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
-import { downloadLinksFor } from '../lib/utils';
+import { downloadLicensedFile, downloadLinksFor } from '../lib/utils';
+import { cycleDay } from '../lib/signalCycles';
 import { cn } from '../lib/utils';
 
 const PLAN_LABELS = {
@@ -22,7 +23,7 @@ function fmtDateTime(s) {
   });
 }
 
-export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
+export function AccountTab({ user, notify, onNavigate, onOpenAuth, schedule }) {
   const [payments, setPayments] = useState([]);
   const [bots, setBots] = useState([]);
   const [copiedId, setCopiedId] = useState(null);
@@ -67,10 +68,14 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
   };
 
   const now = Date.now();
-  const expiry = user?.cycle_expires_at ? new Date(String(user.cycle_expires_at).replace(' ', 'T')).getTime() : null;
+  const membershipEnd = schedule?.memberCycle?.endsAt || user.cycle_expires_at;
+  const expiry = membershipEnd ? Date.parse(membershipEnd.replace(' ', 'T')) : null;
+  const plan = schedule?.plan || user.plan;
+  const scheduled = schedule?.enrolledNext;
+  const duration = schedule?.memberCycle ? Math.max(1, Math.ceil((expiry - Date.parse(schedule.memberCycle.startsAt.replace(' ', 'T'))) / 86400000)) : 30;
   const isActive = expiry && expiry > now;
   const daysLeft = isActive ? Math.max(0, Math.ceil((expiry - now) / 86400000)) : 0;
-  const cycleProgress = isActive ? Math.max(0, Math.min(100, Math.round(((30 - daysLeft) / 30) * 100))) : 100;
+  const cycleProgress = isActive ? Math.max(0, Math.min(100, Math.round(((duration - daysLeft) / duration) * 100))) : 100;
   const subState = isActive ? (daysLeft <= 7 ? 'expiring' : 'active') : (user?.plan && user?.plan !== 'NONE' ? 'expired' : 'none');
   const pendingSub = payments.find((p) => p.status === 'pending' && !p.plan?.startsWith('BOT:'));
 
@@ -111,15 +116,15 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <div className="text-2xl font-extrabold text-akg-text font-display">
-              {PLAN_LABELS[user?.plan] || 'Free Member Access'}
+              {PLAN_LABELS[plan] || 'Free Member Access'}
             </div>
             <div className="text-xs text-akg-muted mt-1">
               {isActive ? (
-                <>Cycle ends <b className="text-akg-text">{new Date(expiry).toLocaleDateString()}</b> · <span className="text-akg-accent font-semibold">{daysLeft} day{daysLeft === 1 ? '' : 's'} remaining</span></>
+                <>Cycle ends <b className="text-akg-text">{cycleDay(membershipEnd, !!schedule?.memberCycle)}</b> · <span className="text-akg-accent font-semibold">{daysLeft} day{daysLeft === 1 ? '' : 's'} remaining</span></>
               ) : user?.plan && user?.plan !== 'NONE' ? (
                 <>Your previous cycle has ended. Renew to restore full signal access.</>
               ) : (
-                <>No active 30-day signal cycle yet. Subscribe to unlock the live desk.</>
+                <>No active signal cycle. Visit Pricing for upcoming dates.</>
               )}
             </div>
           </div>
@@ -132,7 +137,7 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
                 onClick={() => onNavigate && onNavigate('pricing')}
               >
                 <CreditCard className="h-3.5 w-3.5" />
-                <span>Buy Next Month</span>
+                <span>View upcoming cycles</span>
               </Button>
             )}
             {!isActive && (
@@ -141,6 +146,7 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
                 <span>Subscribe Now</span>
               </Button>
             )}
+            {scheduled && <span className="text-xs text-akg-accent">Enrolled in {scheduled.name}. Starts {cycleDay(scheduled.startsAt)}.</span>}
             {pendingSub && (
               <span className="text-[10px] text-amber-500 font-semibold flex items-center gap-1">
                 <Timer className="h-3 w-3" /> Next-cycle payment awaiting desk verification
@@ -229,6 +235,7 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
                       <a
                         key={l.path}
                         href={l.path}
+                        onClick={(event) => downloadLicensedFile(event, l.path, notify)}
                         download
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-akg-cta text-akg-cta-text font-semibold hover:opacity-90 transition-opacity text-xs cursor-pointer"
                       >
@@ -344,7 +351,7 @@ export function AccountTab({ user, notify, onNavigate, onOpenAuth }) {
                   {p.status === 'confirmed' && !isBot && (
                     <div className="text-[11px] text-akg-green/90 flex items-start gap-1.5">
                       <CheckCircle2 className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                      <span>Confirmed. 30-day signal cycle granted.</span>
+                      <span>Confirmed. Access follows your signal cycle dates.</span>
                     </div>
                   )}
                 </div>

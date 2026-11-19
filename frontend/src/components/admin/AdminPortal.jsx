@@ -15,6 +15,7 @@ import { DensityProvider, DensityToggle, useDensity } from './components/Density
 import CommandPalette from './components/CommandPalette';
 import Overview from './sections/Overview';
 import Payments from './sections/Payments';
+import Cycles from './sections/Cycles';
 import Signals from './sections/Signals';
 import Bots from './sections/Bots';
 import Briefings from './sections/Briefings';
@@ -191,6 +192,7 @@ function ConsoleShell({ currentUser, onLogout, notify, onNavigatePublic }) {
     resources: Resources,
     users: Users,
     settings: Settings,
+    cycles: Cycles,
   }[section];
 
   return (

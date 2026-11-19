@@ -153,7 +153,7 @@ export function getPlans(settings) {
       name: s.plan_sr_name || 'SR Signal Box',
       price: Number(s.plan_sr_price) || 10,
       blurb: s.plan_sr_blurb || '',
-      period: 'per 30-day cycle',
+      period: 'cycle',
       popular: false,
       tag: 'STANDARD EXECUTION',
       features: STATIC_PLAN_FEATURES.SR_SIGNAL_BOX
@@ -163,7 +163,7 @@ export function getPlans(settings) {
       name: s.plan_vip_name || 'Perfect Signal Box',
       price: Number(s.plan_vip_price) || 20,
       blurb: s.plan_vip_blurb || '',
-      period: 'per 30-day cycle',
+      period: 'cycle',
       popular: true,
       tag: 'INSTITUTIONAL VIP',
       features: STATIC_PLAN_FEATURES.PERFECT_SIGNAL_BOX

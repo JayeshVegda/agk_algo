@@ -89,21 +89,7 @@ onRecordUpdateRequest((e) => {
 onRecordCreateRequest((e) => {
   if (e.record && e.record.collection().name !== "payments") { e.next(); return; }
 
-  // Plan prices are admin-editable (site_settings) with a fallback for a
-  // missing record; the server is still the source of truth for validation.
-  const FALLBACK_PRICES = { SR_SIGNAL_BOX: 10, PERFECT_SIGNAL_BOX: 20 };
-  const readPlanPrices = () => {
-    const prices = Object.assign({}, FALLBACK_PRICES);
-    try {
-      const s = $app.findFirstRecordByFilter("site_settings", "id != ''");
-      const sr = Number(s.get("plan_sr_price"));
-      const vip = Number(s.get("plan_vip_price"));
-      if (sr > 0) prices.SR_SIGNAL_BOX = sr;
-      if (vip > 0) prices.PERFECT_SIGNAL_BOX = vip;
-    } catch {}
-    return prices;
-  };
-  const PLAN_PRICES = readPlanPrices();
+  const membership = require(__hooks + "/membership.js");
 
   if (!e.auth) throw new BadRequestError("Authentication required.");
 
@@ -115,6 +101,9 @@ onRecordCreateRequest((e) => {
     // file a payment on behalf of a customer, so their provided email is kept.
     e.record.set("user_email", e.auth.get("email"));
     e.record.set("status", "pending");
+    e.record.set("license_key", "");
+    e.record.set("bound_account", "");
+    e.record.set("bound_at", "");
 
     // Anti-flood: reject new submissions while the member already has 3+
     // payments awaiting verification (catches double-clicks, retries and spam).
@@ -172,7 +161,58 @@ onRecordCreateRequest((e) => {
         dupe[0].get("status") + ". If it was rejected, please contact support before resubmitting."
       );
     }
+  }
 
+  // Validate plan + amount against server-side prices (clients cannot pay $1 for a $299 bot).
+  const plan = e.record.get("plan") || "";
+  const amount = Number(e.record.get("amount") || 0);
+  let expected = 0;
+
+  if (membership.SIGNAL_PLANS.includes(plan)) {
+    const now = Date.now();
+    const id = e.record.getString("signal_cycle");
+    const cycle = id ? e.app.findRecordById("signal_cycles", id) :
+      isManager ? membership.schedule(e.app, e.record.getString("user_email"), now).checkout : null;
+    if (!cycle || !membership.windowOpen(cycle, now)) {
+      throw new BadRequestError("Select an open signal cycle from Pricing.");
+    }
+    e.record.set("signal_cycle", cycle.id);
+    expected = cycle.getFloat(plan === membership.SIGNAL_PLANS[0] ? "sr_price" : "vip_price");
+  } else if (plan.indexOf("BOT:") === 0) {
+    e.record.set("signal_cycle", "");
+    const m = plan.match(/BOT:\s*(.+?)\s*(?:\(|$)/);
+    if (!m) throw new BadRequestError("Invalid bot purchase format.");
+    let bot;
+    try {
+      bot = $app.findFirstRecordByFilter("bots", "name = {:name}", { name: m[1].trim() });
+    } catch {
+      throw new BadRequestError("Unknown bot: " + m[1].trim());
+    }
+    if (!isManager && !bot.getBool("is_live")) throw new BadRequestError("This robot is unavailable.");
+    expected = Number(bot.get("price") || 0);
+  } else {
+    throw new BadRequestError("Unknown plan.");
+  }
+
+  if (amount !== expected) {
+    throw new BadRequestError(
+      "Amount " + amount + " USDT does not match the price of the selected plan (" + expected + " USDT)."
+    );
+  }
+
+  const confirmed = isManager && e.record.getString("status") === "confirmed";
+  if (confirmed) {
+    if (plan.startsWith("BOT:")) e.record.set("license_key", membership.licenseKey(plan));
+    else e.app.findFirstRecordByFilter("users", "email = {:email}", { email: e.record.getString("user_email") });
+  }
+  e.next();
+  if (confirmed) {
+    const notice = plan.startsWith("BOT:")
+      ? ["Robot license issued", "Your license key and downloads are available in My Account.", "license_issued"]
+      : ["Signal cycle approved", "Your account shows when this signal cycle starts and ends.", "payment_approved"];
+    require(__hooks + "/payment-approval.js").notify(e.app, e.record.getString("user_email"), notice);
+  }
+  if (!isManager) {
     // Alert every admin in real time: a member filed a payment for review.
     try {
       const col = $app.findCollectionByNameOrId("notifications");
@@ -190,245 +230,11 @@ onRecordCreateRequest((e) => {
       console.log("akg: admin payment alert failed:", err);
     }
   }
-
-  // Validate plan + amount against server-side prices (clients cannot pay $1 for a $299 bot).
-  const plan = e.record.get("plan") || "";
-  const amount = Number(e.record.get("amount") || 0);
-  let expected = 0;
-
-  if (PLAN_PRICES.hasOwnProperty(plan)) {
-    expected = PLAN_PRICES[plan];
-  } else if (plan.indexOf("BOT:") === 0) {
-    const m = plan.match(/BOT:\s*(.+?)\s*(?:\(|$)/);
-    if (!m) throw new BadRequestError("Invalid bot purchase format.");
-    let bot;
-    try {
-      bot = $app.findFirstRecordByFilter("bots", "name = {:name}", { name: m[1].trim() });
-    } catch {
-      throw new BadRequestError("Unknown bot: " + m[1].trim());
-    }
-    expected = Number(bot.get("price") || 0);
-  } else {
-    throw new BadRequestError("Unknown plan.");
-  }
-
-  if (amount !== expected) {
-    throw new BadRequestError(
-      "Amount " + amount + " USDT does not match the price of the selected plan (" + expected + " USDT)."
-    );
-  }
-
-  // Manager filed an already-confirmed payment (offline settlement): run the
-  // same grant logic the approval transition uses, before the record is saved.
-  if (isManager && e.record.get("status") === "confirmed") {
-    const DAY_MS = 30 * 24 * 60 * 60 * 1000;
-
-    if (plan === "SR_SIGNAL_BOX" || plan === "PERFECT_SIGNAL_BOX") {
-      let userNotFound = false;
-      $app.runInTransaction((tx) => {
-        let user;
-        try {
-          user = tx.findFirstRecordByFilter("users", "email = {:email}", { email: e.record.get("user_email") });
-        } catch {
-          userNotFound = true;
-          return;
-        }
-        const currentRaw = user.get("cycle_expires_at");
-        const current = currentRaw && typeof currentRaw.string === "function"
-          ? currentRaw.string()
-          : String(currentRaw || "");
-        let base = Date.now();
-        if (current && current.indexOf("0001-01-01") !== 0) {
-          const parsed = new Date(current.replace(" ", "T"));
-          if (!isNaN(parsed.getTime()) && parsed.getTime() > base) base = parsed.getTime();
-        }
-        user.set("plan", plan);
-        user.set("cycle_expires_at", new Date(base + DAY_MS).toISOString());
-        tx.save(user);
-      });
-      if (userNotFound) {
-        throw new BadRequestError(
-          "Cannot confirm: no user account exists for " + e.record.get("user_email") + "."
-        );
-      }
-    } else if (plan.indexOf("BOT:") === 0) {
-      const m = plan.match(/BOT:\s*(.+?)\s*(?:\(([^#)]+)(?:#[^)]+)?\)|$)/);
-      if (m) {
-        const platform = (m[2] ? m[2].trim().replace(/[^A-Z0-9]/gi, "").toUpperCase() : "EA") || "EA";
-        const rand = $security.randomString(8).toUpperCase();
-        e.record.set("license_key", "AKG-" + platform + "-" + rand.slice(0, 4) + "-" + rand.slice(4, 8));
-
-        // Offline settlement filed directly as confirmed: deliver the license
-        // and Drive package to the buyer exactly like an approval would.
-        try {
-          let drive = "";
-          try {
-            const bot = $app.findFirstRecordByFilter("bots", "name = {:n}", { n: m[1].trim() });
-            drive = String(bot.get("download_url") || "");
-          } catch {
-            // exact match missed (case drift): scan and compare in JS
-            try {
-              for (const b of $app.findRecordsByFilter("bots", "", "", 500, 0)) {
-                if (String(b.get("name") || "").trim().toLowerCase() === m[1].trim().toLowerCase()) {
-                  drive = String(b.get("download_url") || "");
-                  break;
-                }
-              }
-            } catch {}
-          }
-          const u = $app.findFirstRecordByFilter("users", "email = {:e}", { e: e.record.get("user_email") });
-          const col = $app.findCollectionByNameOrId("notifications");
-          const n = new Record(col);
-          n.set("user", u.id);
-          n.set("title", "License Issued — " + m[1].trim());
-          n.set("body", "Your bot license is ready: " + e.record.get("license_key") + "." + (drive
-            ? " Google Drive package: " + drive + " — it also stays available in My Account."
-            : " The Google Drive package will be added shortly and appears in My Account automatically."));
-          n.set("type", "license_issued");
-          n.set("read", false);
-          $app.save(n);
-        } catch (err) {
-          console.log("akg: license notification failed:", err);
-        }
-      }
-    }
-  }
-
-  e.next();
 });
 
 onRecordUpdateRequest((e) => {
-  if (e.record && e.record.collection().name !== "payments") { e.next(); return; }
-  const DAY_MS = 30 * 24 * 60 * 60 * 1000;
-  const orig = e.record.original();
-  const was = orig.get("status") || "";
-  const now = e.record.get("status") || "";
-
-  const notifyUser = (email, title, body, type, dedupeKey) => {
-    try {
-      const u = $app.findFirstRecordByFilter("users", "email = {:email}", { email: email });
-      const col = $app.findCollectionByNameOrId("notifications");
-      const n = new Record(col);
-      n.set("user", u.id);
-      n.set("title", title);
-      n.set("body", body || "");
-      n.set("type", type);
-      n.set("read", false);
-      if (dedupeKey) n.set("dedupe_key", dedupeKey);
-      $app.save(n);
-    } catch (err) {
-      console.log("akg: user notification failed:", err);
-    }
-  };
-
-  // Rejection: tell the member what happened and why (admin_notes).
-  if (now === "rejected" && was !== "rejected") {
-    const reason = e.record.get("admin_notes") || "";
-    notifyUser(
-      e.record.get("user_email") || "",
-      "Payment Rejected",
-      "Your " + e.record.get("plan") + " payment was rejected by the desk." + (reason ? " Reason: " + reason : ""),
-      "payment_rejected"
-    );
-    e.next();
-    return;
-  }
-
-  // Only act on a pending -> confirmed transition (idempotent approvals).
-  if (was === "confirmed" || now !== "confirmed") {
-    e.next();
-    return;
-  }
-
-  const plan = e.record.get("plan") || "";
-  const email = e.record.get("user_email") || "";
-
-  // Subscription payment: extend/activate the member's 30-day cycle atomically.
-  if (plan === "SR_SIGNAL_BOX" || plan === "PERFECT_SIGNAL_BOX") {
-    let userNotFound = false;
-    $app.runInTransaction((tx) => {
-      let user;
-      try {
-        user = tx.findFirstRecordByFilter("users", "email = {:email}", { email: email });
-      } catch (err) {
-        userNotFound = true;
-        return;
-      }
-
-      const currentRaw = user.get("cycle_expires_at");
-      const current = currentRaw && typeof currentRaw.string === "function"
-        ? currentRaw.string()
-        : String(currentRaw || "");
-      let base = Date.now();
-      if (current && current.indexOf("0001-01-01") !== 0) {
-        const parsed = new Date(current.replace(" ", "T"));
-        if (!isNaN(parsed.getTime()) && parsed.getTime() > base) {
-          base = parsed.getTime();
-        }
-      }
-      const expiry = new Date(base + DAY_MS);
-
-      user.set("plan", plan);
-      user.set("cycle_expires_at", expiry.toISOString());
-      tx.save(user);
-    });
-    if (userNotFound) {
-      throw new BadRequestError(
-        "Cannot approve: no user account exists for " + email + ". Reject or delete this payment."
-      );
-    }
-    notifyUser(
-      email,
-      "Payment Approved — Signals Unlocked",
-      "Your " + plan + " membership is active for 30 days. Welcome to the desk.",
-      "payment_approved"
-    );
-    e.next();
-    return;
-  }
-
-  // Bot license payment: issue a random server-side license key.
-  if (plan.indexOf("BOT:") === 0) {
-    const m = plan.match(/BOT:\s*(.+?)\s*(?:\(([^#)]+)(?:#[^)]+)?\)|$)/);
-    if (!m) throw new BadRequestError("Invalid bot purchase record; cannot issue a license key.");
-
-    const platform = (m[2] ? m[2].trim().replace(/[^A-Z0-9]/gi, "").toUpperCase() : "EA") || "EA";
-    const rand = $security.randomString(8).toUpperCase();
-    const key = "AKG-" + platform + "-" + rand.slice(0, 4) + "-" + rand.slice(4, 8);
-
-    e.record.set("license_key", key);
-
-    // The Drive package link is the deliverable: point the buyer straight at
-    // it in the approval notification (bot may not have one uploaded yet).
-    let drive = "";
-    try {
-      const bot = $app.findFirstRecordByFilter("bots", "name = {:n}", { n: m[1].trim() });
-      drive = String(bot.get("download_url") || "");
-    } catch (err) {
-      // exact match missed (case drift): scan and compare in JS
-      try {
-        for (const b of $app.findRecordsByFilter("bots", "", "", 500, 0)) {
-          if (String(b.get("name") || "").trim().toLowerCase() === m[1].trim().toLowerCase()) {
-            drive = String(b.get("download_url") || "");
-            break;
-          }
-        }
-      } catch (err2) {}
-    }
-    notifyUser(
-      e.record.get("user_email") || "",
-      "License Issued — " + m[1].trim(),
-      "Your bot license is ready: " + key + "." + (drive
-        ? " Google Drive package: " + drive + " — it also stays available in My Account."
-        : " The Google Drive package will be added shortly and appears in My Account automatically."),
-      "license_issued"
-    );
-    e.next();
-    return;
-  }
-
-  e.next();
-});
+  require(__hooks + "/payment-approval.js").update(e);
+}, "payments");
 
 // ---------------------------------------------------------------------------
 // connector_requests
@@ -488,18 +294,7 @@ routerAdd("GET", "/api/akg/download/{name}", (e) => {
       return;
     }
 
-    let purchases = [];
-    try {
-      purchases = $app.findRecordsByFilter(
-        "payments",
-        "user_email = {:email} && status = 'confirmed' && plan ~ {:bot}",
-        "-created", 1, 0,
-        { email: auth.get("email"), bot: "BOT: " + bot.get("name") }
-      );
-    } catch {
-      purchases = [];
-    }
-    if (purchases.length === 0) {
+    if (!require(__hooks + "/bot-publication.js").owns(e.app, auth, bot.getString("name"))) {
       e.json(403, { message: "This binary requires a confirmed license for " + bot.get("name") + "." });
       return;
     }
@@ -928,40 +723,6 @@ routerAdd("GET", "/api/akg/stats", (e) => {
 //     (create-rules cannot traverse the joined message) + fixed emoji set
 // ---------------------------------------------------------------------------
 
-var ROOM_AUDIENCES = ["all", "sr", "vip"];
-var ROOM_EMOJIS = ["\uD83D\uDD25", "\uD83D\uDC4D", "\uD83C\uDFAF", "\uD83D\uDCB0", "\uD83D\uDE4F"];
-
-var roomFetchUser = function (id, $app) {
-  try {
-    return $app.findRecordById("users", id);
-  } catch {
-    return null;
-  }
-};
-
-var roomIsActive = function (u) {
-  if (!u) return false;
-  const plan = String(u.get("plan") || "");
-  if (!plan || plan === "NONE") return false;
-  let exp = 0;
-  try {
-    exp = new Date(String(u.get("cycle_expires_at") || "").replace(" ", "T")).getTime();
-  } catch {
-    exp = 0;
-  }
-  return exp > Date.now();
-};
-
-var roomCanReadContent = function (u, audience) {
-  if (!u) return false;
-  if (String(u.collectionId || "") === "_pb_users_auth_" && String(u.get("role") || "") === "admin") return true;
-  if (String(u.collectionId || "") !== "_pb_users_auth_") return true; // superuser
-  if (audience === "all") return true;
-  if (!roomIsActive(u)) return false;
-  if (audience === "sr") return true;
-  return String(u.get("plan") || "") === "PERFECT_SIGNAL_BOX";
-};
-
 onRecordCreateRequest((e) => {
   if (e.record && e.record.collection().name !== "messages") { e.next(); return; }
     const rec = e.record;
@@ -1014,12 +775,11 @@ onRecordCreateRequest((e) => {
 
   const audience = String(msg.get("audience") || "all");
 
-  // same gate as message_content reads
-  const collName = String(auth.collection().name || "");
-  const isUserRec = collName === "users";
-  const roleAdmin = isUserRec && String(auth.get("role") || "") === "admin";
-  let mayRead = audience === "all";
-  if (!mayRead && (roleAdmin || !isUserRec)) mayRead = true;
+  // Check the same collection rule that protects the message body and files.
+  const contentCollection = e.app.findCollectionByNameOrId("message_content");
+  const content = e.app.findFirstRecordByFilter(contentCollection, "message = {:id}", { id: msg.id });
+  const mayRead = auth.collection().name === "_superusers" ||
+    e.app.canAccessRecord(content, e.requestInfo(), contentCollection.viewRule);
   if (!mayRead) {
     const plan = String(auth.get("plan") || "");
     let exp = 0;

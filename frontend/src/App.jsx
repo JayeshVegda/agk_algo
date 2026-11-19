@@ -4,6 +4,8 @@ import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
 import { AuthModal } from './components/AuthModal';
 import { ToastContainer } from './components/Toast';
+import { NewRobotModal } from './components/NewRobotModal';
+import { useSignalSchedule } from './lib/signalCycles';
 import { Footer } from './components/Footer';
 import { Compass, Zap, Cpu, Network, User } from 'lucide-react';
 
@@ -63,6 +65,7 @@ export default function App() {
   });
   const [user, setUser] = useState(pb.authStore.record);
   const [authOpen, setAuthOpen] = useState(false);
+  const schedule = useSignalSchedule(user?.id || '', ['signals', 'pricing', 'account'].includes(activeTab) && currentPath !== '/admin');
   const [toasts, setToasts] = useState([]);
 
   // Toast notification dispatcher
@@ -221,6 +224,7 @@ export default function App() {
 
           {activeTab === 'signals' && (
             <SignalsTab
+              schedule={schedule}
               user={user}
               onOpenPricing={() => switchTab('pricing')}
               onOpenAuth={() => setAuthOpen(true)}
@@ -260,6 +264,7 @@ export default function App() {
 
           {activeTab === 'pricing' && (
             <PricingTab
+              schedule={schedule}
               user={user}
               onOpenAuth={() => setAuthOpen(true)}
               onNavigate={(tab) => switchTab(tab)}
@@ -292,6 +297,7 @@ export default function App() {
 
           {activeTab === 'account' && (
             <AccountTab
+              schedule={schedule}
               user={user}
               notify={notify}
               onNavigate={(tab) => switchTab(tab)}
@@ -309,6 +315,17 @@ export default function App() {
           onNavigateAdmin={() => navigateTo('/admin')}
         />
       )}
+
+      <NewRobotModal
+        enabled={activeTab !== 'checkout' && !authOpen}
+        user={user}
+        onCheckout={(bot) => {
+          sessionStorage.setItem('akg_order', JSON.stringify({
+            kind: 'bot', id: bot.id, name: bot.name, price: bot.price, platform: bot.platform,
+          }));
+          switchTab('checkout');
+        }}
+      />
 
       {/* Auth Modal */}
       <AuthModal

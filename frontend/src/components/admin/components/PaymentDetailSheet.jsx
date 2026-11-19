@@ -181,7 +181,7 @@ export default function PaymentDetailSheet({ payment: p, open, onClose, onReject
         onClose={() => setConfirming(false)}
         onConfirm={async () => { onClose(); await approvePayment(p); }}
         title="Approve this payment?"
-        message={`${p.user_email} · ${planShort(p.plan)} · $${p.amount} USDT. ${isBot ? 'A license key will be issued automatically.' : 'A 30-day cycle activates automatically.'} Undo is available from the toast.`}
+        message={`${p.user_email} · ${planShort(p.plan)} · $${p.amount} USDT. ${isBot ? 'A license key will be issued automatically.' : 'Access follows the payment’s signal cycle dates.'} Undo is available from the toast.`}
         confirmLabel={isBot ? 'Approve + License' : 'Approve + 30d'}
       />
       <ConfirmSheet

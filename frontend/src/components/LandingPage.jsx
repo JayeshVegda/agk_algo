@@ -989,7 +989,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                 >
                   <div className="flex items-center justify-between">
                     <Badge variant={plan.vip ? 'emerald' : 'secondary'}>{plan.tier}</Badge>
-                    <span className="text-[11px] text-akg-muted">Manual 30-day renewal</span>
+                    <span className="text-[11px] text-akg-muted">Manual renewal by cycle</span>
                   </div>
 
                   <h3 className="mt-4 font-display text-xl font-bold text-akg-text">{plan.name}</h3>
@@ -998,7 +998,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
                     <span className="font-display text-4xl font-extrabold tabular-nums text-akg-text">
                       ${plan.price}
                     </span>
-                    <span className="text-xs text-akg-muted">USDT / 30 days</span>
+                    <span className="text-xs text-akg-muted">USDT / cycle</span>
                   </div>
 
                   <p className="mt-3 text-sm text-akg-muted">{plan.blurb}</p>

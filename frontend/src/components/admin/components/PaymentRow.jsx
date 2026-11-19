@@ -88,7 +88,7 @@ export default function PaymentRow({ payment: p, prior = 0, onOpen, onReject }) 
         onClose={() => setConfirming(false)}
         onConfirm={async () => { await approvePayment(p); }}
         title="Approve this payment?"
-        message={`${p.user_email} · ${planShort(p.plan)} · $${p.amount} USDT. ${isBot ? 'A license key will be issued automatically.' : 'A 30-day cycle activates automatically.'} Undo is available from the toast.`}
+        message={`${p.user_email} · ${planShort(p.plan)} · $${p.amount} USDT. ${isBot ? 'A license key will be issued automatically.' : 'Access follows the payment’s signal cycle dates.'} Undo is available from the toast.`}
         confirmLabel={isBot ? 'Approve + License' : 'Approve + 30d'}
       />
     </>

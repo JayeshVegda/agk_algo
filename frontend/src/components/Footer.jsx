@@ -161,7 +161,7 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
               Settlement <span className="font-medium text-akg-green">USDT direct</span>
             </span>
             <span className="text-akg-hairline">·</span>
-            <span>Perpetual licenses &amp; 30-day cycles</span>
+            <span>Perpetual licenses &amp; scheduled signal cycles</span>
             {user?.role === 'admin' && (
               <>
                 <span className="text-akg-hairline">·</span>

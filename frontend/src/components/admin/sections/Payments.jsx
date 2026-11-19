@@ -402,7 +402,7 @@ export default function Payments() {
             if (ok) afterAction();
           }}
           title="Approve this payment?"
-          message={`${confirming.user_email} · ${planShort(confirming.plan)} · $${confirming.amount} USDT. ${String(confirming.plan || '').startsWith('BOT:') ? 'A license key will be issued automatically.' : 'A 30-day cycle activates automatically.'} Undo is available from the toast.`}
+          message={`${confirming.user_email} · ${planShort(confirming.plan)} · $${confirming.amount} USDT. ${String(confirming.plan || '').startsWith('BOT:') ? 'A license key will be issued automatically.' : 'Access follows the payment’s signal cycle dates.'} Undo is available from the toast.`}
           confirmLabel={String(confirming.plan || '').startsWith('BOT:') ? 'Approve + License' : 'Approve + 30d'}
         />
       )}

@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, CreditCard, Zap, Cpu, Bell, Package, Users as UsersIcon, Settings as Cog,
+  LayoutDashboard, CalendarDays, CreditCard, Zap, Cpu, Bell, Package, Users as UsersIcon, Settings as Cog,
 } from 'lucide-react';
 
 export const SECTIONS = [
@@ -8,6 +8,7 @@ export const SECTIONS = [
   { id: 'users', label: 'Traders', short: 'Traders', icon: UsersIcon, group: 'people' },
   { id: 'bots', label: 'Expert Advisors', short: 'Bots', icon: Cpu, group: 'catalog' },
   { id: 'resources', label: 'Traders Kit', short: 'Kit', icon: Package, group: 'catalog' },
+  { id: 'cycles', label: 'Signal Cycles', short: 'Cycles', icon: CalendarDays, group: 'content' },
   { id: 'signals', label: 'Signals', short: 'Signals', icon: Zap, group: 'content' },
   { id: 'briefings', label: 'Briefings', short: 'Briefs', icon: Bell, group: 'content' },
   { id: 'settings', label: 'Settings', short: 'Settings', icon: Cog, group: 'system' },

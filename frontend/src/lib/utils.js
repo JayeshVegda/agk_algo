@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { pbUrl } from './pocketbase';
+import { pb, pbUrl } from './pocketbase';
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -20,4 +20,22 @@ export function downloadLinksFor(bot) {
     ext: p === 'mt4' ? 'EX4' : 'EX5',
     path: pbUrl(`/api/akg/download/${slug}_${p}.${p === 'mt4' ? 'ex4' : 'ex5'}`),
   }));
+}
+
+export async function downloadLicensedFile(event, url, notify) {
+  event.preventDefault();
+  try {
+    const response = await fetch(url, { headers: { Authorization: pb.authStore.token } });
+    if (!response.ok) {
+      throw new Error(response.status === 404 ? 'This file is unavailable.' : 'The download could not be authorized.');
+    }
+    const file = URL.createObjectURL(await response.blob());
+    const link = document.createElement('a');
+    link.href = file;
+    link.download = new URL(url).pathname.split('/').pop();
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(file), 1000);
+  } catch (error) {
+    notify?.({ type: 'error', title: 'Download failed', message: error.message });
+  }
 }

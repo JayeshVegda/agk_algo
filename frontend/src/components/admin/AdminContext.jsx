@@ -89,28 +89,15 @@ export function AdminDataProvider({ currentUser, notify, children }) {
   // side effects the hook applied (pull the cycle back / clear the license).
   const undoPayment = useCallback(async (p) => {
     try {
-      const isBot = String(p.plan || '').startsWith('BOT:');
-      if (isBot) {
-        await pb.collection('payments').update(p.id, { status: 'pending', license_key: '' });
-      } else if (p.plan === 'SR_SIGNAL_BOX' || p.plan === 'PERFECT_SIGNAL_BOX') {
-        const users = await pb.collection('users').getFullList({ filter: `email = "${p.user_email}"` }).catch(() => []);
-        const u = users[0];
-        if (u?.cycle_expires_at) {
-          const cur = new Date(String(u.cycle_expires_at).replace(' ', 'T')).getTime();
-          const rolled = Math.max(Date.now(), cur - 30 * 86400000);
-          await pb.collection('users').update(u.id, { cycle_expires_at: new Date(rolled).toISOString() });
-        }
-        await pb.collection('payments').update(p.id, { status: 'pending' });
-      } else {
-        await pb.collection('payments').update(p.id, { status: 'pending' });
-      }
+      const updated = await pb.collection('payments').update(p.id, { status: 'pending' });
+      applyLocal('payments', updated);
       toast('Reverted', `${p.user_email}: payment is back in the pending queue.`, 'info');
       return true;
     } catch (err) {
       toast('Undo Failed', err.message, 'error');
       return false;
     }
-  }, [toast]);
+  }, [applyLocal, toast]);
 
   const approvePayment = useCallback(async (p) => {
     try {
@@ -122,7 +109,7 @@ export function AdminDataProvider({ currentUser, notify, children }) {
         title: isBot ? 'License Issued' : 'Access Granted',
         message: isBot
           ? `${p.user_email}: license key issued for ${p.plan.replace('BOT:', '').trim().split('(')[0].trim()}.`
-          : `${p.user_email}: 30-day cycle activated ($${p.amount} USDT).`,
+          : `${p.user_email}: signal payment approved ($${p.amount} USDT).`,
         action: { label: 'Undo', onClick: () => undoPayment(updated) },
       });
       return true;

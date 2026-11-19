@@ -1,6 +1,8 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
-  const collection = app.findCollectionByNameOrId("pbc_1549310251")
+  const collection = app.findAllCollections().find((item) => item.id === "pbc_1549310251")
+  // Fresh installs create reactions in 1999000000_signal_room.js.
+  if (!collection) return
 
   // update collection data
   unmarshal({
@@ -9,7 +11,8 @@ migrate((app) => {
 
   return app.save(collection)
 }, (app) => {
-  const collection = app.findCollectionByNameOrId("pbc_1549310251")
+  const collection = app.findAllCollections().find((item) => item.id === "pbc_1549310251")
+  if (!collection) return
 
   // update collection data
   unmarshal({

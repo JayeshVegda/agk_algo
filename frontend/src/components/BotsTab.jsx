@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
-import { downloadLinksFor } from '../lib/utils';
+import { downloadLicensedFile, downloadLinksFor } from '../lib/utils';
 import { pairsOf, featuresOf, timeframesOf, pctStat, statNumOrNull } from '../lib/bots';
 
 const slugify = (name) =>
@@ -520,6 +520,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onOpenPricing, o
                   <a
                     key={l.path}
                     href={l.path}
+                        onClick={(event) => downloadLicensedFile(event, l.path, notify)}
                     download
                     className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-akg-cta px-3.5 py-2 font-mono text-xs font-bold text-akg-cta-text hover:opacity-90 transition-opacity"
                   >
