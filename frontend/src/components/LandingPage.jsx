@@ -1,3 +1,4 @@
+import { getSignalPriceCycle } from '../lib/signalCycles';
 import React, { useState, useEffect } from 'react';
 import { pb, pbUrl } from '../lib/pocketbase';
 import { pairsOf, pctStat, statNumOrNull } from '../lib/bots';
@@ -190,13 +191,13 @@ function HeroHeadline({ botCount = 8 }) {
   );
 }
 
-export function LandingPage({ onNavigate, onOpenAuth, notify }) {
+export function LandingPage({ onNavigate, onOpenAuth, notify, schedule }) {
   const [bots, setBots] = useState(FALLBACK_BOTS);
   const [botCount, setBotCount] = useState(FALLBACK_BOTS.length);
   const [briefings, setBriefings] = useState([]);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const settings = useSiteSettings();
-  const PLANS = getPlans(settings);
+  const PLANS = getPlans(settings, getSignalPriceCycle(schedule));
 
   const [botsAutoplay] = useState(() => Autoplay({ delay: 3800, stopOnInteraction: false }));
   const [botsEmblaRef, botsEmbla] = useEmblaCarousel(
@@ -982,13 +983,13 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
               <RevealItem key={plan.id}>
                 <article
                   className={`card-depth flex h-full flex-col rounded-2xl p-7 bg-akg-card ${
-                    plan.vip
+                    plan.popular
                       ? 'border border-emerald-500/40 ring-1 ring-emerald-500/20'
                       : 'border border-akg-hairline'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <Badge variant={plan.vip ? 'emerald' : 'secondary'}>{plan.tier}</Badge>
+                    <Badge variant={plan.popular ? 'emerald' : 'secondary'}>{plan.tag}</Badge>
                     <span className="text-[11px] text-akg-muted">Manual renewal by cycle</span>
                   </div>
 
@@ -1014,7 +1015,7 @@ export function LandingPage({ onNavigate, onOpenAuth, notify }) {
 
                   <div className="mt-auto pt-7">
                     <Button
-                      variant={plan.vip ? 'gradient' : 'secondary'}
+                      variant={plan.popular ? 'gradient' : 'secondary'}
                       size="lg"
                       onClick={() => onNavigate('pricing')}
                       className="w-full font-bold text-sm shadow-sm"

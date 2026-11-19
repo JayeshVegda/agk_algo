@@ -41,6 +41,7 @@ const TAB_ROUTES = {
   '/bots': 'bots',
   '/pricing': 'pricing',
   '/charts': 'charts',
+  '/terminal-desk': 'connector',
   '/desk': 'broadcasts',
   '/kit': 'resources',
   '/account': 'account',
@@ -65,7 +66,7 @@ export default function App() {
   });
   const [user, setUser] = useState(pb.authStore.record);
   const [authOpen, setAuthOpen] = useState(false);
-  const schedule = useSignalSchedule(user?.id || '', ['signals', 'pricing', 'account'].includes(activeTab) && currentPath !== '/admin');
+  const { data: schedule } = useSignalSchedule(user?.id || '', ['home', 'signals', 'pricing', 'account'].includes(activeTab) && currentPath !== '/admin');
   const [toasts, setToasts] = useState([]);
 
   // Toast notification dispatcher
@@ -216,6 +217,7 @@ export default function App() {
           <Suspense fallback={<TabFallback />}>
           {activeTab === 'home' && (
             <LandingPage
+              schedule={schedule}
               onNavigate={switchTab}
               onOpenAuth={() => setAuthOpen(true)}
               notify={notify}

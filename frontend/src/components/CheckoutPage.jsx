@@ -9,28 +9,30 @@ import {
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { cycleDay, useSignalSchedule } from '../lib/signalCycles';
-import { cn } from '../lib/utils';
+import { cn, formatUsdt } from '../lib/utils';
 
 export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
   const settings = useSiteSettings();
   const walletList = useWallets();
   const walletMap = walletsToMap(walletList);
-  const [order, setOrder] = useState(null);
-  const schedule = useSignalSchedule(user?.id || '', order?.kind === 'plan');
+  const [order] = useState(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem('akg_order'));
+    } catch {
+      return null;
+    }
+  });
+  const { data: schedule, status: scheduleStatus, retry: retrySchedule } = useSignalSchedule(user?.id || '', order?.kind === 'plan');
   const [method, setMethod] = useState('crypto');
   const [network, setNetwork] = useState('');
   const [ref, setRef] = useState('');
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState('');
   const [done, setDone] = useState(false);
-  const [walletQr, setWalletQr] = useState('');
-
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem('akg_order');
-      if (raw) setOrder(JSON.parse(raw));
-    } catch { /* ignore */ }
-  }, []);
+  const [walletQr, setWalletQr] = useState(null);
+  const selectedWallet = walletList.find((wallet) => wallet.label === network);
+  const walletAddress = walletMap[network];
+  const uploadedQr = selectedWallet?.qr_image;
 
   useEffect(() => {
     if (!settings.crypto_enabled && settings.inr_enabled && settings.upi_id) {
@@ -45,14 +47,19 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
   }, [walletList, network]);
 
   useEffect(() => {
-    const address = walletMap[network];
-    const uploaded = walletList.find((w) => w.label === network)?.qr_image;
-    if (!address || uploaded) { setWalletQr(''); return; }
-    QRCode.toDataURL(address, { width: 220, margin: 1, color: { dark: '#0C1619E6', light: '#FFFFFF' } })
-      .then(setWalletQr)
-      .catch(() => setWalletQr(''));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [network, walletList]);
+    if (!walletAddress || uploadedQr) return;
+    let active = true;
+    QRCode.toDataURL(walletAddress, { width: 220, margin: 1, color: { dark: '#0C1619E6', light: '#FFFFFF' } })
+      .then((url) => { if (active) setWalletQr({ address: walletAddress, url }); })
+      .catch(() => { if (active) setWalletQr(null); });
+    return () => { active = false; };
+  }, [walletAddress, uploadedQr]);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timeout = setTimeout(() => setCopied(''), 1500);
+    return () => clearTimeout(timeout);
+  }, [copied]);
 
   if (!order) {
     return (
@@ -68,34 +75,55 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
     );
   }
 
-  if (!done && order.kind === 'plan' && (!order.cycleId || schedule?.checkout?.id !== order.cycleId ||
-    (order.id === 'SR_SIGNAL_BOX' ? schedule.checkout.srPrice : schedule.checkout.vipPrice) !== order.price)) {
-    return (
-      <div className="mx-auto max-w-lg space-y-4 py-16 text-center">
-        <p className="text-sm text-akg-muted">Check Pricing for the current cycle and price before sending payment.</p>
-        <Button onClick={() => onNavigate('pricing')}>Back to Pricing</Button>
-      </div>
-    );
+  if (!done && order.kind === 'plan') {
+    if (scheduleStatus === 'loading') {
+      return <p role="status" className="mx-auto max-w-lg py-16 text-center text-sm text-akg-muted">Checking your signal cycle and price…</p>;
+    }
+    if (scheduleStatus === 'error') {
+      return (
+        <div className="mx-auto max-w-lg space-y-4 py-16 text-center">
+          <p role="alert" className="text-sm text-akg-muted">We couldn’t verify this cycle. Try again before sending payment.</p>
+          <Button onClick={retrySchedule}>Try again</Button>
+        </div>
+      );
+    }
+    const cycle = schedule?.checkout;
+    const currentPrice = order.id === 'SR_SIGNAL_BOX' ? cycle?.srPrice : cycle?.vipPrice;
+    if (!order.cycleId || cycle?.id !== order.cycleId || currentPrice !== order.price) {
+      return (
+        <div className="mx-auto max-w-lg space-y-4 py-16 text-center">
+          <p role="status" className="text-sm text-akg-muted">This cycle or price is no longer available. Check Pricing before sending payment.</p>
+          <Button onClick={() => onNavigate('pricing')}>Back to Pricing</Button>
+        </div>
+      );
+    }
   }
 
+  const amount = formatUsdt(order.price);
   const inr = settings.inr_enabled && settings.usdt_inr_rate > 0
     ? Math.round(order.price * settings.usdt_inr_rate)
     : 0;
   const isBot = order.kind === 'bot';
-  const selectedWallet = walletList.find((w) => w.label === network);
-  const qrSrc = selectedWallet?.qr_image || walletQr;
+  const qrSrc = uploadedQr || (walletQr?.address === walletAddress ? walletQr?.url : null);
   const upiLink = settings.upi_id
     ? `upi://pay?pa=${encodeURIComponent(settings.upi_id)}${settings.payee_name ? `&pn=${encodeURIComponent(settings.payee_name)}` : ''}${inr ? `&am=${inr}&cu=INR` : ''}&tn=${encodeURIComponent('AKG ALGO order')}`
     : '';
-  const upiAvailable = settings.inr_enabled && settings.upi_id;
+  const upiAvailable = Boolean(settings.inr_enabled && settings.upi_id && inr > 0);
+  const canPay = method === 'upi' ? upiAvailable : Boolean(settings.crypto_enabled && walletAddress);
 
-  const copy = (text, key) => {
-    navigator.clipboard.writeText(text);
-    setCopied(key);
-    setTimeout(() => setCopied(''), 1500);
+  const copy = async (text, key) => {
+    if (!text) return;
+    setCopied('');
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+    } catch {
+      notify?.({ type: 'error', title: 'Could not copy', message: 'Select and copy the payment address manually.' });
+    }
   };
 
   const submit = async () => {
+    if (!canPay || busy) return;
     if (!ref.trim()) {
       notify?.({ type: 'error', title: 'Reference missing', message: 'Paste your transaction hash or UPI reference (UTR).' });
       return;
@@ -189,7 +217,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
             </p>
           </div>
           <div className="shrink-0 text-right">
-            <div className="font-mono text-2xl font-bold text-akg-text tabular-nums">${order.price}</div>
+            <div className="font-mono text-2xl font-bold text-akg-text tabular-nums">{amount}</div>
             <div className="text-[10px] font-bold text-akg-accent">USDT</div>
             {inr > 0 && settings.display_currency !== 'USD' && (
               <div className="mt-1 rounded-md bg-akg-raised border border-akg-hairline px-2 py-0.5 font-mono text-[11px] text-akg-muted">
@@ -258,15 +286,16 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
             </div>
           </div>
           <div>
-            <h4 className="mb-2 text-xs font-semibold text-akg-text">2 · Send exactly ${order.price}.00 USDT to</h4>
+            <h4 className="mb-2 text-xs font-semibold text-akg-text">2 · Send exactly {amount} USDT to</h4>
             <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center">
-              <button
-                onClick={() => copy(walletMap[network] || '', 'wallet')}
-                className="flex w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-akg-hairline bg-akg-raised px-3.5 py-3 text-left cursor-pointer"
-              >
-                <span className="min-w-0 break-all font-mono text-xs text-akg-accent">{walletMap[network] || 'Loading…'}</span>
-                {copied === 'wallet' ? <Check className="h-4 w-4 shrink-0 text-akg-green" /> : <Copy className="h-4 w-4 shrink-0 text-akg-muted" />}
-              </button>
+              <div className="flex w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-akg-hairline bg-akg-raised px-3.5 py-2">
+                <span className="min-w-0 select-text break-all font-mono text-xs text-akg-accent">{walletAddress || 'No wallet address available'}</span>
+                <button type="button" disabled={!walletAddress} aria-label="Copy wallet address"
+                  onClick={() => copy(walletAddress, 'wallet')}
+                  className="shrink-0 rounded-md p-2 text-akg-muted hover:text-akg-text disabled:opacity-50">
+                  {copied === 'wallet' ? <Check aria-hidden className="h-4 w-4 text-akg-green" /> : <Copy aria-hidden className="h-4 w-4" />}
+                </button>
+              </div>
               {qrSrc && (
                 <div className="self-center shrink-0 rounded-lg border border-akg-hairline bg-white p-2 sm:self-auto">
                   <img src={qrSrc} alt={`${network} deposit QR`} className="h-32 w-32 object-contain" />
@@ -303,14 +332,15 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
                 <div className="mt-1.5 font-mono text-2xl font-bold text-akg-text">₹{inr.toLocaleString('en-IN')}</div>
                 {settings.payee_name && <div className="text-xs text-akg-muted">to {settings.payee_name}</div>}
               </div>
-              <button
-                onClick={() => copy(settings.upi_id, 'upi')}
-                className="flex w-full items-center justify-between gap-3 rounded-lg border border-akg-hairline bg-akg-raised px-3.5 py-2.5 text-left cursor-pointer"
-              >
-                <span className="min-w-0 truncate font-mono text-xs text-akg-green">{settings.upi_id}</span>
-                {copied === 'upi' ? <Check className="h-4 w-4 shrink-0 text-akg-green" /> : <Copy className="h-4 w-4 shrink-0 text-akg-muted" />}
-              </button>
-              {upiLink && (
+              <div className="flex w-full items-center justify-between gap-3 rounded-lg border border-akg-hairline bg-akg-raised px-3.5 py-2">
+                <span className="min-w-0 select-text break-all font-mono text-xs text-akg-green">{settings.upi_id || 'No UPI ID available'}</span>
+                <button type="button" disabled={!upiAvailable} aria-label="Copy UPI ID"
+                  onClick={() => copy(settings.upi_id, 'upi')}
+                  className="shrink-0 rounded-md p-2 text-akg-muted hover:text-akg-text disabled:opacity-50">
+                  {copied === 'upi' ? <Check aria-hidden className="h-4 w-4 text-akg-green" /> : <Copy aria-hidden className="h-4 w-4" />}
+                </button>
+              </div>
+              {upiAvailable && upiLink && (
                 <a
                   href={upiLink}
                   className="flex h-10 items-center justify-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-xs font-semibold text-akg-green"
@@ -331,6 +361,8 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
           </div>
         </section>
       )}
+
+      <p role="status" className="sr-only">{copied === 'wallet' ? 'Wallet address copied' : copied === 'upi' ? 'UPI ID copied' : ''}</p>
 
       {/* What happens next */}
       <section className="mt-5 rounded-xl border border-akg-hairline bg-akg-card p-5">
@@ -362,11 +394,11 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
 
       <button
         onClick={submit}
-        disabled={busy}
+        disabled={busy || !canPay}
         className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-akg-cta text-sm font-bold text-akg-cta-text transition-all active:scale-[0.98] disabled:opacity-50 hover:opacity-90 cursor-pointer shadow-sm"
       >
         <KeyRound className="h-4 w-4" />
-        {busy ? 'Submitting...' : !user ? 'Sign in and Submit Order' : `Submit Order · $${order.price}${method === 'upi' && inr ? ` / ₹${inr.toLocaleString('en-IN')}` : ''}`}
+        {busy ? 'Submitting...' : !user ? 'Sign in and Submit Order' : `Submit Order · ${amount} USDT${method === 'upi' && inr ? ` / ₹${inr.toLocaleString('en-IN')}` : ''}`}
       </button>
 
       <SupportCard settings={settings} />

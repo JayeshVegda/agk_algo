@@ -39,3 +39,13 @@ export async function downloadLicensedFile(event, url, notify) {
     notify?.({ type: 'error', title: 'Download failed', message: error.message });
   }
 }
+
+const usdtFormatter = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 20,
+  useGrouping: false,
+});
+
+export function formatUsdt(amount) {
+  return usdtFormatter.format(amount);
+}

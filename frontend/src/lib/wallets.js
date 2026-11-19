@@ -145,13 +145,13 @@ const STATIC_PLAN_FEATURES = {
  * admin-editable site_settings; stable plan ids, feature copy and tags stay
  * static because roles, grants and analytics key off them.
  */
-export function getPlans(settings) {
+export function getPlans(settings, cycle) {
   const s = settings || DEFAULT_SETTINGS;
   return [
     {
       id: 'SR_SIGNAL_BOX',
       name: s.plan_sr_name || 'SR Signal Box',
-      price: Number(s.plan_sr_price) || 10,
+      price: cycle?.srPrice ?? (Number(s.plan_sr_price) || 10),
       blurb: s.plan_sr_blurb || '',
       period: 'cycle',
       popular: false,
@@ -161,7 +161,7 @@ export function getPlans(settings) {
     {
       id: 'PERFECT_SIGNAL_BOX',
       name: s.plan_vip_name || 'Perfect Signal Box',
-      price: Number(s.plan_vip_price) || 20,
+      price: cycle?.vipPrice ?? (Number(s.plan_vip_price) || 20),
       blurb: s.plan_vip_blurb || '',
       period: 'cycle',
       popular: true,

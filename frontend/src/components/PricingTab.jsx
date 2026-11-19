@@ -5,7 +5,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { getPlans, useSiteSettings } from '../lib/wallets';
-import { cycleDay } from '../lib/signalCycles';
+import { formatUsdt } from '../lib/utils';
+import { cycleDay, getSignalPriceCycle } from '../lib/signalCycles';
 
 export function PricingTab({ user, onNavigate, schedule }) {
   const [myPayments, setMyPayments] = useState([]);
@@ -32,10 +33,8 @@ export function PricingTab({ user, onNavigate, schedule }) {
 
   const settings = useSiteSettings();
   const cycle = schedule?.checkout;
-  const plans = getPlans(settings).map((plan) => ({
-    ...plan,
-    price: cycle ? (plan.id === 'SR_SIGNAL_BOX' ? cycle.srPrice : cycle.vipPrice) : plan.price,
-  }));
+  const priceCycle = getSignalPriceCycle(schedule);
+  const plans = getPlans(settings, priceCycle);
   const pendingPlans = new Set(myPayments
     .filter((payment) => payment.status === 'pending' && payment.signal_cycle === cycle?.id)
     .map((payment) => payment.plan));
@@ -68,6 +67,7 @@ export function PricingTab({ user, onNavigate, schedule }) {
         {cycle ? <><strong>{cycle.name}</strong> · {cycleDay(cycle.startsAt)} to {cycleDay(cycle.endsAt, true)}</> :
           schedule?.enrolledNext ? <>You’re enrolled. Access starts {cycleDay(schedule.enrolledNext.startsAt)}.</> :
           schedule?.next ? <>Renewals open {cycleDay(schedule.next.renewalsAt)}. The next cycle starts {cycleDay(schedule.next.startsAt)}.</> :
+          schedule?.active ? <>Joining is closed for {schedule.active.name}.</> :
           'Checkout opens when the desk schedules a cycle.'}
       </div>
 
@@ -109,13 +109,13 @@ export function PricingTab({ user, onNavigate, schedule }) {
                   </CardTitle>
 
                   <div className="mt-4 flex items-baseline gap-1">
-                    <span className="text-4xl font-extrabold tabular-nums text-akg-text">${plan.price}</span>
+                    <span className="text-4xl font-extrabold tabular-nums text-akg-text">{formatUsdt(plan.price)}</span>
                     <span className="text-xs text-akg-accent font-bold">USDT</span>
                     <span className="text-xs text-akg-muted ml-1">/ {plan.period}</span>
                   </div>
 
                   <CardDescription className="mt-2 text-xs text-akg-muted">
-                    Access follows the dates set by the desk.
+                    {priceCycle ? `Price for ${priceCycle.name}` : 'Standard price'}
                   </CardDescription>
                 </CardHeader>
 

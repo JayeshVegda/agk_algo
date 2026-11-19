@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { pb } from './pocketbase';
 
 export const CYCLE_ZONE = 'Asia/Kolkata';
@@ -11,21 +11,28 @@ export function cycleDay(value, inclusiveEnd = false) {
   });
 }
 
+export function getSignalPriceCycle(schedule) {
+  return schedule?.checkout || schedule?.next || schedule?.active || null;
+}
+
 export function useSignalSchedule(userId, enabled) {
   const [snapshot, setSnapshot] = useState(null);
+  const refreshRef = useRef(null);
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
     let request = 0;
-    const refresh = async () => {
+    const refresh = async (reset = false) => {
       const sequence = ++request;
+      if (reset === true) setSnapshot({ userId, status: 'loading', data: null });
       try {
         const data = await pb.send('/api/akg/signal-schedule');
-        if (alive && sequence === request) setSnapshot({ userId, data });
+        if (alive && sequence === request) setSnapshot({ userId, status: 'ready', data });
       } catch {
-        if (alive && sequence === request) setSnapshot({ userId, data: null });
+        if (alive && sequence === request) setSnapshot({ userId, status: 'error', data: null });
       }
     };
+    refreshRef.current = refresh;
     refresh();
     const interval = setInterval(refresh, 30000);
     window.addEventListener('focus', refresh);
@@ -33,10 +40,16 @@ export function useSignalSchedule(userId, enabled) {
     if (userId) subscriptions.push(pb.collection('payments').subscribe('*', refresh).catch(() => null));
     return () => {
       alive = false;
+      refreshRef.current = null;
       clearInterval(interval);
       window.removeEventListener('focus', refresh);
       subscriptions.forEach((promise) => promise.then((unsubscribe) => unsubscribe?.()));
     };
   }, [userId, enabled]);
-  return snapshot?.userId === userId ? snapshot.data : null;
+  const current = snapshot?.userId === userId ? snapshot : null;
+  return {
+    status: current?.status || 'loading',
+    data: current?.data || null,
+    retry: () => refreshRef.current?.(true),
+  };
 }
