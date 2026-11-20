@@ -69,7 +69,10 @@ backend side. A `VITE_` variable is visible to browser users.
 - **Signals** — Submit a test order, approve it twice, and check that only the
   buyer gets the correct tier. Pause and resume the cycle, verify expiry and
   reminders, then reject the order and verify access is revoked. Check realtime
-  posts and reactions using two sessions.
+  posts and reactions using two sessions. After the broadcast receipt migration,
+  verify the admin’s text and image posts show immediately, an interrupted send
+  retries without a duplicate, and a failed attachment keeps the draft. Deploy
+  the PocketBase hooks and migrations before the matching storefront build.
 - **Payments** — Use two customer accounts and verify each can see only their
   own orders. Verify duplicate references are rejected. Disable a payment
   method, confirm checkout stops showing it, and submit an already-paid

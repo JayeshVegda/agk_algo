@@ -77,25 +77,28 @@ export function reactionCounts(reactions) {
   return counts;
 }
 
-export async function postMessage({ audience, body, replyTo, files }) {
-  const stub = await pb.collection('messages').create({
-    audience: audience || 'all',
-    has_image: !!(files && files.length),
-    reply_to: replyTo || '',
-  });
-  try {
-    const fd = new FormData();
-    fd.set('message', stub.id);
-    if (body) fd.set('body', body);
-    if (files && files.length) {
-      for (const f of files) fd.append('attachments', f, f.name || 'image.png');
-    }
-    await pb.collection('message_content').create(fd);
-  } catch (err) {
-    await pb.collection('messages').delete(stub.id).catch(() => {});
-    throw err;
-  }
-  return stub;
+export const ROOM_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+export const ROOM_IMAGE_LIMIT = 4;
+export const ROOM_IMAGE_BYTES = 8 * 1024 * 1024;
+export const ROOM_TEXT_LIMIT = 6000;
+
+export function newBroadcastKey() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 15) | 64;
+  bytes[8] = (bytes[8] & 63) | 128;
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+export async function postMessage({ requestKey, audience, body, replyTo, files }) {
+  const fd = new FormData();
+  fd.set('request_key', requestKey);
+  fd.set('audience', audience);
+  fd.set('body', body);
+  fd.set('reply_to', replyTo || '');
+  for (const file of files) fd.append('attachments', file, file.name || 'pasted-image');
+  return pb.send('/api/akg/signal-room/broadcasts', { method: 'POST', body: fd });
 }
 
 export async function updateMessageBody(contentId, body) {

@@ -732,16 +732,18 @@ onRecordUpdateRequest((e) => {
     throw new BadRequestError("Unknown audience.");
   }
 
-  const before = $app.findRecordById("messages", rec.id);
-  if (rec.get("pinned") === true && before.get("pinned") !== true) {
-    const others = $app.findRecordsByFilter("messages", "pinned = true", "", 50, 0);
-    for (const o of others) {
-      if (o.id === rec.id) continue;
-      o.set("pinned", false);
-      $app.save(o);
+  if (!rec.getBool("pinned")) { e.next(); return; }
+
+  const app = e.app;
+  app.runInTransaction((tx) => {
+    const others = tx.findRecordsByFilter("messages", "pinned = true && id != {:id}", "", 0, 0, { id: rec.id });
+    for (const other of others) {
+      other.set("pinned", false);
+      tx.save(other);
     }
-  }
-  e.next();
+    e.app = tx;
+    try { e.next(); } finally { e.app = app; }
+  });
 });
 
 onRecordCreateRequest((e) => {

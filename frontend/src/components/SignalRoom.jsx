@@ -1,21 +1,27 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, BellOff, ImagePlus, Lock, Paperclip, Pencil, Pin, PinOff, Reply, Send, Trash2, X } from 'lucide-react';
+import { Bell, BellOff, ImagePlus, Lock, Pencil, Pin, PinOff, Reply, Send, Trash2, X } from 'lucide-react';
 import { pb } from '../lib/pocketbase';
 import {
   canReadAudience,
   PAGE_SIZE,
+  ROOM_IMAGE_BYTES,
+  ROOM_IMAGE_LIMIT,
+  ROOM_IMAGE_TYPES,
+  ROOM_TEXT_LIMIT,
   deleteMessage,
   fetchContent,
   fetchMessages,
   fetchReactions,
   fileUrl,
   isStaff,
+  newBroadcastKey,
   postMessage,
   reactionCounts,
   setMessagePinned,
   subscribeRoom,
   subActive,
   toggleReaction,
+  updateMessageBody,
 } from '../lib/room';
 
 const EMOJIS = ['🔥', '👍', '🎯', '💰', '🙏'];
@@ -54,6 +60,17 @@ function withUrls(content, fileToken) {
   const urls = {};
   atts.forEach((f) => { urls[f] = fileUrl(content, f, fileToken); });
   return Object.assign({}, content, { __urls: urls });
+}
+
+function publishError(error) {
+  if (error.status === 404) return 'The broadcast endpoint is unavailable. Reload the Signal Room and try again.';
+  if (error.status === 413) return 'The upload was too large. Try smaller images or fewer attachments.';
+  if (error.status === 401 || error.status === 403) return 'Sign in as an admin to publish this broadcast.';
+  const field = Object.values(error.data?.data || {}).find((entry) => entry?.message);
+  if (error.status >= 400 && error.status < 500) {
+    return field?.message || error.data?.message || 'The server rejected the broadcast. Check the draft and try again.';
+  }
+  return 'Couldn’t confirm the broadcast. Retry to check whether it was already saved.';
 }
 
 function LockedBubble({ audience, user, onOpenPricing, onOpenAuth, hasImage }) {
@@ -287,7 +304,9 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
   const [olderError, setOlderError] = useState(false);
   const [contentById, setContentById] = useState({});
   const [reactions, setReactions] = useState([]);
-  const [pending, setPending] = useState([]);
+  const [sendFeedback, setSendFeedback] = useState(null);
+  const [attachmentError, setAttachmentError] = useState('');
+  const [actionError, setActionError] = useState('');
   const [audience, setAudience] = useState(() => localStorage.getItem('akg_room_audience') || 'vip');
   const [draft, setDraft] = useState('');
   const [files, setFiles] = useState([]);
@@ -301,6 +320,11 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [newCount, setNewCount] = useState(0);
   const [sending, setSending] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const draftLocked = sending || sendFeedback?.kind === 'uncertain';
+  const sendInProgress = useRef(false);
+  const retryKey = useRef('');
+  const pinInProgress = useRef(false);
   const scrollRef = useRef(null);
   const tailRef = useRef(null);
   const atBottomRef = useRef(true);
@@ -468,7 +492,7 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
     if (atBottomRef.current && tailRef.current) {
       tailRef.current.scrollIntoView({ block: 'end' });
     }
-  }, [msgs]);
+  }, [msgs, filter]);
 
   const onToggle = useCallback(async (msgId, emoji, mine) => {
     if (!user) {
@@ -504,65 +528,145 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
     }
   }, [user, meId, reactions, msgs, onOpenAuth]);
 
-  const send = useCallback(async () => {
+  const send = async () => {
     const text = draft.trim();
-    if (!text && files.length === 0) return;
-    if (sending) return;
-    const toSendFiles = files.slice();
-    const tempId = 'pend_' + Date.now();
-    const pendingItem = { id: tempId, body: text, audience, failed: false };
-    setPending((p) => [...p, pendingItem]);
-    setDraft('');
-    setFiles([]);
+    if (!staff || (!text && files.length === 0) || sendInProgress.current || roomStatus === 'loading') return;
+    if (text.length > ROOM_TEXT_LIMIT) {
+      setSendFeedback({ kind: 'failed', message: 'Shorten the broadcast to 6,000 characters.' });
+      return;
+    }
+
+    sendInProgress.current = true;
     setSending(true);
+    setAttachmentError('');
+    const retryingUncertain = sendFeedback?.kind === 'uncertain';
+    setSendFeedback({ kind: 'sending', message: 'Sending broadcast…' });
     try {
-      await postMessage({
-        audience,
-        body: text,
-        files: toSendFiles,
-        replyTo: replyTo?.id || null,
+      retryKey.current ||= newBroadcastKey();
+      const result = await postMessage({
+        requestKey: retryKey.current, audience, body: text, files, replyTo: replyTo?.id,
       });
-      setPending((p) => p.filter((x) => x.id !== tempId));
+      if (!result.removed) {
+        const { message, content } = result;
+        atBottomRef.current = true;
+        setNewCount(0);
+        if (filter !== 'all' && filter !== message.audience) setFilter('all');
+        tailRef.current?.scrollIntoView({ block: 'end' });
+        setMsgs((previous) => {
+          if (previous.some(({ id }) => id === message.id)) return previous;
+          return [...previous, message].sort((a, b) => a.created.localeCompare(b.created) || a.id.localeCompare(b.id));
+        });
+        setContentById((previous) => previous[message.id]
+          ? previous
+          : { ...previous, [message.id]: withUrls(content, fileTokenInit.current) });
+        if (content.attachments?.length) {
+          pb.files.getToken().then((token) => {
+            fileTokenInit.current = token;
+            setFileToken(token);
+            setContentById((previous) => previous[message.id]
+              ? { ...previous, [message.id]: withUrls(previous[message.id], token) }
+              : previous);
+          }).catch(() => {});
+        }
+      }
+      retryKey.current = '';
+      setDraft('');
+      setFiles([]);
       setReplyTo(null);
-    } catch (err) {
-      console.warn('send failed', err);
-      setPending((p) => p.map((x) => (x.id === tempId ? Object.assign({}, x, { failed: true }) : x)));
-      setDraft(text);
-      setFiles(toSendFiles);
+      setSendFeedback({ kind: 'published', message: result.removed
+        ? 'This broadcast was published earlier and has since been removed.'
+        : `Published to ${AUDIENCE_LABEL[audience]}.` });
+    } catch (error) {
+      const uncertain = Boolean(retryKey.current) && (!error.status || error.status === 408 || error.status >= 500 ||
+        (retryingUncertain && [401, 403, 404, 413, 429].includes(error.status)));
+      if (!uncertain) retryKey.current = '';
+      setSendFeedback({ kind: uncertain ? 'uncertain' : 'failed', message: publishError(error) });
     } finally {
+      sendInProgress.current = false;
       setSending(false);
     }
-  }, [draft, files, audience, replyTo, sending]);
+  };
 
-  const onKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
+  const onKeyDown = (event) => {
+    if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && event.keyCode !== 229) {
+      event.preventDefault();
       send();
     }
   };
 
-  const onPaste = (e) => {
-    const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items || [];
-    const pasted = [];
-    for (const it of items) {
-      if (it.kind === 'file' && it.type.startsWith('image/')) {
-        const f = it.getAsFile();
-        if (f) pasted.push(f);
+  const addAttachments = (selected) => {
+    if (draftLocked || sendInProgress.current || !selected.length) return;
+    const accepted = [];
+    let error = '';
+    for (const file of selected) {
+      if (!ROOM_IMAGE_TYPES.includes(file.type)) {
+        error ||= 'Use PNG, JPEG, WebP, or GIF images.';
+      } else if (!file.size || file.size > ROOM_IMAGE_BYTES) {
+        error ||= 'Each image must be between 1 byte and 8 MB.';
+      } else if (files.length + accepted.length >= ROOM_IMAGE_LIMIT) {
+        error ||= 'Attach up to four images.';
+      } else {
+        accepted.push(file);
       }
     }
-    if (pasted.length > 0) {
-      e.preventDefault();
-      setFiles((p) => [...p, ...pasted].slice(0, 4));
+    if (accepted.length) {
+      setFiles([...files, ...accepted]);
+      setSendFeedback(null);
+    }
+    setAttachmentError(error);
+  };
+
+  const onPaste = (event) => {
+    const files = Array.from(event.clipboardData?.items || [])
+      .filter((item) => item.kind === 'file')
+      .map((item) => item.getAsFile())
+      .filter(Boolean);
+    if (!files.length) return;
+    if (!event.clipboardData.getData('text/plain')) event.preventDefault();
+    addAttachments(files);
+  };
+
+  const onPin = async (message) => {
+    if (pinInProgress.current) return;
+    pinInProgress.current = true;
+    setActionError('');
+    try {
+      const updated = await setMessagePinned(message);
+      setMsgs((previous) => previous.map((row) => {
+        if (row.id === updated.id) return { ...row, ...updated };
+        return updated.pinned && row.pinned ? { ...row, pinned: false } : row;
+      }));
+    } catch {
+      setActionError('Couldn’t change the pinned broadcast. Try again.');
+    } finally {
+      pinInProgress.current = false;
     }
   };
 
-  const onPin = async (msg) => {
-    try {
-      await setMessagePinned(msg.id, !msg.pinned);
-    } catch (err) {
-      console.warn('pin toggle failed', err);
+  async function saveEdit() {
+    if (savingEdit || !editing) return;
+    const original = contentById[editing.id];
+    if (!original) {
+      setActionError('The message content is unavailable. Reload the Signal Room and try again.');
+      return;
     }
-  };
+    const text = editing.__body.trim();
+    if (!text && !original.attachments?.length) {
+      setActionError('Enter a message before saving the edit.');
+      return;
+    }
+    setSavingEdit(true);
+    setActionError('');
+    try {
+      const updated = await updateMessageBody(original.id, text);
+      setContentById((previous) => ({ ...previous, [updated.message]: withUrls(updated, fileTokenInit.current) }));
+      setEditing(null);
+    } catch {
+      setActionError('Couldn’t save the edit. Your changes are still here.');
+    } finally {
+      setSavingEdit(false);
+    }
+  }
 
   const toggleAlerts = async () => {
     if (!alertsOn) {
@@ -687,7 +791,7 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
                 meId={meId}
                 reactions={reactions}
                 onToggle={onToggle}
-                onReply={(m) => setReplyTo(m)}
+                onReply={(m) => { if (!draftLocked && !sendInProgress.current) setReplyTo(m); }}
                 onPin={onPin}
                 onEdit={(m) => setEditing(Object.assign({}, m, { __body: String((contentById[m.id] || {}).body || '') }))}
                 onDelete={(m) => { if (window.confirm('Delete this broadcast?')) deleteMessage(m.id); }}
@@ -714,18 +818,6 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
             </div>
           )}
 
-          {pending.map((p, i) => (
-            <div key={'pd' + i} className="flex w-full flex-row-reverse justify-start gap-2 px-3 py-0.5">
-              <div className={cn(
-                'max-w-[min(420px,88%)] rounded-xl rounded-br-sm border px-4 py-2.5',
-                p.failed ? 'border-rose-500/50 bg-rose-500/5' : 'border-akg-hairline bg-akg-surface ' + (p.failed ? '' : 'opacity-60'),
-              )}>
-                {p.failed && <p className="mb-1 font-mono text-[10px] font-medium text-rose-500">Failed to send: draft restored. Press send again.</p>}
-                <pre className="w-full max-w-[400px] whitespace-pre-wrap break-words [overflow-wrap:anywhere] font-sans text-[13px] leading-relaxed text-akg-text">{p.body}</pre>
-              </div>
-            </div>
-          ))}
-
           <div ref={tailRef} className="h-2" />
 
           {newCount > 0 && (
@@ -745,27 +837,30 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
                 <span className="truncate font-mono text-[10px] text-akg-muted">
                   {AUDIENCE_LABEL[replyTo.audience] || replyTo.audience} · {String((contentById[replyTo.id] || {}).body || '').slice(0, 48) || (replyTo.id && 'earlier broadcast')}
                 </span>
-                <button onClick={() => setReplyTo(null)} className="cursor-pointer"><X className="h-3.5 w-3.5 text-akg-muted hover:text-akg-text" /></button>
+                <button type="button" aria-label="Clear reply" disabled={draftLocked} onClick={() => setReplyTo(null)} className="cursor-pointer disabled:opacity-40"><X className="h-3.5 w-3.5 text-akg-muted hover:text-akg-text" /></button>
               </div>
             )}
             {editing && (
               <div className="flex items-end gap-2 border-b border-akg-hairline px-4 py-2">
                 <textarea
                   value={editing.__body}
+                  maxLength={ROOM_TEXT_LIMIT}
+                  disabled={savingEdit}
+                  aria-label="Edit broadcast"
                   onChange={(e) => setEditing((ed) => Object.assign({}, ed, { __body: e.target.value }))}
                   rows={2}
                   className="min-h-[36px] flex-1 resize-none bg-transparent font-sans text-[12px] text-akg-text outline-none"
                 />
                 <div className="flex items-center gap-1.5 pb-0.5">
                   <button
-                    onClick={() => {
-                      updateMessageBody(contentById[editing.id] && contentById[editing.id].id, editing.__body).then(() => setEditing(null)).catch(() => {});
-                    }}
+                    type="button"
+                    disabled={savingEdit}
+                    onClick={saveEdit}
                     className="rounded-md bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400 px-3 py-1 font-mono text-[10px] font-semibold cursor-pointer transition-colors"
                   >
-                    Save edit
+                    {savingEdit ? 'Saving…' : 'Save edit'}
                   </button>
-                  <button onClick={() => setEditing(null)} className="font-mono text-[10px] text-akg-muted hover:text-akg-text cursor-pointer">Cancel</button>
+                  <button type="button" disabled={savingEdit} onClick={() => setEditing(null)} className="font-mono text-[10px] text-akg-muted hover:text-akg-text cursor-pointer">Cancel</button>
                 </div>
               </div>
             )}
@@ -776,7 +871,9 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
                   <button
                     key={k}
                     type="button"
-                    onClick={() => { setAudience(k); localStorage.setItem('akg_room_audience', k); }}
+                    disabled={draftLocked}
+                    aria-pressed={audience === k}
+                    onClick={() => { setAudience(k); localStorage.setItem('akg_room_audience', k); setSendFeedback(null); }}
                     className={cn(
                       'rounded-md px-2.5 py-0.5 font-mono text-[10px] font-semibold transition-colors cursor-pointer',
                       audience === k 
@@ -793,32 +890,38 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
               </span>
             </div>
             <div className="flex items-end gap-2 px-3 py-2.5">
-              <label className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-akg-hairline text-akg-muted transition-colors hover:border-emerald-500/40 hover:text-akg-green" title="Attach images">
+              <label className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-akg-hairline text-akg-muted transition-colors focus-within:outline focus-within:outline-2 focus-within:outline-akg-accent hover:border-emerald-500/40 hover:text-akg-green" title="Attach images" aria-disabled={draftLocked}>
                 <ImagePlus className="h-4 w-4" />
                 <input
                   type="file"
-                  accept="image/*"
+                  accept={ROOM_IMAGE_TYPES.join(',')}
+                  aria-label="Attach images"
                   multiple
-                  hidden
-                  onChange={(e) => { setFiles((p) => [...p, ...Array.from(e.target.files || [])].slice(0, 4)); e.target.value = ''; }}
+                  disabled={draftLocked}
+                  className="sr-only"
+                  onChange={(event) => { addAttachments(Array.from(event.target.files || [])); event.target.value = ''; }}
                 />
               </label>
               <textarea
                 value={draft}
                 onKeyDown={onKeyDown}
                 onPaste={onPaste}
-                onChange={(e) => setDraft(e.target.value)}
+                maxLength={ROOM_TEXT_LIMIT}
+                disabled={draftLocked}
+                aria-label="Broadcast message"
+                onChange={(event) => { setDraft(event.target.value); setSendFeedback(null); }}
                 placeholder={'Broadcast to ' + (AUDIENCE_LABEL[audience] || 'members') + '…'}
                 rows={1}
-                className="max-h-32 min-h-[38px] flex-1 resize-none rounded-lg border border-akg-hairline bg-akg-card px-3.5 py-2 font-sans text-[13px] text-akg-text outline-none transition-colors placeholder:text-akg-muted focus:border-emerald-500/40"
+                className="max-h-32 min-h-11 min-w-0 flex-1 resize-none rounded-lg border border-akg-hairline bg-akg-card px-3.5 py-2 font-sans text-[13px] text-akg-text outline-none transition-colors placeholder:text-akg-muted focus:border-emerald-500/40"
               />
               <button
+                type="button"
                 onClick={send}
-                disabled={sending || (!draft.trim() && files.length === 0)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400 transition-opacity disabled:opacity-40 cursor-pointer"
-                title="Send broadcast"
+                disabled={sending || roomStatus === 'loading' || (!draft.trim() && files.length === 0)}
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-akg-cta px-3 text-sm font-semibold text-akg-cta-text disabled:opacity-40"
               >
-                {files.length > 0 ? <Paperclip className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+                <Send aria-hidden className="h-4 w-4" />
+                {sending ? 'Sending…' : sendFeedback?.kind === 'failed' || sendFeedback?.kind === 'uncertain' ? 'Retry' : 'Send'}
               </button>
             </div>
             {files.length > 0 && (
@@ -827,11 +930,19 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
                   <span key={i} className="flex items-center gap-1.5 rounded-md border border-akg-hairline bg-akg-card px-2 py-0.5 font-mono text-[10px] text-akg-text">
                     <ImagePlus className="h-3 w-3" />
                     {f.name || 'pasted'} #{i + 1}
-                    <button onClick={() => setFiles((p) => p.filter((_, x) => x !== i))} className="cursor-pointer"><X className="h-3 w-3 text-akg-muted hover:text-akg-text" /></button>
+                    <button type="button" disabled={draftLocked} aria-label={`Remove attachment ${i + 1}`} onClick={() => {
+                      setFiles((p) => p.filter((_, index) => index !== i));
+                      setAttachmentError('');
+                      setSendFeedback(null);
+                    }} className="cursor-pointer"><X className="h-3 w-3 text-akg-muted hover:text-akg-text" /></button>
                   </span>
                 ))}
               </div>
             )}
+            {sendFeedback && <p role={['failed', 'uncertain'].includes(sendFeedback.kind) ? 'alert' : 'status'}
+              className="px-4 pb-2 text-xs text-akg-text">{sendFeedback.message}</p>}
+            {attachmentError && <p role="alert" className="px-4 pb-2 text-xs text-akg-text">{attachmentError}</p>}
+            {actionError && <p role="alert" className="px-4 pb-2 text-xs text-akg-text">{actionError}</p>}
           </div>
         ) : (
           <div className="flex select-none flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-t border-akg-hairline px-4 py-3 sm:py-2.5 bg-akg-surface">

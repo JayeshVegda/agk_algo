@@ -61,3 +61,8 @@ jobs:
               )}
               assert {"payments_reference_insert", "payments_reference_update"} <= triggers
           PYTHON
+      - name: Verify atomic signal broadcasts
+        run: |
+          mkdir -p "$RUNNER_TEMP/akg-test-hooks"
+          cp pb_hooks/*.js tests/verify-signal-broadcast.pb.js "$RUNNER_TEMP/akg-test-hooks/"
+          ./bin/pocketbase verify-signal-broadcast --dir="$RUNNER_TEMP/akg-data" --hooksDir="$RUNNER_TEMP/akg-test-hooks" --migrationsDir="$PWD/pb_migrations"
