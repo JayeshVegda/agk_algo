@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build --outDir ../pb_public",
-    "build:vercel": "vite build --outDir dist --emptyOutDir",
+    "build:vercel": "vite build --mode hosted --outDir dist --emptyOutDir",
     "preview": "vite preview"
   },
   "dependencies": {

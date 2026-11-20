@@ -4,60 +4,64 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/signals",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/bots/:path*",
-      "destination": "/index.html"
+      "source": "/bots",
+      "destination": "/storefront/bots.html"
     },
     {
       "source": "/pricing",
-      "destination": "/index.html"
+      "destination": "/storefront/pricing.html"
+    },
+    {
+      "source": "/signals",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/bots/:path*",
+      "destination": "/app.html"
     },
     {
       "source": "/charts",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/terminal-desk",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/desk",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/kit",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/account",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/checkout",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/terms",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/refund",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/risk",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/privacy",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/admin/:path*",
-      "destination": "/index.html"
+      "destination": "/app.html"
     }
   ],
   "headers": [
@@ -94,6 +98,33 @@
         {
           "key": "X-Robots-Tag",
           "value": "noindex"
+        }
+      ]
+    },
+    {
+      "source": "/assets/logos/akg-algo-crest-96.webp",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
+        }
+      ]
+    },
+    {
+      "source": "/assets/logos/akg-algo-crest-384.webp",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
+        }
+      ]
+    },
+    {
+      "source": "/assets/brand/robot-store.webp",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
         }
       ]
     }

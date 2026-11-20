@@ -9,6 +9,8 @@ import { Badge } from './ui/Badge';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './ui/Accordion';
 import Reveal, { RevealGroup, RevealItem } from './motion/Reveal';
 import { useSiteSettings, getPlans } from '../lib/wallets';
+import { StorefrontGuide } from './StorefrontGuide';
+import { storefrontPages } from '../lib/storefrontPages';
 
 const botSlug = (name) =>
   String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -125,10 +127,10 @@ export function LandingPage({ onNavigate, schedule }) {
           <div className="max-w-2xl">
             <p className="mb-4 text-xs font-semibold uppercase tracking-[0.16em] text-akg-accent">AKG ALGO · MetaTrader robots</p>
             <h1 className="font-display text-4xl font-extrabold leading-[1.08] tracking-tight text-akg-text sm:text-5xl xl:text-6xl">
-              Ready-made trading robots for MetaTrader 4 and 5
+              {storefrontPages['/'].heading}
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-akg-muted sm:text-lg">
-              Choose a robot, buy a one-time license, and install it in your MetaTrader terminal.
+              {storefrontPages['/'].intro}
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <a href="#home-robots-title" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-akg-cta px-5 text-sm font-bold text-akg-cta-text transition-transform hover:-translate-y-0.5 active:translate-y-0 motion-reduce:transform-none">
@@ -449,6 +451,7 @@ export function LandingPage({ onNavigate, schedule }) {
           </div>
         </Reveal>
       </section>
+      <StorefrontGuide path="/" />
     </div>
   );
 }

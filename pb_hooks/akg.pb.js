@@ -173,6 +173,7 @@ onRecordCreateRequest((e) => {
   const plan = e.record.get("plan") || "";
   const amount = Number(e.record.get("amount") || 0);
   let expected = 0;
+  let paymentCycle;
   let needsReview = !isManager && alreadyPaid;
 
   if (membership.SIGNAL_PLANS.includes(plan)) {
@@ -180,12 +181,15 @@ onRecordCreateRequest((e) => {
     const id = e.record.getString("signal_cycle");
     const cycle = id ? e.app.findRecordById("signal_cycles", id) :
       isManager ? membership.schedule(e.app, e.record.getString("user_email"), now).checkout : null;
-    if (!cycle || cycle.getBool("is_draft") || membership.time(cycle, "renewals_at") > now) {
+    if (!cycle || cycle.getBool("is_draft")) {
       throw new BadRequestError("Select a signal cycle that has opened for payments.");
     }
+    paymentCycle = cycle;
     e.record.set("signal_cycle", cycle.id);
     expected = cycle.getFloat(plan === membership.SIGNAL_PLANS[0] ? "sr_price" : "vip_price");
-    const cycleChanged = !membership.windowOpen(cycle, now) || amount !== expected;
+    const dateChanged = ["starts_at", "ends_at"].some((field) =>
+      body[field] && Date.parse(String(body[field]).replace(" ", "T")) !== membership.time(cycle, field));
+    const cycleChanged = !membership.windowOpen(cycle, now) || amount !== expected || dateChanged;
     if (cycleChanged && !isManager && !alreadyPaid) {
       throw new BadRequestError("This cycle or price changed. If you already paid, submit your reference for review.");
     }
@@ -241,7 +245,22 @@ onRecordCreateRequest((e) => {
     else e.app.findFirstRecordByFilter("users", "email = {:email}", { email: e.record.getString("user_email") });
   }
   try {
-    e.next();
+    if (paymentCycle) {
+      const app = e.app;
+      app.runInTransaction((tx) => {
+        const current = tx.findRecordById("signal_cycles", paymentCycle.id);
+        if (current.getBool("is_draft")) throw new BadRequestError("This signal cycle is unavailable.");
+        const moved = ["starts_at", "ends_at", "sr_price", "vip_price"].some((field) =>
+          current.getString(field) !== paymentCycle.getString(field));
+        if (moved) {
+          throw new BadRequestError("The cycle changed. Refresh and submit your reference for review if you already paid.");
+        }
+        e.app = tx;
+        try { e.next(); } finally { e.app = app; }
+      });
+    } else {
+      e.next();
+    }
   } catch (error) {
     if (String(error).includes("Payment reference already submitted")) {
       throw new BadRequestError("This payment reference is already in the ledger.");

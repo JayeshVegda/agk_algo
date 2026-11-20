@@ -6,8 +6,7 @@ function time(record, field) {
 }
 
 function windowOpen(cycle, now) {
-  return !cycle.getBool("is_draft") && time(cycle, "renewals_at") <= now && time(cycle, "ends_at") > now &&
-    (now < time(cycle, "starts_at") || cycle.getBool("allow_late_join"));
+  return !cycle.getBool("is_draft") && time(cycle, "ends_at") > now;
 }
 
 function paused(cycle, now) {
@@ -19,17 +18,17 @@ function schedule(app, email, now) {
   const cycles = app.findRecordsByFilter("signal_cycles", "is_draft = false && ends_at > {:now}", "starts_at", 100, 0, { now: stamp });
   const active = cycles.find((cycle) => time(cycle, "starts_at") <= now);
   const next = cycles.find((cycle) => time(cycle, "starts_at") > now);
-  const eligible = cycles.filter((cycle) => windowOpen(cycle, now));
+  const eligible = [active, next].filter((cycle) => cycle && windowOpen(cycle, now));
   const enrolled = email ? app.findRecordsByFilter("payments",
     "user_email = {:email} && status = 'confirmed' && signal_cycle.ends_at > {:now}",
     "-created", 0, 0, { email, now: stamp }) : [];
-  const checkout = eligible.find((cycle) => time(cycle, "starts_at") > now && !enrolled.some((p) => p.getString("signal_cycle") === cycle.id)) ||
-    eligible.find((cycle) => !enrolled.some((p) => p.getString("signal_cycle") === cycle.id));
+  const checkoutOptions = eligible.filter((cycle) => !enrolled.some((p) => p.getString("signal_cycle") === cycle.id));
+  const checkout = checkoutOptions[0];
   const activePlan = !active || paused(active, now) ? "" :
     enrolled.filter((p) => p.getString("signal_cycle") === active.id).reduce((plan, p) =>
       plan === SIGNAL_PLANS[1] ? plan : p.getString("plan"), "");
   const future = enrolled.find((p) => next && p.getString("signal_cycle") === next.id);
-  return { active, next, checkout, activePlan, future };
+  return { active, next, checkout, checkoutOptions, activePlan, future };
 }
 
 function applyLegacy(app, payment, direction) {
@@ -51,4 +50,4 @@ function licenseKey(plan) {
   return "AKG-" + platform + "-" + random.slice(0, 4) + "-" + random.slice(4, 8);
 }
 
-module.exports = { SIGNAL_PLANS, time, windowOpen, paused, schedule, applyLegacy, licenseKey };
+module.exports = { SIGNAL_PLANS, CYCLE_MS, time, windowOpen, paused, schedule, applyLegacy, licenseKey };

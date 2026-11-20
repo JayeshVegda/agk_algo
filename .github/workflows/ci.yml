@@ -17,6 +17,25 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci --prefix frontend
       - run: npm --prefix frontend run build -- --outDir "$RUNNER_TEMP/akg-web"
+      - name: Verify storefront HTML
+        run: |
+          node --input-type=module - "$RUNNER_TEMP/akg-web" <<'JS'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          import { siteOrigin, storefrontPages } from './frontend/src/lib/storefrontPages.js';
+
+          const dir = process.argv[2];
+          for (const [path, page] of Object.entries(storefrontPages)) {
+            const html = readFileSync(join(dir, 'storefront', page.file + '.html'), 'utf8');
+            assert.equal(html.match(/rel="canonical"/g)?.length, 1, path);
+            assert.ok(html.includes(`rel="canonical" href="${siteOrigin}${path}"`), path);
+            assert.ok(html.includes(page.heading) && html.includes(page.guideHeading), path);
+            assert.ok(html.includes('"@type": "Organization"'), path);
+          }
+          const shell = readFileSync(join(dir, 'index.html'), 'utf8');
+          assert.ok(!shell.includes('rel="canonical"'), 'SPA fallback must not canonicalize pages to the home page');
+          JS
       - name: Check PocketBase hooks
         run: |
           for hook in pb_hooks/*.js pb_migrations/*.js; do

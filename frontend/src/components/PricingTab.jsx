@@ -7,9 +7,12 @@ import { Badge } from './ui/Badge';
 import { getPlans, useSiteSettings } from '../lib/wallets';
 import { formatUsdt } from '../lib/utils';
 import { cycleDay, getSignalPriceCycle } from '../lib/signalCycles';
+import { StorefrontGuide } from './StorefrontGuide';
+import { storefrontPages } from '../lib/storefrontPages';
 
 export function PricingTab({ user, onNavigate, schedule }) {
   const [myPayments, setMyPayments] = useState([]);
+  const [chosenCycle, setChosenCycle] = useState('');
 
   const loadMyPayments = useCallback(async () => {
     if (!user?.email) { setMyPayments([]); return; }
@@ -32,8 +35,9 @@ export function PricingTab({ user, onNavigate, schedule }) {
   }, [user?.email, loadMyPayments]);
 
   const settings = useSiteSettings();
-  const cycle = schedule?.checkout;
-  const priceCycle = getSignalPriceCycle(schedule);
+  const checkoutOptions = schedule?.checkoutOptions || (schedule?.checkout ? [schedule.checkout] : []);
+  const cycle = checkoutOptions.find(({ id }) => id === chosenCycle) || checkoutOptions[0];
+  const priceCycle = cycle || getSignalPriceCycle(schedule);
   const plans = getPlans(settings, priceCycle);
   const pendingPlans = new Set(myPayments
     .filter((payment) => payment.status === 'pending' && payment.signal_cycle === cycle?.id)
@@ -56,12 +60,26 @@ export function PricingTab({ user, onNavigate, schedule }) {
           </Badge>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-akg-text tracking-tight font-display">
-          Signal Subscriptions and Memberships
+          {storefrontPages['/pricing'].heading}
         </h1>
         <p className="text-sm text-akg-muted max-w-lg mx-auto leading-relaxed">
-          Predictable cycle renewals. Zero automated credit card charges or recurring fees. Direct crypto settlement in USDT.
+          {storefrontPages['/pricing'].intro}
         </p>
       </div>
+
+      {checkoutOptions.length > 1 && (
+        <label className="block space-y-1 text-sm font-semibold">
+          <span>Choose a signal cycle</span>
+          <select value={cycle.id} onChange={(event) => setChosenCycle(event.target.value)}
+            className="block min-h-11 w-full max-w-md rounded-lg border border-akg-hairline bg-akg-card px-3 text-sm text-akg-text">
+            {checkoutOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.id === schedule.active?.id ? 'Current' : 'Next'} cycle · {cycleDay(option.startsAt)} – {cycleDay(option.endsAt, true)}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <div className="rounded-xl border border-akg-hairline bg-akg-card px-5 py-4 text-sm text-akg-text" role="status">
         {cycle ? <><strong>{cycle.name}</strong> · {cycleDay(cycle.startsAt)} to {cycleDay(cycle.endsAt, true)}</> :
@@ -165,6 +183,7 @@ export function PricingTab({ user, onNavigate, schedule }) {
         </p>
       </div>
 
+      <StorefrontGuide path="/pricing" />
     </div>
   );
 }

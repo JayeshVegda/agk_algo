@@ -53,7 +53,8 @@ const TAB_ROUTES = {
   '/privacy': 'privacy',
 };
 
-const pathToTab = (pathname) => {
+const pathToTab = (rawPath) => {
+  const pathname = rawPath.replace(/\/+$/, '') || '/';
   if (pathname.startsWith('/admin')) return '/admin';
   if (pathname.startsWith('/bots')) return 'bots'; // includes /bots/<slug> product pages
   return TAB_ROUTES[pathname] || 'home';

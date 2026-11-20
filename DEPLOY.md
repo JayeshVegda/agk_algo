@@ -106,10 +106,16 @@ backend side. A `VITE_` variable is visible to browser users.
 
 - In Admin → Cycles, confirm the public cycle is published. The reported test
   cycle moves to draft on upgrade if it has no pending or confirmed orders.
-  If it still has orders, review them before hiding the cycle.
+  If it still has orders, review them before hiding the cycle. To start the
+  schedule, the admin enters a single date. Later cycles renew every 30 days
+  and open for advance purchases. A future start can be moved before any
+  order is placed. Verify the automatic date and override in staging.
 - Verify `/robots.txt`, `/sitemap.xml`, and `/llms.txt` return the expected
   content. `/.well-known/ard.json` should return 404 until a manifest is
-  published. Check canonicals for `https://akgalgo.com` on the rendered pages.
+  published. Use View Page Source on `/`, `/bots`, and `/pricing` to verify each
+  has a heading and one canonical URL for `https://akgalgo.com`. PocketBase
+  serves the snapshots through its storefront hook. Vercel serves the home
+  snapshot as its index and uses its rewrite rules for Bots and Pricing.
 - If hosting on a VPS with a separate proxy configuration, apply the static
   cache and noindex rules from the repo's Caddyfile to the active proxy. Verify
   that hashed JS/CSS are cached and HTML and API responses retain their

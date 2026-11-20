@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { storefrontHtmlPlugin } from './scripts/storefrontHtml.js';
 
-export default defineConfig({
-  plugins: [react()],
+export default defineConfig(({ mode }) => ({
+  plugins: [react(), storefrontHtmlPlugin(mode === 'hosted')],
   server: {
     port: 5173,
     proxy: {
@@ -28,4 +29,4 @@ export default defineConfig({
       }
     }
   }
-});
+}));

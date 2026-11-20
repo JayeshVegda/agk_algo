@@ -9,6 +9,7 @@ onRecordUpdateRequest((e) => {
 routerAdd("GET", "/api/akg/signal-schedule", (e) => {
   const membership = require(__hooks + "/membership.js");
   const now = Date.now();
+  require(__hooks + "/cycle-rollover.js").ensure(e.app, now);
   const auth = e.auth;
   const state = membership.schedule(e.app, auth ? auth.getString("email") : "", now);
   const display = (cycle) => cycle ? {
@@ -29,10 +30,23 @@ routerAdd("GET", "/api/akg/signal-schedule", (e) => {
     active: display(state.active),
     next: display(state.next),
     checkout: display(state.checkout),
+    checkoutOptions: state.checkoutOptions.map(display),
     memberCycle: state.activePlan ? display(state.active) : null,
     enrolledNext: state.future ? display(state.next) : null,
     plan,
   });
+});
+
+routerAdd("POST", "/api/akg/signal-cycle/next", (e) => {
+  if (!e.auth || (e.auth.collection().name !== "_superusers" && e.auth.getString("role") !== "admin")) {
+    throw new ForbiddenError("Only administrators can set the next cycle date.");
+  }
+  require(__hooks + "/cycle-rollover.js").setNextStart(e.app, (e.requestInfo().body || {}).startDate, Date.now());
+  return e.json(200, { saved: true });
+});
+
+cronAdd("akg_signal_rollover", "*/15 * * * *", () => {
+  require(__hooks + "/cycle-rollover.js").ensure($app, Date.now());
 });
 
 onRecordCreateRequest((e) => {

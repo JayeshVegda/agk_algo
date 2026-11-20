@@ -10,3 +10,18 @@ routerUse((e) => {
   }
   e.next();
 });
+
+for (const route of ["/{$}", "/bots", "/bots/{$}", "/pricing", "/pricing/{$}"]) {
+  routerAdd("GET", route, (e) => {
+    const args = $os.args;
+    const index = args.findIndex((arg) => arg === "--publicDir" || arg.startsWith("--publicDir="));
+    const publicDir = index < 0 ? $filepath.join(args[0], "../pb_public")
+      : (args[index] === "--publicDir" ? args[index + 1] : args[index].slice("--publicDir=".length));
+    const page = e.request.url.path.replace(/^\/|\/$/g, "") || "home";
+    const file = "storefront/" + page + ".html";
+    let target = file;
+    try { $os.stat(publicDir + "/" + file); } catch { target = "index.html"; }
+    e.response.header().set("Cache-Control", "no-cache");
+    return e.fileFS($os.dirFS(publicDir), target);
+  });
+}

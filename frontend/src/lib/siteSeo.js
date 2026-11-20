@@ -1,9 +1,7 @@
-const origin = 'https://akgalgo.com';
+import { siteOrigin, storefrontPages } from './storefrontPages.js';
 
 const pages = {
-  '/': ['AKG ALGO | Trading Robots for MetaTrader 4 and 5', 'Buy ready-made MetaTrader 4 and 5 trading robots with one-time licenses. Signal subscriptions are available separately.'],
-  '/bots': ['MetaTrader 4 and 5 Trading Robots | AKG ALGO', 'Browse ready-made Expert Advisors for MetaTrader 4 and 5 and compare their platforms, requirements and one-time license prices.'],
-  '/pricing': ['Signal Room Plans and Prices | AKG ALGO', 'Compare the SR Signal Box and Perfect Signal Box subscriptions, with scheduled cycle dates and payment details.'],
+  ...Object.fromEntries(Object.entries(storefrontPages).map(([path, page]) => [path, [page.title, page.description]])),
   '/signals': ['Signal Room | AKG ALGO', 'View the current AKG ALGO signal cycle and learn how to join the Signal Room.'],
   '/terms': ['Terms of Service | AKG ALGO', 'Read the terms for using AKG ALGO trading robots and signal subscriptions.'],
   '/refund': ['Refund Policy | AKG ALGO', 'Read refund eligibility and how to request a refund for an AKG ALGO purchase.'],
@@ -11,7 +9,8 @@ const pages = {
   '/privacy': ['Privacy Policy | AKG ALGO', 'Learn how AKG ALGO handles account, contact and payment information.'],
 };
 
-export function updatePageSeo(path) {
+export function updatePageSeo(pathname) {
+  const path = pathname.replace(/\/+$/, '') || '/';
   const page = Object.hasOwn(pages, path) ? pages[path] : null;
   const [title, description] = page || pages['/'];
   document.title = title;
@@ -20,12 +19,12 @@ export function updatePageSeo(path) {
   document.querySelector('meta[property="og:description"]').content = description;
   document.querySelector('meta[name="twitter:title"]').content = title;
   document.querySelector('meta[name="twitter:description"]').content = description;
-  document.querySelector('meta[property="og:url"]').content = origin + path;
+  document.querySelector('meta[property="og:url"]').content = siteOrigin + path;
 
   const canonical = document.querySelector('link[rel="canonical"]') || document.createElement('link');
   if (page) {
     canonical.rel = 'canonical';
-    canonical.href = origin + path;
+    canonical.href = siteOrigin + path;
     if (!canonical.isConnected) document.head.append(canonical);
   } else {
     canonical.remove();

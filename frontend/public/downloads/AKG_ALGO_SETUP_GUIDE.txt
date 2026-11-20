@@ -1,29 +1,32 @@
-================================================================================
-AKG ALGO: EXPERT ADVISOR (EA) INSTALLATION & ACTIVATION GUIDE
-================================================================================
+AKG ALGO MetaTrader robot installation and activation
+===================================================
 
-1. PREREQUISITES
-   - MetaTrader 4 (MT4) or MetaTrader 5 (MT5) installed on Windows VPS or PC.
-   - Broker account connected (Demo or Live ECN recommended: IC Markets, Pepperstone, Tickmill).
-   - Valid AKG License Key obtained from your account dashboard.
+Before you start
+----------------
+- Check the robot's product page for the supported MetaTrader version,
+  instruments, timeframes, and any account requirements.
+- Sign in to https://akgalgo.com/account after your payment is approved.
+  Download the robot file and copy your license key from My Account.
+- MT4 uses .ex4 files. MT5 uses .ex5 files.
 
-2. INSTALLATION STEPS
-   a. In MetaTrader, click: File -> Open Data Folder.
-   b. Open the folder: MQL4/Experts (for MT4) OR MQL5/Experts (for MT5).
-   c. Paste the downloaded binary (.ex4 or .ex5 file) into this Experts folder.
-   d. Return to MetaTrader, open the Navigator window (Ctrl+N), right-click 'Expert Advisors', and click 'Refresh'.
-   e. The EA will now appear in your Navigator list.
+Install the robot
+-----------------
+1. In MetaTrader, select File > Open Data Folder.
+2. Open MQL4/Experts for MT4 or MQL5/Experts for MT5.
+3. Copy the downloaded file into the Experts folder.
+4. In Navigator, refresh Expert Advisors, or restart MetaTrader.
+5. Attach the robot to a chart supported by the product. Enter your license
+   key if prompted and follow the product-specific activation instructions.
+   Use the MetaTrader account you intend to license.
 
-3. ATTACHING TO CHART & SETTING LICENSE KEY
-   a. Drag the EA onto the recommended chart (e.g. XAUUSD M15 or EURUSD H1).
-   b. In the 'Common' tab, check: 'Allow Algorithmic Trading' and 'Allow DLL imports'.
-   c. In the 'Inputs' tab:
-      - LicenseKey: Paste your official hardware & account key (e.g. AKG-MT5-920-ABCD-1234).
-      - MaxSpreadPips: Default 1.8 (Recommended).
-      - RiskPercent: 1.0% - 2.0% per trade.
-   d. Click OK. Verify the smiley face or graduation cap in the top right corner is green.
+Troubleshooting
+---------------
+- Robot missing from Navigator: check the folder and whether the file matches
+  your MetaTrader version.
+- License rejected: verify the key, the connected MetaTrader account, and any
+  WebRequest instructions supplied with the product. The license can bind to
+  a MetaTrader account on activation.
+- For help, use the support contact listed at https://akgalgo.com/. Include
+  the robot name and the error message. Keep passwords and license keys private.
 
-4. SUPPORT & DESK CONTACT
-   - Telegram Community: https://t.me/akg_algo_official
-   - Direct Verification Desk: support@akgalgo.local
-================================================================================
+Trading can cause financial loss. Read https://akgalgo.com/risk before use.

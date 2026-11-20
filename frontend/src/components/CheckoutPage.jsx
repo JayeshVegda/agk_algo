@@ -106,10 +106,13 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
     );
   }
 
-  const cycle = schedule?.checkout;
+  const checkoutOptions = schedule?.checkoutOptions || (schedule?.checkout ? [schedule.checkout] : []);
+  const cycle = checkoutOptions.find(({ id }) => id === order.cycleId);
   const currentPrice = order.id === 'SR_SIGNAL_BOX' ? cycle?.srPrice : cycle?.vipPrice;
+  const timestamp = (value) => Date.parse(String(value || '').replace(' ', 'T'));
   const cycleChanged = order.kind === 'plan' && Boolean(order.cycleId) &&
-    scheduleStatus === 'ready' && (cycle?.id !== order.cycleId || currentPrice !== order.price);
+    scheduleStatus === 'ready' && (!cycle || currentPrice !== order.price ||
+      timestamp(cycle.startsAt) !== timestamp(order.startsAt) || timestamp(cycle.endsAt) !== timestamp(order.endsAt));
   const botChanged = order.kind === 'bot' && (botStatus === 'unavailable' ||
     (botStatus === 'ready' && (!currentBot?.is_live || Number(currentBot.price) !== Number(order.price) ||
       currentBot.name !== order.name || currentBot.platform !== order.platform)));
@@ -186,7 +189,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         user_email: user.email,
         plan: isBot ? `BOT: ${order.name} (${order.platform || 'EA'})` : order.id,
         amount: order.price,
-        ...(isBot ? { bot_id: order.id } : { signal_cycle: order.cycleId }),
+        ...(isBot ? { bot_id: order.id } : { signal_cycle: order.cycleId, starts_at: order.startsAt, ends_at: order.endsAt }),
         ...(submittingForReview ? { already_paid: true } : {}),
         network: paidNetwork,
         method: paidMethod,

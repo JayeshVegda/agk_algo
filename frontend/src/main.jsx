@@ -14,10 +14,20 @@ window.addEventListener('unhandledrejection', (e) => {
   window.__akgLastError = `rejection: ${e.reason}`;
 });
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>
-);
+function renderApp() {
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </React.StrictMode>
+  );
+}
+
+// Keep the pre-rendered introduction visible until the first route can render.
+const path = window.location.pathname.replace(/\/+$/, '') || '/';
+const entry = path === '/bots' ? import('./components/BotsTab')
+  : path === '/pricing' ? import('./components/PricingTab')
+  : null;
+if (entry) entry.then(renderApp, renderApp);
+else renderApp();

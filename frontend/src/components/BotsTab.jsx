@@ -10,6 +10,8 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { downloadLicensedFile, downloadLinksFor, formatUsdt } from '../lib/utils';
 import { pairsOf, featuresOf, timeframesOf, pctStat, statNumOrNull, performanceReport, matchesBotPurchase } from '../lib/bots';
+import { StorefrontGuide } from './StorefrontGuide';
+import { storefrontPages } from '../lib/storefrontPages';
 
 const slugify = (name) =>
   String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -394,7 +396,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onNavigateAdmin,
               </div>
               <h3 className="font-bold text-sm text-akg-text">EA Binary File</h3>
               <p className="text-xs text-akg-muted leading-relaxed">
-                Compiled .{bot.platform.toLowerCase().includes('mt4') ? 'ex4' : 'ex5'} executable file, ready to attach to your charts.
+                File format: {downloadLinksFor(bot).map(({ platform, ext }) => `${platform} (.${ext.toLowerCase()})`).join(' or ')}.
               </p>
             </div>
 
@@ -404,8 +406,9 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onNavigateAdmin,
               </div>
               <h3 className="font-bold text-sm text-akg-text">Setup Guide</h3>
               <p className="text-xs text-akg-muted leading-relaxed">
-                Step-by-step setup documentation with WebRequest URL allowlisting instructions.
+                Follow the installation steps for your MetaTrader version and check the product requirements before enabling the robot.
               </p>
+              <a href="/downloads/AKG_ALGO_SETUP_GUIDE.txt" className="inline-block text-xs font-semibold text-akg-accent underline underline-offset-4">Read the installation guide</a>
             </div>
 
             <div className="rounded-xl border border-akg-hairline bg-akg-card p-5 space-y-2">
@@ -418,6 +421,11 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onNavigateAdmin,
               </p>
             </div>
           </div>
+
+          <p className="text-xs leading-relaxed text-akg-muted">
+            After payment approval, access the key and download in <a className="text-akg-accent underline underline-offset-4" href="/account">My Account</a>.
+            See the <a className="text-akg-accent underline underline-offset-4" href="/refund">refund policy</a> for purchase eligibility and support instructions.
+          </p>
 
           {/* Drive package link if owned */}
           {owned && bot.download_url && (
@@ -562,8 +570,8 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onNavigateAdmin,
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#071a12] via-[#071a12]/90 to-transparent" />
         <div className="relative max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">AKG ALGO · Robot store</p>
-          <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-white sm:text-5xl">Find your trading robot</h1>
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-200 sm:text-base">Explore ready-made robots for MetaTrader 4 and 5. Compare platforms, markets, and one-time license prices.</p>
+          <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-white sm:text-5xl">{storefrontPages['/bots'].heading}</h1>
+          <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-200 sm:text-base">{storefrontPages['/bots'].intro}</p>
         </div>
       </header>
 
@@ -627,6 +635,7 @@ export function BotsTab({ user, botSlug, onOpenBot, onNavigate, onNavigateAdmin,
           {platformFilter !== "all" && <Button variant="outline" className="mt-3" onClick={() => setPlatformFilter("all")}>Show all robots</Button>}
         </div>
       )}
+      <StorefrontGuide path="/bots" />
     </div>
   );
 }
