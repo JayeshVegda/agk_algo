@@ -81,11 +81,22 @@ export function useStats() {
 
   useEffect(() => {
     load();
-    const unsubs = ['payments', 'users', 'connector_requests']
-      .map((c) => pb.collection(c).subscribe('*', () => load()).catch(() => null));
-    const t = setInterval(load, 60000);
+    let active = true;
+    let timer;
+    const refresh = () => {
+      if (!active || timer) return;
+      timer = setTimeout(() => {
+        timer = null;
+        load();
+      }, 1000);
+    };
+    const unsubs = ['payments', 'users', 'connector_requests', 'signal_cycles']
+      .map((c) => pb.collection(c).subscribe('*', refresh).catch(() => null));
+    const t = setInterval(refresh, 60000);
     return () => {
-      unsubs.forEach((u) => u?.then?.((fn) => fn && fn()));
+      active = false;
+      clearTimeout(timer);
+      unsubs.forEach((u) => u.then((fn) => fn?.()));
       clearInterval(t);
     };
   }, [load]);

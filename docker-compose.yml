@@ -6,7 +6,9 @@ services:
     container_name: akg_pocketbase
     restart: unless-stopped
     ports:
-      - "8095:8090" # direct access for local dev; close this in production and go through Caddy
+      - "127.0.0.1:8095:8090" # local maintenance access; public traffic goes through Caddy
+    environment:
+      AKG_CRED_KEY: ${AKG_CRED_KEY:-}
     volumes:
       - ./pb_data:/app/pb_data # SQLite database (BACK THIS UP)
       - ./pb_public:/app/pb_public # compiled frontend

@@ -12,6 +12,6 @@
   "build": {
     "pbPublic": "pb_public",
     "pbHooks": "pb_hooks",
-    "pbMigrations": "scratch_empty_migrations"
+    "pbMigrations": "pb_migrations"
   }
 }

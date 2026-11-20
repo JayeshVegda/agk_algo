@@ -50,21 +50,29 @@ export default function Users() {
   const [payments, setPayments] = useState([]);
   const [bots, setBots] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [rosterAtLimit, setRosterAtLimit] = useState(false);
   const [editing, setEditing] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       // Roster route returns trader records with emails (PB hides user emails
       // from other users, even console admins - see hook /api/akg/traders).
       const [us, ps, bs] = await Promise.all([
         pb.send('/api/akg/traders'),
-        pb.collection('payments').getFullList({ sort: '-created' }),
+        pb.collection('payments').getFullList({
+          sort: '-created', fields: 'id,user_email,plan,status,amount,created,method,network,license_key',
+        }),
         pb.collection('bots').getFullList({ sort: 'name' }),
       ]);
       setUsers(us.filter((u) => u.role !== 'admin'));
+      setRosterAtLimit(us.length >= 5000);
       setPayments(ps);
       setBots(bs);
+    } catch {
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -72,8 +80,21 @@ export default function Users() {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
-    const unsubs = ['users', 'payments'].map((c) => pb.collection(c).subscribe('*', () => load()).catch(() => null));
-    return () => unsubs.forEach((u) => u?.then?.((fn) => fn && fn()));
+    let active = true;
+    let timer;
+    const refresh = () => {
+      if (!active || timer) return;
+      timer = setTimeout(() => {
+        timer = null;
+        load();
+      }, 1000);
+    };
+    const unsubs = ['users', 'payments'].map((c) => pb.collection(c).subscribe('*', refresh).catch(() => null));
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      unsubs.forEach((u) => u.then((fn) => fn?.()));
+    };
   }, [load]);
 
   /* ---------------------------- derived indexes --------------------------- */
@@ -367,6 +388,15 @@ export default function Users() {
 
   return (
     <div className="space-y-4 pb-10">
+      {tab !== 'managed' && loadError && (
+        <div role="alert" className="flex items-center gap-3 text-sm">
+          Couldn’t refresh the trader list.
+          <button className="underline" onClick={load}>Try again</button>
+        </div>
+      )}
+      {tab !== 'managed' && rosterAtLimit && (
+        <p role="status" className="text-sm text-akg-muted">Showing up to the latest 5,000 accounts. Older traders may be missing from this view and export.</p>
+      )}
       <SectionHeader
         title="Traders & Access"
         sub={
@@ -744,8 +774,10 @@ function exportCsv(ctx) {
   }
   const csv = [cols.join(',')].concat(
     out.map((row) => cols.map((_, i) => {
-      const v = String(row[i] ?? '').replace(/"/g, '""');
-      return /[",\n]/.test(v) ? `"${v}"` : v;
+      const value = String(row[i] ?? '');
+      const safe = /^[\s]*[=+@-]|^[\t\r\n]/.test(value) ? "'" + value : value;
+      const escaped = safe.replace(/"/g, '""');
+      return /[",\r\n]/.test(escaped) ? `"${escaped}"` : escaped;
     }).join(','))
   );
   const blob = new Blob([csv.join('\n')], { type: 'text/csv' });

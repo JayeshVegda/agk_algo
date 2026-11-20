@@ -7,7 +7,7 @@ import { ToastContainer } from './components/Toast';
 import { NewRobotModal } from './components/NewRobotModal';
 import { useSignalSchedule } from './lib/signalCycles';
 import { Footer } from './components/Footer';
-import { Compass, Zap, Cpu, Network, User } from 'lucide-react';
+import { Compass, Zap, Cpu, CreditCard, User } from 'lucide-react';
 
 // Rest of the SPA streams in on first visit to each tab (per-tab chunks)
 const lazily = (loader, name) => lazy(() => loader().then((m) => ({ default: m[name] || m.default })));
@@ -340,9 +340,10 @@ export default function App() {
       />
 
       {/* Mobile Bottom Navigation Dock for Android & Mobile Web */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-akg-card/95 backdrop-blur-xl border-t border-[var(--akg-hairline)] grid grid-cols-5 px-1 py-1.5 shadow-2xl safe-area-pb">
+      <nav aria-label="Mobile navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-akg-card/95 backdrop-blur-xl border-t border-[var(--akg-hairline)] grid grid-cols-5 px-1 py-1.5 shadow-2xl safe-area-pb">
         <button
           onClick={() => switchTab('home')}
+          aria-current={activeTab === 'home' ? 'page' : undefined}
           className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1 cursor-pointer transition-all ${
             activeTab === 'home' ? 'text-akg-accent' : 'text-akg-muted hover:text-[var(--akg-text)]'
           }`}
@@ -353,6 +354,7 @@ export default function App() {
 
         <button
           onClick={() => switchTab('signals')}
+          aria-current={activeTab === 'signals' ? 'page' : undefined}
           className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1 cursor-pointer transition-all relative ${
             activeTab === 'signals' ? 'text-akg-accent' : 'text-akg-muted hover:text-[var(--akg-text)]'
           }`}
@@ -366,6 +368,7 @@ export default function App() {
 
         <button
           onClick={() => switchTab('bots')}
+          aria-current={activeTab === 'bots' ? 'page' : undefined}
           className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1 cursor-pointer transition-all ${
             activeTab === 'bots' ? 'text-akg-accent' : 'text-akg-muted hover:text-[var(--akg-text)]'
           }`}
@@ -375,13 +378,14 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => switchTab('connector')}
+          onClick={() => switchTab('pricing')}
+          aria-current={activeTab === 'pricing' ? 'page' : undefined}
           className={`flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1 cursor-pointer transition-all ${
-            activeTab === 'connector' ? 'text-purple-400' : 'text-akg-muted hover:text-[var(--akg-text)]'
+            activeTab === 'pricing' ? 'text-akg-accent' : 'text-akg-muted hover:text-[var(--akg-text)]'
           }`}
         >
-          <Network className="h-5 w-5" />
-          <span className="text-[10px] font-bold">Manage</span>
+          <CreditCard className="h-5 w-5" />
+          <span className="text-[10px] font-bold">Plans</span>
         </button>
 
         <button

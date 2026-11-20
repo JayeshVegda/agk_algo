@@ -1,6 +1,6 @@
 import { pb } from './pocketbase';
 
-const PAGE_SIZE = 60;
+export const PAGE_SIZE = 60;
 const EMOJIS = ['🔥', '👍', '🎯', '💰', '🙏'];
 
 export const ROOM_EMOJIS = EMOJIS;
@@ -36,31 +36,34 @@ export function canReadAudience(user, audience) {
   return plan === 'vip';
 }
 
-export async function fetchMessages({ beforeCreated, before } = {}) {
-  const cutoff = beforeCreated || before;
-  const filter = cutoff ? 'created < "' + escapeFilter(cutoff) + '"' : '';
+export async function fetchMessages({ before: cursor } = {}) {
+  const filter = cursor
+    ? pb.filter('created < {:created} || (created = {:created} && id < {:id})', cursor)
+    : '';
   const res = await pb.collection('messages').getList(1, PAGE_SIZE, {
     filter,
-    sort: '-created',
+    sort: '-created,-id',
     expand: 'author,reply_to',
+    skipTotal: true,
   });
-  return res.items;
+  return res.items.reverse();
 }
 
-function escapeFilter(value) {
-  return value.replace(/"/g, '\\"');
+function byMessage(ids) {
+  return ids.map((id) => pb.filter('message = {:id}', { id })).join(' || ');
 }
 
 export async function fetchContent(messageIds) {
   if (!messageIds || !messageIds.length) return [];
   const filter = messageIds.map((id) => 'message = "' + id + '"').join(' || ');
-  const rows = await pb.collection('message_content').getFullList({ filter }).catch(() => []);
+  const rows = await pb.collection('message_content').getFullList({ filter });
   return Array.isArray(rows) ? rows : [];
 }
 
-export async function fetchReactions() {
-  const rows = await pb.collection('reactions').getFullList({}).catch(() => []);
-  return rows;
+export async function fetchReactions(messageIds) {
+  if (!messageIds.length) return [];
+  const filter = byMessage(messageIds);
+  return pb.collection('reactions').getFullList({ filter });
 }
 
 export function reactionCounts(reactions) {
@@ -124,13 +127,12 @@ export function fileUrl(contentRecord, filename, fileToken, thumb) {
   return pb.files.getURL(contentRecord, filename, opts);
 }
 
-export function subscribeRoom({ onMessages, onContent, onReactions }) {
-  const unsubs = [];
+export function subscribeRoom({ onMessage, onContent, onReaction }) {
   const wire = (collection, handler) => {
     if (!handler) return Promise.resolve(null);
-    return pb.collection(collection).subscribe('*', (e) => handler(e)).catch(() => null);
+    return pb.collection(collection).subscribe('*', ({ action, record }) => handler(action, record)).catch(() => null);
   };
-  return Promise.all([wire('messages', onMessages), wire('message_content', onContent), wire('reactions', onReactions)]).then(
+  return Promise.all([wire('messages', onMessage), wire('message_content', onContent), wire('reactions', onReaction)]).then(
     (all) => all.filter(Boolean),
   );
 }

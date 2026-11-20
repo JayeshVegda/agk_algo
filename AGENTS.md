@@ -15,7 +15,7 @@ A self-hosted membership website for a trading business: rolling **signal subscr
 
 ## Commands (from the repo root)
 - `npm run setup:db` — creates a fresh `pb_data/` from the schema in `scripts/setup_pb.py` (needs `.env` copied from `.env.example` first: superuser email/password, `AKG_SUPERUSER_URL`, etc.)
-- `npm run harden:db` — `scripts/apply_hardening.py`: locks down API rules/visibility per collection
+- `npm run harden:db` — `scripts/apply_hardening.py`: verifies the migration-managed payment and signal-room rules
 - `npm run serve` — runs PocketBase at `http://0.0.0.0:8095` with `--publicDir=pb_public --hooksDir=pb_hooks`; the rebuilt frontend is served at `/`, admin UI at `/_/`
 - `npm run dev` — Vite dev server only (background: it still needs `npm run serve` for the PocketBase API on the configured port)
 - `npm run build` — builds the frontend into `pb_public/` (this is what makes live changes visible through `serve`)

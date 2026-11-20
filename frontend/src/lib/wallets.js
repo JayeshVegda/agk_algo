@@ -1,34 +1,7 @@
 import { useEffect, useState } from 'react';
 import { pb } from './pocketbase';
 
-/**
- * USDT deposit wallets. Since the wallets collection became admin-managed the
- * public read goes straight to it (addresses are public data); these constants
- * are the fallback while the collection loads (or if the API is unreachable).
- */
-export const DEFAULT_WALLETS = [
-  { id: 'default-trc20', label: 'USDT-TRC20', address: 'TLa2g9Y8kP2qXvL1b8Jp9wZmN4qK7dEf9A', note: '', qr_image: '' },
-  { id: 'default-bep20', label: 'USDT-BEP20', address: '0x48D406F20110D753C90D7465D35889F7628192F9', note: '', qr_image: '' },
-  { id: 'default-erc20', label: 'USDT-ERC20', address: '0x71C2B81F1A9D4E72b83A072fCc8295b7A19D38Ef', note: '', qr_image: '' },
-];
-
-let cachePromise = null;
-
-function fetchWallets() {
-  if (!cachePromise) {
-    cachePromise = pb.collection('wallets')
-      .getList(1, 50, { filter: 'enabled = true', sort: 'sort,created' })
-      .then((res) => {
-        const rows = (res.items || []).map((r) => ({ id: r.id, label: r.label, address: r.address, note: r.note || '', qr_image: r.qr_image || '' }));
-        return rows.length ? rows : DEFAULT_WALLETS;
-      })
-      .catch(() => DEFAULT_WALLETS);
-  }
-  return cachePromise;
-}
-
 export const DEFAULT_SETTINGS = {
-  wallets: DEFAULT_WALLETS,
   upi_id: '',
   payee_name: '',
   upi_qr_url: '',
@@ -59,11 +32,6 @@ function fetchSettings() {
         const s = res.items[0];
         if (!s) return DEFAULT_SETTINGS;
         return {
-          wallets: {
-            'USDT-TRC20': s.wallet_trc20 || DEFAULT_WALLETS['USDT-TRC20'],
-            'USDT-BEP20': s.wallet_bep20 || DEFAULT_WALLETS['USDT-BEP20'],
-            'USDT-ERC20': s.wallet_erc20 || DEFAULT_WALLETS['USDT-ERC20'],
-          },
           upi_id: s.upi_id || '',
           payee_name: s.payee_name || '',
           upi_qr_url: s.upi_qr_url || '',
@@ -100,26 +68,36 @@ export function useSiteSettings() {
   return settings;
 }
 
-/** Returns the live wallet list (falls back to defaults). */
-export function useWallets() {
-  const [wallets, setWallets] = useState(DEFAULT_WALLETS);
+/** Load live payment details on every checkout visit. */
+export function useCheckoutConfig() {
+  const [attempt, setAttempt] = useState(0);
+  const [config, setConfig] = useState({ status: 'loading', settings: DEFAULT_SETTINGS, wallets: [] });
 
   useEffect(() => {
     let alive = true;
-    fetchWallets().then((w) => {
-      if (alive) setWallets(w);
+    Promise.all([
+      pb.collection('site_settings').getList(1, 1),
+      pb.collection('wallets').getList(1, 50, { filter: 'enabled = true', sort: 'sort,created' }),
+    ]).then(([settingsPage, walletPage]) => {
+      const settings = settingsPage.items[0];
+      if (!settings) throw new Error('Payment settings are unavailable.');
+      if (alive) setConfig({
+        status: 'ready',
+        settings,
+        wallets: walletPage.items.filter((wallet) => wallet.address && wallet.label && wallet.label !== 'INR-UPI'),
+      });
+    }).catch(() => {
+      if (alive) setConfig({ status: 'error', settings: DEFAULT_SETTINGS, wallets: [] });
     });
     return () => { alive = false; };
-  }, []);
+  }, [attempt]);
 
-  return wallets;
-}
+  function retry() {
+    setConfig({ status: 'loading', settings: DEFAULT_SETTINGS, wallets: [] });
+    setAttempt((value) => value + 1);
+  }
 
-/** Same list shaped as a legacy {label: address} map (used by QR + admin import). */
-export function walletsToMap(list) {
-  const out = {};
-  (list || []).forEach((w) => { out[w.label] = w.address; });
-  return out;
+  return { ...config, retry };
 }
 
 const STATIC_PLAN_FEATURES = {

@@ -49,22 +49,22 @@ Or `npm run serve` from the repo root. The server-side security hooks live in
 `pb_hooks/akg.pb.js` — they enforce registration defaults, payment validation,
 transactional approvals and license-key issuance. Never run without `--hooksDir=pb_hooks`.
 
-### 3. Fresh install: seed & harden
-```bash
-python3 scripts/setup_pb.py       # create collections + demo content
-python3 scripts/apply_hardening.py  # lock API rules, masked preview view, data cleanup
-```
+### 3. Database setup
+
+PocketBase applies the versioned migrations in `pb_migrations/` on startup.
+Use `npm run harden:db` with superuser credentials in the environment to verify
+the payment fields and scheduled-cycle access rules. Use the production
+[deployment runbook](DEPLOY.md) when configuring a fresh public instance.
 
 ### Security model (do not bypass)
-- Signals entry/SL/TP are only readable by admins and members with an active 30-day
-  cycle; locked visitors get a server-side masked `signal_previews` feed.
+- Signal message bodies and attachments are filtered by the user's access tier.
+  Scheduled memberships activate and expire according to the configured cycle.
 - Users cannot self-assign `role`, `plan` or `cycle_expires_at` (enforced in `pb_hooks`).
 - Payments are forced to `status=pending` with the authenticated email; plan and amount
   are validated against server-side prices. Admin approval grants the cycle or issues a
   license key in one transaction (`pb_hooks/akg.pb.js`).
 - Bot binaries live in `private_downloads/` (outside the web root) and are served via
   `/api/akg/download/{name}` only to authenticated users with a confirmed `BOT:` payment.
-- The admin credentials below are demo defaults — rotate them before any deployment.
 
 ---
 
@@ -77,14 +77,14 @@ python3 scripts/apply_hardening.py  # lock API rules, masked preview view, data 
 
 ---
 
-## 🧾 Legal, Track Record & Ops
-* Public pages: `/terms` `/refund` `/risk` `/privacy` and a live `/track-record` computed from closed signals.
+## 🧾 Legal & Operations
+* Public pages: `/terms` `/refund` `/risk` `/privacy`.
 * Settlements: managed-account profit splits are recorded per period (`managed_settlements`) and visible to the owning trader.
 * Exports: CSV export on admin Payments and Traders (respects the active filter).
 * Fraud guard: duplicate TXID/UTR submissions are rejected server-side.
 
 ## 🔄 Realtime Features & CRUD
 * **Live Signals Desk**: Real-time broadcast of institutional entry zones, stop losses, and TP targets.
-* **Payment TXID Approvals**: User submits USDT TXID; Admin clicks "Approve & Grant" which immediately updates payment status and unlocks 30 days of signal access for the user in real time.
+* **Payment TXID Approvals**: User submits USDT TXID; The admin verifies the transfer and approves the order. Signal access follows the purchased cycle’s dates.
 * **Announcements / Broadcasts**: Realtime directives from lead desk analysts with pinned message support.
 * **Trading Bots Store**: Direct licensing and downloads for MT4/MT5 expert advisors.

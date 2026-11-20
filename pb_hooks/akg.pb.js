@@ -140,7 +140,26 @@ onRecordCreateRequest((e) => {
   }
 
   const reference = e.record.getString("txid").trim();
-  const isUpi = e.record.getString("method") === "upi" || e.record.getString("network") === "INR-UPI";
+  const method = e.record.getString("method");
+  const network = e.record.getString("network").trim();
+  const isUpi = method === "upi" || network === "INR-UPI";
+  const body = e.requestInfo().body || {};
+  const alreadyPaid = body.already_paid === true;
+  const settings = e.app.findRecordsByFilter("site_settings", "", "", 1, 0)[0];
+  const rate = settings ? settings.getFloat("usdt_inr_rate") : 0;
+  if (!isManager) {
+    if (!network || (method !== (isUpi ? "upi" : "crypto")) || (isUpi && network !== "INR-UPI")) {
+      throw new BadRequestError("Choose a valid payment method and network.");
+    }
+    const enabled = isUpi
+      ? settings && settings.getBool("inr_enabled") && settings.getString("upi_id").trim() && rate > 0
+      : settings && settings.getBool("crypto_enabled") &&
+        e.app.findRecordsByFilter("wallets", "enabled = true && label = {:network} && address != ''", "", 1, 0, { network }).length > 0;
+    if (!enabled && !alreadyPaid) {
+      throw new BadRequestError("This payment method is unavailable. If you already sent money, choose I already paid for help.");
+    }
+  }
+  e.record.set("network", network);
   if (!isManager && !(isUpi ? /^[0-9]{8,30}$/ : /^[a-zA-Z0-9]{20,128}$/).test(reference)) {
     throw new BadRequestError("Enter the full payment reference from your wallet or UPI app.");
   }
@@ -154,7 +173,7 @@ onRecordCreateRequest((e) => {
   const plan = e.record.get("plan") || "";
   const amount = Number(e.record.get("amount") || 0);
   let expected = 0;
-  let needsReview = false;
+  let needsReview = !isManager && alreadyPaid;
 
   if (membership.SIGNAL_PLANS.includes(plan)) {
     const now = Date.now();
@@ -166,22 +185,28 @@ onRecordCreateRequest((e) => {
     }
     e.record.set("signal_cycle", cycle.id);
     expected = cycle.getFloat(plan === membership.SIGNAL_PLANS[0] ? "sr_price" : "vip_price");
-    needsReview = !membership.windowOpen(cycle, now) || amount !== expected;
-    if (needsReview && !isManager && (e.requestInfo().body || {}).already_paid !== true) {
+    const cycleChanged = !membership.windowOpen(cycle, now) || amount !== expected;
+    if (cycleChanged && !isManager && !alreadyPaid) {
       throw new BadRequestError("This cycle or price changed. If you already paid, submit your reference for review.");
     }
+    needsReview = needsReview || cycleChanged;
   } else if (plan.indexOf("BOT:") === 0) {
     e.record.set("signal_cycle", "");
     const m = plan.match(/BOT:\s*(.+?)\s*(?:\(|$)/);
     if (!m) throw new BadRequestError("Invalid bot purchase format.");
     let bot;
     try {
-      bot = $app.findFirstRecordByFilter("bots", "name = {:name}", { name: m[1].trim() });
+      bot = !isManager && body.bot_id
+        ? e.app.findRecordById("bots", String(body.bot_id))
+        : e.app.findFirstRecordByFilter("bots", "name = {:name}", { name: m[1].trim() });
     } catch {
       throw new BadRequestError("Unknown bot: " + m[1].trim());
     }
-    if (!isManager && !bot.getBool("is_live")) throw new BadRequestError("This robot is unavailable.");
-    expected = Number(bot.get("price") || 0);
+    if (!isManager && !alreadyPaid && !bot.getBool("is_live")) throw new BadRequestError("This robot is unavailable.");
+    if (!isManager) {
+      e.record.set("plan", "BOT: " + bot.getString("name") + " (" + (bot.getString("platform") || "EA") + ")");
+    }
+    expected = bot.getFloat("price");
   } else {
     throw new BadRequestError("Unknown plan.");
   }
@@ -194,12 +219,10 @@ onRecordCreateRequest((e) => {
 
   if (needsReview) {
     e.record.set("status", "pending");
-    e.record.set("admin_notes", "Cycle or price changed. Confirm the actual transfer and resolve any price difference before approving.");
+    e.record.set("admin_notes", "Manual payment review requested. Verify the destination, actual amount and order eligibility before approving.");
   }
   e.record.set("amount", expected);
   if (isUpi) {
-    const settings = e.app.findRecordsByFilter("site_settings", "", "", 1, 0)[0];
-    const rate = settings ? settings.getFloat("usdt_inr_rate") : 0;
     if (rate > 0) {
       e.record.set("inr_amount", Math.round(expected * rate));
     } else if (needsReview) {
@@ -361,66 +384,57 @@ onRecordUpdateRequest((e) => {
 cronAdd("akg_expiry_reminders", "17 3 * * *", () => {
   const DAY_MS = 24 * 60 * 60 * 1000;
   const now = Date.now();
-  let members = [];
-  try {
-    members = $app.findRecordsByFilter(
-      "users",
-      "plan != '' && plan != 'NONE'",
-      "-created", 500, 0
-    );
-  } catch (err) {
-    console.log("akg: expiry scan failed:", err);
-    return;
-  }
-
+  const { findExpiries } = require(__hooks + "/membership-expiry.js");
   const col = $app.findCollectionByNameOrId("notifications");
-  for (const u of members) {
-    const raw = u.get("cycle_expires_at");
-    const s = raw && typeof raw.string === "function" ? raw.string() : String(raw || "");
-    if (!s || s.indexOf("0001-01-01") === 0) continue;
-    const expiry = new Date(s.replace(" ", "T")).getTime();
-    if (isNaN(expiry)) continue;
+  let after = "";
+  while (true) {
+    const members = findExpiries($app, now, now - DAY_MS, now + 8 * DAY_MS, after, 200);
+    if (!members.length) break;
+    for (const u of members) {
+      const s = u.expiry;
+      const expiry = Date.parse(s.replace(" ", "T"));
+      const diffDays = Math.floor((expiry - now) / DAY_MS); // >=0 unexpired, -1 = expired today
+      let title = null;
+      let daysLabel = null;
 
-    const diffDays = Math.floor((expiry - now) / DAY_MS); // >=0 unexpired, -1 = expired today
-    let title = null;
-    let daysLabel = null;
+      if (diffDays === 7 || diffDays === 3 || diffDays === 1) {
+        daysLabel = String(diffDays);
+        title = "Membership Expiring in " + diffDays + " Day" + (diffDays === 1 ? "" : "s");
+      } else if (diffDays === 0) {
+        daysLabel = "0";
+        title = "Membership Expires Today";
+      } else if (diffDays === -1) {
+        daysLabel = "expired";
+        title = "Membership Expired";
+      }
+      if (!title) continue;
 
-    if (diffDays === 7 || diffDays === 3 || diffDays === 1) {
-      daysLabel = String(diffDays);
-      title = "Membership Expiring in " + diffDays + " Day" + (diffDays === 1 ? "" : "s");
-    } else if (diffDays === 0) {
-      daysLabel = "0";
-      title = "Membership Expires Today";
-    } else if (diffDays === -1) {
-      daysLabel = "expired";
-      title = "Membership Expired";
+      const expiryDay = s.split(" ")[0];
+      const dedupeKey = "expiry_" + u.id + "_" + expiryDay + "_" + daysLabel;
+      let existing = null;
+      try {
+        existing = $app.findFirstRecordByFilter("notifications", "dedupe_key = {:k}", { k: dedupeKey });
+      } catch {
+        existing = null;
+      }
+      if (existing) continue;
+
+      const n = new Record(col);
+      n.set("user", u.id);
+      n.set("title", title);
+      n.set("body", diffDays < 0
+        ? "Your " + u.plan + " cycle has ended. Check Signal Plans for the next cycle."
+        : "Your " + u.plan + " cycle ends " + expiryDay + ". Check your renewal status in My Account.");
+      n.set("type", "plan_expiry");
+      n.set("read", false);
+      n.set("dedupe_key", dedupeKey);
+      try {
+        $app.save(n);
+      } catch (err) {
+        console.log("akg: expiry notification failed:", err);
+      }
     }
-    if (!title) continue;
-
-    const expiryDay = s.split(" ")[0];
-    const dedupeKey = "expiry_" + u.id + "_" + expiryDay + "_" + daysLabel;
-    let existing = null;
-    try {
-      existing = $app.findFirstRecordByFilter("notifications", "dedupe_key = {:k}", { k: dedupeKey });
-    } catch {
-      existing = null;
-    }
-    if (existing) continue;
-
-    const n = new Record(col);
-    n.set("user", u.id);
-    n.set("title", title);
-    n.set("body", diffDays < 0
-      ? "Your " + u.get("plan") + " cycle has ended. Renew now to keep your signal access."
-      : "Your " + u.get("plan") + " cycle ends " + expiryDay + ". Buy next month from My Account to stay locked in.");
-    n.set("type", "plan_expiry");
-    n.set("read", false);
-    n.set("dedupe_key", dedupeKey);
-    try {
-      $app.save(n);
-    } catch (err) {
-      console.log("akg: expiry notification failed:", err);
-    }
+    after = members[members.length - 1].id;
   }
 });
 
@@ -450,15 +464,17 @@ routerAdd("GET", "/api/akg/creds/{id}", (e) => {
   }
 
   const enc = rec.getString("account_password").replace(/^enc:/, "");
+  const key = $os.getenv("AKG_CRED_KEY");
   let password = "";
   if (enc) {
     try {
-      password = $security.decrypt(enc, $os.getenv("AKG_CRED_KEY") || "akg-dev-cred-key");
+      password = $security.decrypt(enc, key);
     } catch {
       password = "(undecryptable - key changed?)";
     }
   }
 
+  e.response.header().set("Cache-Control", "private, no-store");
   e.json(200, {
     id: rec.id,
     account_number: rec.getString("account_number"),
@@ -490,6 +506,11 @@ routerAdd("POST", "/api/akg/managed/apply", (e) => {
     }
   }
 
+  const key = $os.getenv("AKG_CRED_KEY");
+  if (!/^[!-~]{32}$/.test(key)) {
+    e.json(503, { message: "Managed-account applications are temporarily unavailable. Contact the desk for help." });
+    return;
+  }
   const col = $app.findCollectionByNameOrId("connector_requests");
   const rec = new Record(col);
   rec.set("user_email", auth.get("email"));
@@ -508,7 +529,7 @@ routerAdd("POST", "/api/akg/managed/apply", (e) => {
     if (v >= 10 && v <= 90) userShare = v;
   } catch {}
   rec.set("user_profit_share", userShare);
-  rec.set("account_password", "enc:" + $security.encrypt(String(data.password), $os.getenv("AKG_CRED_KEY") || "akg-dev-cred-key"));
+  rec.set("account_password", "enc:" + $security.encrypt(String(data.password), key));
   $app.save(rec);
 
   e.json(200, { id: rec.id, message: "Application received. The desk will review your account." });
@@ -604,74 +625,52 @@ routerAdd("GET", "/api/akg/stats", (e) => {
   const now = Date.now();
   const iso = (ms) => new Date(ms).toISOString().replace("T", " ").slice(0, 23) + "Z";
   const nowIso = iso(now);
-  const in3dIso = iso(now + 3 * DAY_MS);
 
-  // findRecordsByFilter-based helpers (proven API in this JSVM build).
-  const list = (col, filter, sort, params) => {
-    try {
-      return $app.findRecordsByFilter(col, filter, sort || "-created", 100000, 0, params || {});
-    } catch {
-      return [];
-    }
-  };
-  const cP = (status) => list("payments", "status = {:s}", "-created", { s: status }).length;
-  const cU = (filter, params) => list("users", filter, "created", params).length;
+  const counts = new DynamicModel({
+    pending: 0, confirmed: 0, rejected: 0, paymentTotal: 0,
+    revenue: -0, revenue24: -0,
+    revenue7: -0, revenue30: -0,
+  });
+  e.app.db().newQuery(`
+    SELECT COUNT(*) AS paymentTotal,
+      COUNT(*) FILTER (WHERE status = 'pending') AS pending,
+      COUNT(*) FILTER (WHERE status = 'confirmed') AS confirmed,
+      COUNT(*) FILTER (WHERE status = 'rejected') AS rejected,
+      COALESCE(SUM(amount) FILTER (WHERE status = 'confirmed'), 0) AS revenue,
+      COALESCE(SUM(amount) FILTER (WHERE status = 'confirmed' AND created >= {:day}), 0) AS revenue24,
+      COALESCE(SUM(amount) FILTER (WHERE status = 'confirmed' AND created >= {:week}), 0) AS revenue7,
+      COALESCE(SUM(amount) FILTER (WHERE status = 'confirmed' AND created >= {:month}), 0) AS revenue30
+    FROM payments
+  `).bind({ day: iso(now - DAY_MS), week: iso(now - 7 * DAY_MS), month: iso(now - 30 * DAY_MS) }).one(counts);
 
-  const sumConfirmed = (sinceMs) => {
-    try {
-      const filter = sinceMs ? "status = 'confirmed' && created >= {:c}" : "status = 'confirmed'";
-      const records = $app.findRecordsByFilter("payments", filter, "-created", 100000, 0, sinceMs ? { c: iso(now - sinceMs) } : {});
-      let sum = 0;
-      for (const r of records) sum += r.getInt("amount");
-      return sum;
-    } catch {
-      return 0;
-    }
-  };
+  const { findExpiries } = require(__hooks + "/membership-expiry.js");
+  const expiring = findExpiries(e.app, now, now, now + 3 * DAY_MS, "", 10, true)
+    .map(({ id, email, plan, expiry }) => ({ id, email, plan, cycle_expires_at: expiry }));
+  const users = new DynamicModel({ total: 0, active: 0 });
+  e.app.db().newQuery(`
+    SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE
+      (plan IN ('SR_SIGNAL_BOX', 'PERFECT_SIGNAL_BOX') AND cycle_expires_at > {:now})
+      OR id IN (SELECT sr_member FROM active_signal_access)
+    ) AS active FROM users WHERE role != 'admin'
+  `).bind({ now: nowIso }).one(users);
 
-  let expiring = [];
-  try {
-    expiring = $app.findRecordsByFilter(
-      "users",
-      "role != 'admin' && plan != 'NONE' && plan != '' && cycle_expires_at >= {:now} && cycle_expires_at <= {:in3d}",
-      "cycle_expires_at", 10, 0,
-      { now: nowIso, in3d: in3dIso }
-    ).map((u) => ({
-      id: u.id,
-      email: u.get("email"),
-      plan: u.get("plan"),
-      cycle_expires_at: u.getString("cycle_expires_at"),
-    }));
-  } catch {
-    expiring = [];
-  }
+  const room = new DynamicModel({ last7d: 0 });
+  e.app.db().newQuery("SELECT COUNT(*) AS last7d FROM messages WHERE created >= {:week}")
+    .bind({ week: iso(now - 7 * DAY_MS) }).one(room);
+
+  const connectors = new DynamicModel({ pending: 0, trading: 0, total: 0 });
+  e.app.db().newQuery(`
+    SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE status IN ('pending_review', 'pending')) AS pending,
+      COUNT(*) FILTER (WHERE status = 'trading') AS trading FROM connector_requests
+  `).one(connectors);
 
   e.json(200, {
-    payments: {
-      pending: cP("pending"),
-      confirmed: cP("confirmed"),
-      rejected: cP("rejected"),
-      total: list("payments").length,
-    },
-    revenue: {
-      total: sumConfirmed(0),
-      last24h: sumConfirmed(DAY_MS),
-      last7d: sumConfirmed(7 * DAY_MS),
-      last30d: sumConfirmed(30 * DAY_MS),
-    },
-    users: {
-      total: cU("role != 'admin'"),
-      active: cU("role != 'admin' && plan != 'NONE' && plan != '' && cycle_expires_at >= {:n}", { n: nowIso }),
-    },
-    room: {
-      last7d: list("messages", "created >= {:d7}", "-created", { d7: iso(now - 7 * DAY_MS) }).length,
-    },
-    connectors: {
-      pending: list("connector_requests", "status = 'pending_review' || status = 'pending'").length,
-      trading: list("connector_requests", "status = 'trading'").length,
-      total: list("connector_requests").length,
-    },
-    expiring: expiring,
+    payments: { pending: counts.pending, confirmed: counts.confirmed, rejected: counts.rejected, total: counts.paymentTotal },
+    revenue: { total: counts.revenue, last24h: counts.revenue24, last7d: counts.revenue7, last30d: counts.revenue30 },
+    users: { total: users.total, active: users.active },
+    room: { last7d: room.last7d },
+    connectors: { pending: connectors.pending, trading: connectors.trading, total: connectors.total },
+    expiring,
   });
 });
 

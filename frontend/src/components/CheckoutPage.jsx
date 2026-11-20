@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { pb } from '../lib/pocketbase';
-import { useSiteSettings, useWallets, walletsToMap } from '../lib/wallets';
+import { useCheckoutConfig } from '../lib/wallets';
 import QRCode from 'qrcode';
 import {
   ShieldCheck, Copy, Check, ArrowLeft, Bitcoin, Smartphone,
@@ -11,10 +11,22 @@ import { Badge } from './ui/Badge';
 import { cycleDay, useSignalSchedule } from '../lib/signalCycles';
 import { cn, formatUsdt } from '../lib/utils';
 
+function usePaymentQr(value) {
+  const [qr, setQr] = useState(null);
+  useEffect(() => {
+    if (!value) return;
+    let alive = true;
+    QRCode.toDataURL(value, { width: 220, margin: 2 })
+      .then((url) => { if (alive) setQr({ value, url }); })
+      .catch(() => { if (alive) setQr(null); });
+    return () => { alive = false; };
+  }, [value]);
+  return qr?.value === value ? qr.url : null;
+}
+
 export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
-  const settings = useSiteSettings();
-  const walletList = useWallets();
-  const walletMap = walletsToMap(walletList);
+  const { status: configStatus, settings, wallets, retry } = useCheckoutConfig();
+  const walletList = settings.crypto_enabled ? wallets : [];
   const [order] = useState(() => {
     try {
       return JSON.parse(sessionStorage.getItem('akg_order'));
@@ -23,23 +35,36 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
     }
   });
   const { data: schedule, status: scheduleStatus, retry: retrySchedule } = useSignalSchedule(user?.id || '', order?.kind === 'plan');
-  const [method, setMethod] = useState('crypto');
+  const [currentBot, setCurrentBot] = useState(null);
+  const [botStatus, setBotStatus] = useState('loading');
+  const [botAttempt, setBotAttempt] = useState(0);
+  const [chosenMethod, setMethod] = useState(null);
+  const [alreadyPaid, setAlreadyPaid] = useState(false);
+  const cryptoAvailable = walletList.length > 0;
+  const method = chosenMethod ?? (cryptoAvailable ? 'crypto' : 'upi');
   const [network, setNetwork] = useState('');
   const [recoveryNetwork, setRecoveryNetwork] = useState(null);
   const [ref, setRef] = useState('');
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState('');
   const [done, setDone] = useState(false);
-  const [walletQr, setWalletQr] = useState(null);
   const selectedWallet = walletList.find((wallet) => wallet.label === network);
-  const walletAddress = walletMap[network];
-  const uploadedQr = selectedWallet?.qr_image;
+  const walletAddress = selectedWallet?.address;
 
   useEffect(() => {
-    if (!settings.crypto_enabled && settings.inr_enabled && settings.upi_id) {
-      setMethod('upi');
-    }
-  }, [settings.crypto_enabled, settings.inr_enabled, settings.upi_id]);
+    if (order?.kind !== 'bot') return;
+    let alive = true;
+    pb.collection('bots').getOne(order.id, { fields: 'id,name,platform,price,is_live' })
+      .then((bot) => {
+        if (!alive) return;
+        setCurrentBot(bot);
+        setBotStatus('ready');
+      })
+      .catch((error) => {
+        if (alive) setBotStatus(error.status === 404 ? 'unavailable' : 'error');
+      });
+    return () => { alive = false; };
+  }, [order, botAttempt]);
 
   useEffect(() => {
     if (walletList.length && !walletList.some((w) => w.label === network)) {
@@ -48,19 +73,24 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
   }, [walletList, network]);
 
   useEffect(() => {
-    if (!walletAddress || uploadedQr) return;
-    let active = true;
-    QRCode.toDataURL(walletAddress, { width: 220, margin: 1, color: { dark: '#0C1619E6', light: '#FFFFFF' } })
-      .then((url) => { if (active) setWalletQr({ address: walletAddress, url }); })
-      .catch(() => { if (active) setWalletQr(null); });
-    return () => { active = false; };
-  }, [walletAddress, uploadedQr]);
-
-  useEffect(() => {
     if (!copied) return;
     const timeout = setTimeout(() => setCopied(''), 1500);
     return () => clearTimeout(timeout);
   }, [copied]);
+
+  const inr = settings.inr_enabled && settings.usdt_inr_rate > 0 && order
+    ? Math.round(order.price * settings.usdt_inr_rate)
+    : 0;
+  const upiId = settings.upi_id?.trim();
+  const upiAvailable = Boolean(settings.inr_enabled && upiId && inr > 0);
+  const upiLink = upiAvailable ? `upi://pay?${new URLSearchParams({
+    pa: upiId,
+    ...(settings.payee_name ? { pn: settings.payee_name } : {}),
+    am: String(inr),
+    cu: 'INR',
+    tn: 'AKG ALGO order',
+  })}` : '';
+  const qrSrc = usePaymentQr(method === 'upi' ? upiLink : walletAddress);
 
   if (!order) {
     return (
@@ -78,18 +108,25 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
 
   const cycle = schedule?.checkout;
   const currentPrice = order.id === 'SR_SIGNAL_BOX' ? cycle?.srPrice : cycle?.vipPrice;
-  const needsReview = order.kind === 'plan' && Boolean(order.cycleId) &&
+  const cycleChanged = order.kind === 'plan' && Boolean(order.cycleId) &&
     scheduleStatus === 'ready' && (cycle?.id !== order.cycleId || currentPrice !== order.price);
+  const botChanged = order.kind === 'bot' && (botStatus === 'unavailable' ||
+    (botStatus === 'ready' && (!currentBot?.is_live || Number(currentBot.price) !== Number(order.price) ||
+      currentBot.name !== order.name || currentBot.platform !== order.platform)));
+  const needsReview = cycleChanged || botChanged;
 
   if (!done && order.kind === 'plan') {
     if (scheduleStatus === 'loading') {
       return <p role="status" className="mx-auto max-w-lg py-16 text-center text-sm text-akg-muted">Checking your signal cycle and price…</p>;
     }
-    if (scheduleStatus === 'error') {
+    if (scheduleStatus === 'error' && !alreadyPaid) {
       return (
         <div className="mx-auto max-w-lg space-y-4 py-16 text-center">
           <p role="alert" className="text-sm text-akg-muted">We couldn’t verify this cycle. Try again before sending payment.</p>
-          <Button onClick={retrySchedule}>Try again</Button>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button onClick={retrySchedule}>Try again</Button>
+            <Button variant="outline" onClick={() => setAlreadyPaid(true)}>I already paid</Button>
+          </div>
         </div>
       );
     }
@@ -104,19 +141,13 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
   }
 
   const amount = formatUsdt(order.price);
-  const inr = settings.inr_enabled && settings.usdt_inr_rate > 0
-    ? Math.round(order.price * settings.usdt_inr_rate)
-    : 0;
   const isBot = order.kind === 'bot';
-  const qrSrc = uploadedQr || (walletQr?.address === walletAddress ? walletQr?.url : null);
-  const upiLink = settings.upi_id
-    ? `upi://pay?pa=${encodeURIComponent(settings.upi_id)}${settings.payee_name ? `&pn=${encodeURIComponent(settings.payee_name)}` : ''}${inr ? `&am=${inr}&cu=INR` : ''}&tn=${encodeURIComponent('AKG ALGO order')}`
-    : '';
-  const upiAvailable = Boolean(settings.inr_enabled && settings.upi_id && inr > 0);
+  const priceReady = isBot ? botStatus === 'ready' : scheduleStatus === 'ready';
   const selectedNetwork = method === 'upi' ? 'INR-UPI' : network;
-  const paidNetwork = needsReview ? (recoveryNetwork ?? selectedNetwork) : selectedNetwork;
+  const submittingForReview = needsReview || alreadyPaid;
+  const paidNetwork = submittingForReview ? (recoveryNetwork ?? '') : selectedNetwork;
   const paidMethod = paidNetwork === 'INR-UPI' ? 'upi' : 'crypto';
-  const canPay = needsReview ? Boolean(paidNetwork) : method === 'upi' ? upiAvailable : Boolean(settings.crypto_enabled && walletAddress);
+  const canPay = submittingForReview ? Boolean(paidNetwork) : priceReady && configStatus === 'ready' && (method === 'upi' ? upiAvailable : Boolean(walletAddress));
 
   const copy = async (text, key) => {
     if (!text) return;
@@ -144,7 +175,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         title: paidMethod === 'upi' ? 'Invalid UTR' : 'Invalid TXID',
         message: paidMethod === 'upi'
           ? 'Paste the 12-digit UPI reference number from your payment app.'
-          : 'A transaction hash is 64 hexadecimal characters.',
+          : 'Paste the transaction hash from your wallet or block explorer.',
       });
       return;
     }
@@ -155,7 +186,8 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         user_email: user.email,
         plan: isBot ? `BOT: ${order.name} (${order.platform || 'EA'})` : order.id,
         amount: order.price,
-        ...(!isBot ? { signal_cycle: order.cycleId, already_paid: true } : {}),
+        ...(isBot ? { bot_id: order.id } : { signal_cycle: order.cycleId }),
+        ...(submittingForReview ? { already_paid: true } : {}),
         network: paidNetwork,
         method: paidMethod,
         ...(paidMethod === 'upi' ? { inr_amount: inr } : {}),
@@ -181,7 +213,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         <h1 className="mt-5 font-display text-2xl font-bold text-akg-text">Order submitted</h1>
         <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-akg-muted">
           The desk verifies {paidMethod === 'upi' ? 'your UPI payment (UTR)' : 'the blockchain transfer'} manually,
-          usually within a few hours. {isBot ? 'Your license key is issued automatically on approval.' : `When approved, your access follows the ${order.cycleName} schedule.`}
+          after submission. {isBot ? 'Your license key is issued automatically on approval.' : `When approved, your access follows the ${order.cycleName} schedule.`}
         </p>
         <div className="mt-4 rounded-xl border border-akg-hairline bg-akg-raised px-4 py-3 font-mono text-xs text-akg-accent break-all">
           {paidMethod === 'upi' ? 'UTR' : 'TXID'}: {ref.trim()}
@@ -197,11 +229,11 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
     );
   }
 
-  if (needsReview) {
+  if (submittingForReview) {
     return (
       <form className="mx-auto max-w-lg space-y-4 py-10" onSubmit={(event) => { event.preventDefault(); submit(); }}>
-        <h1 className="font-display text-2xl font-bold">Already paid for {order.cycleName || 'this cycle'}?</h1>
-        <p className="text-sm text-akg-muted">The cycle or price changed. If you already sent a payment, submit your reference so the desk can review it.</p>
+        <h1 className="font-display text-2xl font-bold">Submit a payment for review</h1>
+        <p className="text-sm text-akg-muted">{needsReview ? 'This order or its price changed. If you already paid, send the transfer reference for review.' : 'If you already paid, send the transfer reference so the desk can verify it.'}</p>
         <label className="block space-y-1 text-sm">
           <span>How did you pay?</span>
           <select required value={paidNetwork} onChange={(event) => setRecoveryNetwork(event.target.value)} className="w-full rounded-lg border border-akg-hairline bg-akg-raised p-2">
@@ -210,6 +242,9 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
             <option value="USDT-BEP20">USDT · BEP20</option>
             <option value="USDT-ERC20">USDT · ERC20</option>
             <option value="INR-UPI">UPI</option>
+            {wallets.filter(({ label }) => !['USDT-TRC20', 'USDT-BEP20', 'USDT-ERC20'].includes(label))
+              .map(({ id, label }) => <option key={id} value={label}>{label}</option>)}
+            <option value="OTHER">Other network</option>
           </select>
         </label>
         <label className="block space-y-1 text-sm">
@@ -218,10 +253,45 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         </label>
         <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={busy || !canPay}>{busy ? 'Submitting…' : 'Send for review'}</Button>
-          <Button type="button" variant="outline" onClick={() => onNavigate('pricing')}>Back to Pricing</Button>
+          <Button type="button" variant="outline" onClick={() => needsReview ? onNavigate(isBot ? 'bots' : 'pricing') : setAlreadyPaid(false)}>
+            {needsReview ? (isBot ? 'Back to Robots' : 'Back to Signal Plans') : 'Back to checkout'}
+          </Button>
         </div>
         <SupportCard settings={settings} />
       </form>
+    );
+  }
+
+  if (isBot && !priceReady) {
+    return (
+      <div className="mx-auto max-w-lg space-y-4 py-16 text-center">
+        {botStatus === 'loading' ? <p role="status">Checking the current robot price…</p> : (
+          <>
+            <p role="alert">We couldn’t verify this robot’s price. Please wait before paying.</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button onClick={() => { setBotStatus('loading'); setBotAttempt((value) => value + 1); }}>Try again</Button>
+              <Button variant="outline" onClick={() => setAlreadyPaid(true)}>I already paid</Button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  if (configStatus !== 'ready' || (!cryptoAvailable && !upiAvailable)) {
+    const loading = configStatus === 'loading';
+    return (
+      <div className="mx-auto max-w-lg space-y-4 py-16 text-center">
+        <h1 className="text-xl font-bold">Checkout</h1>
+        <p role={loading ? 'status' : 'alert'} className="text-sm text-akg-muted">
+          {loading ? 'Checking payment methods…' : 'Payment instructions are unavailable. Please wait before sending money.'}
+        </p>
+        {!loading && <div className="flex flex-wrap justify-center gap-2">
+          <Button onClick={retry}>Try again</Button>
+          <Button variant="outline" onClick={() => setAlreadyPaid(true)}>I already paid</Button>
+        </div>}
+        <SupportCard settings={settings} />
+      </div>
     );
   }
 
@@ -266,20 +336,20 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
       {/* Method selector */}
       <section className="mt-5">
         <h3 className="mb-2.5 font-mono text-[11px] uppercase tracking-wider text-akg-muted">Payment method</h3>
-        <div className={cn('grid gap-3', settings.crypto_enabled ? 'grid-cols-2' : 'grid-cols-1')}>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <button
-            onClick={() => settings.crypto_enabled && setMethod('crypto')}
-            disabled={!settings.crypto_enabled}
+            onClick={() => cryptoAvailable && setMethod('crypto')}
+            disabled={!cryptoAvailable}
             className={cn(
               'flex items-center gap-3 rounded-xl border p-4 text-left transition-all cursor-pointer',
-              !settings.crypto_enabled && 'cursor-not-allowed opacity-40',
-              method === 'crypto' && settings.crypto_enabled ? 'border-akg-accent bg-akg-accent/[0.08] ring-1 ring-akg-accent/30' : 'border-akg-hairline bg-akg-card hover:border-akg-hairline/80'
+              !cryptoAvailable && 'cursor-not-allowed opacity-40',
+              method === 'crypto' && cryptoAvailable ? 'border-akg-accent bg-akg-accent/[0.08] ring-1 ring-akg-accent/30' : 'border-akg-hairline bg-akg-card hover:border-akg-hairline/80'
             )}
           >
             <Bitcoin className="h-5 w-5 shrink-0 text-akg-accent" />
             <div>
               <div className="text-sm font-bold text-akg-text">Crypto · USDT</div>
-              <div className="text-[11px] text-akg-muted">{settings.crypto_enabled ? 'TRC20 / BEP20 / ERC20' : 'temporarily unavailable'}</div>
+              <div className="text-[11px] text-akg-muted">{cryptoAvailable ? 'Choose a network' : 'Unavailable'}</div>
             </div>
           </button>
           <button
@@ -301,7 +371,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
       </section>
 
       {/* Method detail */}
-      {method === 'crypto' ? (
+      {method === 'crypto' && cryptoAvailable && (
         <section className="mt-4 space-y-4 rounded-xl border border-akg-hairline bg-akg-card p-5">
           <div>
             <h4 className="mb-2 text-xs font-semibold text-akg-text">1 · Select network</h4>
@@ -340,8 +410,9 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
             <p className="mt-1.5 text-[11px] text-akg-muted">Send only USDT on {network}. Wrong-network transfers cannot be recovered.</p>
           </div>
           <div>
-            <h4 className="mb-2 text-xs font-semibold text-akg-text">3 · Paste your transaction hash (TXID)</h4>
+            <label htmlFor="payment-reference" className="mb-2 block text-xs font-semibold text-akg-text">3 · Paste your transaction hash (TXID)</label>
             <input
+              id="payment-reference"
               value={ref}
               onChange={(e) => setRef(e.target.value)}
               placeholder="0x… or 64-character hash"
@@ -349,16 +420,13 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
             />
           </div>
         </section>
-      ) : (
+      )}
+      {method === 'upi' && upiAvailable && (
         <section className="mt-4 space-y-4 rounded-xl border border-akg-hairline bg-akg-card p-5">
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-            {settings.upi_qr_url ? (
+            {qrSrc && (
               <div className="shrink-0 rounded-lg border border-akg-hairline bg-white p-2.5">
-                <img src={settings.upi_qr_url} alt="UPI QR code" className="h-40 w-40 object-contain" />
-              </div>
-            ) : (
-              <div className="flex h-40 w-40 shrink-0 items-center justify-center rounded-lg border border-dashed border-akg-hairline text-center text-[11px] text-akg-muted">
-                QR not uploaded yet
+                <img src={qrSrc} alt="UPI payment QR code" className="h-40 w-40 object-contain" />
               </div>
             )}
             <div className="min-w-0 flex-1 space-y-3">
@@ -368,9 +436,9 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
                 {settings.payee_name && <div className="text-xs text-akg-muted">to {settings.payee_name}</div>}
               </div>
               <div className="flex w-full items-center justify-between gap-3 rounded-lg border border-akg-hairline bg-akg-raised px-3.5 py-2">
-                <span className="min-w-0 select-text break-all font-mono text-xs text-akg-green">{settings.upi_id || 'No UPI ID available'}</span>
+                <span className="min-w-0 select-text break-all font-mono text-xs text-akg-green">{upiId}</span>
                 <button type="button" disabled={!upiAvailable} aria-label="Copy UPI ID"
-                  onClick={() => copy(settings.upi_id, 'upi')}
+                  onClick={() => copy(upiId, 'upi')}
                   className="shrink-0 rounded-md p-2 text-akg-muted hover:text-akg-text disabled:opacity-50">
                   {copied === 'upi' ? <Check aria-hidden className="h-4 w-4 text-akg-green" /> : <Copy aria-hidden className="h-4 w-4" />}
                 </button>
@@ -386,8 +454,9 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
             </div>
           </div>
           <div>
-            <h4 className="mb-2 text-xs font-semibold text-akg-text">Paste the UPI reference (UTR / transaction ID)</h4>
+            <label htmlFor="payment-reference" className="mb-2 block text-xs font-semibold text-akg-text">Paste the UPI reference (UTR / transaction ID)</label>
             <input
+              id="payment-reference"
               value={ref}
               onChange={(e) => setRef(e.target.value)}
               placeholder="e.g. 415223698741" inputMode="numeric"
@@ -407,7 +476,7 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         <ol className="mt-3 space-y-2.5">
           {[
             <>Submit this form with your {method === 'upi' ? 'UTR' : 'TXID'} reference.</>,
-            <>The desk verifies the payment <b className="text-akg-text">manually</b>, usually within a few hours.</>,
+            <>The desk verifies the payment <b className="text-akg-text">manually</b>.</>,
             isBot
               ? <>Your <b className="text-akg-text">license key</b> is issued automatically and appears in My Account with the download.</>
               : <>After approval, your Signal Room access starts on the scheduled date.</>,
@@ -436,6 +505,9 @@ export function CheckoutPage({ user, onOpenAuth, onNavigate, notify }) {
         {busy ? 'Submitting...' : !user ? 'Sign in and Submit Order' : `Submit Order · ${amount} USDT${method === 'upi' && inr ? ` / ₹${inr.toLocaleString('en-IN')}` : ''}`}
       </button>
 
+      <button type="button" className="mt-3 min-h-11 px-2 text-sm underline" onClick={() => setAlreadyPaid(true)}>
+        I already paid and need help
+      </button>
       <SupportCard settings={settings} />
     </div>
   );

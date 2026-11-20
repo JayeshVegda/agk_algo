@@ -3,6 +3,7 @@ import { Bell, BellOff, ImagePlus, Lock, Paperclip, Pencil, Pin, PinOff, Reply, 
 import { pb } from '../lib/pocketbase';
 import {
   canReadAudience,
+  PAGE_SIZE,
   deleteMessage,
   fetchContent,
   fetchMessages,
@@ -25,7 +26,6 @@ const FAKE_LOCKED = [
   'Risk capped and the invalidation level is clear. Coordination shared with the tier.',
 ];
 const DAY_MS = 86400000;
-const PAGE_SIZE = 60;
 
 const cn = (...parts) => parts.filter(Boolean).join(' ');
 const fmtTime = (iso) => {
@@ -282,6 +282,9 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
   const meId = user && user.id;
   const staff = isStaff(user);
   const [msgs, setMsgs] = useState([]);
+  const [roomStatus, setRoomStatus] = useState('loading');
+  const [roomAttempt, setRoomAttempt] = useState(0);
+  const [olderError, setOlderError] = useState(false);
   const [contentById, setContentById] = useState({});
   const [reactions, setReactions] = useState([]);
   const [pending, setPending] = useState([]);
@@ -318,25 +321,26 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
   const loadOlder = useCallback(async () => {
     if (loadingOlder || !hasOlder || msgs.length === 0) return;
     setLoadingOlder(true);
+    setOlderError(false);
     try {
       const oldest = msgs[0];
-      const page = await fetchMessages({ beforeCreated: oldest.created });
+      const page = await fetchMessages({ before: { created: oldest.created, id: oldest.id } });
       const fresh = page.filter((p) => !msgs.some((m) => m.id === p.id));
       if (fresh.length === 0) {
         setHasOlder(false);
         return;
       }
+      const ids = fresh.map((m) => m.id);
+      const readable = fresh.filter((m) => canReadAudience(user, m.audience)).map((m) => m.id);
+      const [rows, olderReactions] = await Promise.all([fetchContent(readable), fetchReactions(ids)]);
+      const next = {};
+      rows.forEach((r) => { if (r.message) next[r.message] = withUrls(r, fileTokenInit.current); });
+      setContentById((prev) => ({ ...prev, ...next }));
+      setReactions((prev) => [...prev, ...olderReactions.filter((r) => !prev.some((current) => current.id === r.id))]);
       setMsgs((prev) => [...fresh.filter((p) => !prev.some((m) => m.id === p.id)), ...prev]);
-      const missing = page.filter((m) => canReadAudience(user, m.audience)).map((m) => m.id);
-      if (missing.length > 0) {
-        const rows = await fetchContent(missing);
-        const safeRows = Array.isArray(rows) ? rows : Object.values(rows || {});
-        const next = {};
-        safeRows.forEach((r) => { if (r && r.message) next[r.message] = withUrls(r, fileTokenInit.current); });
-        setContentById((prev) => Object.assign({}, prev, next));
-      }
-    } catch (err) {
-      console.warn('load older signals failed', err);
+      setHasOlder(page.length === PAGE_SIZE);
+    } catch {
+      setOlderError(true);
     } finally {
       setLoadingOlder(false);
     }
@@ -344,30 +348,44 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
 
   useEffect(() => {
     let unsubs = [];
+    let alive = true;
+    const unsubscribe = () => unsubs.forEach((u) => {
+      if (typeof u === 'function') u();
+    });
+    setRoomStatus('loading');
+    setOlderError(false);
+    setMsgs([]);
+    setContentById({});
+    setReactions([]);
     async function boot() {
       try {
         if (pb.authStore.isValid) {
           try {
             const token = await pb.files.getToken();
+            if (!alive) return;
             setFileToken(token);
             fileTokenInit.current = token;
           } catch {}
         }
-        const initial = await fetchMessages({ limit: PAGE_SIZE });
-        setMsgs(initial);
+        const initial = await fetchMessages();
         const readIds = initial.filter((m) => canReadAudience(user, m.audience)).map((m) => m.id);
         const [contentRows, rxns] = await Promise.all([
           readIds.length ? fetchContent(readIds) : Promise.resolve([]),
-          fetchReactions(),
+          fetchReactions(initial.map((m) => m.id)),
         ]);
+        if (!alive) return;
+        setMsgs(initial);
+        setHasOlder(initial.length === PAGE_SIZE);
         const cMap = {};
         const safeContent = Array.isArray(contentRows) ? contentRows : Object.values(contentRows || {});
         safeContent.forEach((r) => { if (r && r.message) cMap[r.message] = withUrls(r, fileTokenInit.current); });
         setContentById(cMap);
         setReactions(rxns);
+        setRoomStatus('ready');
 
         unsubs = await subscribeRoom({
           onMessage: (action, record) => {
+            if (!alive) return;
             if (action === 'delete') {
               setMsgs((prev) => prev.filter((m) => m.id !== record.id));
               setContentById((prev) => {
@@ -388,7 +406,7 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
             });
             if (canReadAudience(user, record.audience)) {
               fetchContent([record.id]).then(([row]) => {
-                if (row) {
+                if (alive && row) {
                   setContentById((prev) => Object.assign({}, prev, { [record.id]: withUrls(row, fileTokenInit.current) }));
                   if (alertsRef.current && Notification?.permission === 'granted') {
                     try {
@@ -406,6 +424,7 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
             }
           },
           onContent: (action, record) => {
+            if (!alive) return;
             if (action === 'delete') {
               setContentById((prev) => {
                 const next = Object.assign({}, prev);
@@ -417,6 +436,7 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
             setContentById((prev) => Object.assign({}, prev, { [record.message]: withUrls(record, fileTokenInit.current) }));
           },
           onReaction: (action, record) => {
+            if (!alive) return;
             if (action === 'delete') {
               setReactions((prev) => prev.filter((r) => r.id !== record.id && !(r.message === record.message && r.user === record.user && r.emoji === record.emoji)));
               return;
@@ -432,15 +452,17 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
             });
           },
         });
-      } catch (err) {
-        console.warn('signal room boot error', err);
+        if (!alive) unsubscribe();
+      } catch {
+        if (alive) setRoomStatus('error');
       }
     }
     boot();
     return () => {
-      unsubs.forEach((u) => { try { typeof u === 'function' ? u() : u?.then?.((fn) => fn && fn()); } catch {} });
+      alive = false;
+      unsubscribe();
     };
-  }, [user]);
+  }, [user, roomAttempt]);
 
   useEffect(() => {
     if (atBottomRef.current && tailRef.current) {
@@ -677,7 +699,15 @@ export function SignalRoom({ user, onOpenPricing, onOpenAuth }) {
             ),
           )}
 
-          {msgs.length === 0 && (
+          {olderError && <p role="alert" className="py-2 text-center text-xs text-akg-muted">Older messages couldn’t load. Try again.</p>}
+          {roomStatus === 'loading' && <p role="status" className="py-16 text-center text-sm text-akg-muted">Loading the Signal Room…</p>}
+          {roomStatus === 'error' && (
+            <div className="space-y-3 py-16 text-center">
+              <p role="alert" className="text-sm text-akg-muted">The Signal Room couldn’t load.</p>
+              <button className="min-h-11 px-3 text-sm underline" onClick={() => setRoomAttempt((value) => value + 1)}>Try again</button>
+            </div>
+          )}
+          {roomStatus === 'ready' && msgs.length === 0 && (
             <div className="flex flex-col items-center gap-2 py-16 text-center select-none">
               <Lock className="h-5 w-5 text-akg-muted" />
               <p className="font-mono text-xs text-akg-muted">The desk broadcasts here. Nothing posted yet.</p>

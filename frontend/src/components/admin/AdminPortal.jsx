@@ -87,7 +87,7 @@ export function AdminPortal({ onNavigatePublic, notify }) {
             <p className="mt-1 text-center text-xs text-akg-muted">Administrator access only.</p>
 
             {loginError && (
-              <div className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-500 dark:text-rose-600 dark:text-rose-400">
+              <div role="alert" className="mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-500 dark:text-rose-600 dark:text-rose-400">
                 {loginError}
               </div>
             )}
@@ -95,6 +95,8 @@ export function AdminPortal({ onNavigatePublic, notify }) {
             <form onSubmit={handleLogin} className="mt-5 space-y-3.5">
               <input
                 type="email"
+                aria-label="Admin email"
+                autoComplete="username"
                 required
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
@@ -103,6 +105,8 @@ export function AdminPortal({ onNavigatePublic, notify }) {
               />
               <input
                 type="password"
+                aria-label="Password"
+                autoComplete="current-password"
                 required
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}

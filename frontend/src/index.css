@@ -25,13 +25,13 @@
   --akg-border: rgba(16, 185, 129, 0.22);
 
   /* Signature Accents - Electric Cyan & Terminal Emerald */
-  --akg-accent: #059669;
+  --akg-accent: #047857;
   --akg-accent-deep: #047857;
   --akg-accent-soft: rgba(5, 150, 105, 0.10);
   --akg-accent-border: rgba(5, 150, 105, 0.25);
-  --akg-cyan: #0284C7;
+  --akg-cyan: #0369A1;
   --akg-cyan-soft: rgba(2, 132, 199, 0.10);
-  --akg-cta-bg: linear-gradient(135deg, #0284C7 0%, #059669 100%);
+  --akg-cta-bg: linear-gradient(135deg, #0369A1 0%, #047857 100%);
   --akg-cta-text: #FFFFFF;
 
   /* Card Shadows with Multi-Layered Physical Depth & Natural Ambient Falloff */
@@ -322,7 +322,10 @@ body {
 }
 
 /* Visible keyboard focus ring with accent */
-:focus-visible {
+:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 2px solid var(--akg-accent);
   outline-offset: 2px;
 }

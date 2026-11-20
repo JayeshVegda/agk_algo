@@ -1,77 +1,75 @@
-# DEPLOY.md — AKG ALGO deployment runbook
+# AKG ALGO deployment
 
-Split-stack layout: **SPA → Vercel**, **PocketBase (API + hooks + static guía files) → PocketBase Cloud**.
-Locally everything still runs same-origin (`npm run serve` at :8095, SPA built into `pb_public/`) — that path is untouched.
+The hosted setup uses Vercel for the React frontend and PocketBase Cloud for the
+API, database, hooks and realtime connections. Confirm the instance and domain
+before releasing. The repository currently links to a PocketBase instance named
+`akg-review`.
 
-## What the deployment task is
+## Prepare the backend
 
-| Piece | Hosts | Ships |
-| --- | --- | --- |
-| React SPA (`frontend/`) | Vercel | `npm run build:vercel` → `dist/` |
-| PocketBase backend | PocketBase Cloud (project **"Gojo Vegda's Project"**) | `pb_hooks/` + custom routes; collections via setup script or backup restore |
-| Binaries & demo files (`downloads/`) | PocketBase Cloud static dir | served at `/downloads/...` from the PB origin |
-| Data (`pb_data/`) | PocketBase Cloud instance | restore the local backup (see below) |
+1. Take a full PocketBase backup, including files, and keep a separate copy of
+   private robot binaries and the server configuration. The SQLite-only backup
+   script does not include uploads or binaries.
+2. Verify the migration on a preview of the target instance. For a fresh
+   instance, use the bundled migrations and configure production settings in
+   the admin portal. The legacy setup and demo seed scripts are for development.
+3. In the target, verify the app's admin account, support contact, the active
+   and next signal cycles, robot prices, and every enabled payment destination.
+   Checkout uses the wallet addresses and UPI ID returned by the API. Test the
+   generated QR codes from the same devices customers will use.
+4. Set `AKG_CRED_KEY` on the backend before accepting managed-account
+   applications. Generate a 32-character ASCII key for a new instance with
+   `openssl rand -base64 24`. Keep the existing key on upgrades. Review PocketBase log retention and monitor disk space, API
+   latency and failed checkout submissions.
 
-## 0. One-time frontend change (already in repo)
-
-`frontend/src/lib/pocketbase.js` reads **`VITE_PB_URL`**. Unset → `window.location.origin`
-(same-origin, local dev works as before). Set → every `pb.*` call, subscription and
-asset link points at the PocketBase origin.
-
-## 1. Deploy the PocketBase backend (PocketBase Cloud)
-
-```bash
-pbc project use "Gojo Vegda's Project"
-pbc pocketbase ls            # confirm/create the instance
-# upload hooks & static extras (verify exact command with `pbc --help`):
-pbc pocketbase deploy        # or: pbc deploy
-```
-
-Then bring the schema + demo state up by **either**:
-
-- **Fresh schema:** point the setup script at the cloud instance with a cloud
-  superuser token: `AKG_SUPERUSER_URL=https://<instance-host> python3 scripts/setup_pb.py`,
-  then `scripts/apply_hardening.py`, then seed if wanted (`python3 scripts/seed_demo.py`).
-- **Restore the local backup:** take a backup from the running local instance
-  (`http://127.0.0.1:8095/_/` → Settings → Backups, or `POST /api/backups`) and
-  restore it on the cloud instance. Carries all demo/test data — decide before restoring.
-
-Do **not** upload `pb_data/` as files; it belongs to the instance.
-
-After deploy, open `https://<instance-host>/_/` → create the superuser → check
-Settings → Application → **CORS**: the Vercel domain (or `*`) must be allowed,
-otherwise every browser request fails preflight.
-
-## 2. Deploy the SPA (Vercel)
+From the repo root, using the confirmed instance name:
 
 ```bash
-cd frontend
-vercel login
-vercel link            # project name: akg-algo (root dir = frontend/)
-vercel env add VITE_PB_URL production    # value: https://<instance-host>, no trailing slash
-vercel --prod
+pbc pocketbase deploy --name "$AKG_PB_INSTANCE" --preview --preview-name release-check --skip-env
 ```
 
-- `vercel.json` (in `frontend/`) sets `build:vercel` → `dist/` + SPA rewrite to `index.html`.
-- After the first deploy, when asked "In which directory is your code?" answer the
-  repo root and set **Root Directory = frontend**, or just run vercel from inside `frontend/`.
-- `frontend/.env.example` documents the variable.
+The CLI packages the paths declared in `pbc.json` and applies new migrations at
+restart. Check the preview for migration errors, especially if its original
+schema was imported manually. Verify the payment and cycle schema with
+`AKG_URL` and the preview's superuser credentials in the environment:
 
-## 3. Post-deploy checklist
+```bash
+npm run harden:db
+```
 
-1. `https://<vercel-domain>/` loads; login works (auth uses the `Authorization`
-   header + localStorage token, so cross-origin auth needs only CORS, no cookies).
-2. `/signals` shows signals only when logged in with an active cycle (server-filtered).
-3. `/bots` catalog + `/bots/akg-gold-trap-ea` product page loads; images resolve.
-4. Checkout submits a payment; admin console `/<vercel>/admin?s=...` — wait, admin
-   is part of the same SPA, so it lives on Vercel too; approve a test deposit.
-5. Download links in Account → resolve against the PB origin (gated route 200s).
-6. Realtime (signal updates, admin sync) — subscriptions open against the PB origin.
-7. Custom domain: add on Vercel + point the apex/root at PBC if you want one domain
-   for both (alternatively keep subdomains: `app.` on Vercel, API subdomain on PBC).
+Before enabling robot purchases, install the verified compiled `.ex4`/`.ex5`
+packages in private storage for the target backend. The repository’s sample
+packages have not been verified in MetaTrader. Test an authenticated download,
+then load the downloaded file in the intended MetaTrader version and confirm
+license activation. Keep the binaries out of `pb_public/`. Make sure the
+backend allows the exact frontend origins for the preview and production sites.
 
-## Rules that carry over
+## Prepare the frontend
 
-- Secrets stay out of Git: superuser credentials live in `.env` (root) and Vercel env only.
-- `pb_hooks/akg.pb.js` is all server logic — deploy the same file that is committed.
-- After editing hooks locally, restart `npm run serve`; on the cloud, redeploy hooks.
+Use `frontend/` as the Vercel project root and use the build settings in
+`frontend/vercel.json`. Set `VITE_PB_URL` to the HTTPS backend URL for the
+matching Vercel environment. Build a Vercel preview with the PocketBase preview
+URL, and test the pair before switching `VITE_PB_URL` to the production backend.
+
+## Release checks
+
+- On desktop and iPhone Safari, sign up with email and an international phone
+  number. Check menu navigation, sign-in, focus indicators and payment feedback.
+- Buy a signal cycle in the preview. Verify pending, approved, duplicate
+  approval, pause, expiry and rejection. Check that a paid member can read the
+  correct Signal Room tier and receives a reminder near expiry.
+- Buy a test robot. Verify license issuance, download, and revocation.
+- Disable one method and test that checkout hides its payment details. Verify
+  that an already-paid customer can submit a reference for manual review.
+- Open the Signal Room in two sessions and check new posts and reactions.
+  Verify admin statistics and review the oldest unpaid orders.
+
+After preview checks pass, deploy to the confirmed PocketBase instance and
+verify its health. Deploy the Vercel production build against that backend and
+repeat the smoke checks. Start with a limited rollout and measure concurrency
+before promoting to a larger audience.
+
+Keep the last working frontend deployment and the pre-release PocketBase
+backup. If a release fails, roll back the frontend and stop new checkouts
+before making backend changes. Account for orders accepted after the backup
+before restoring a database so their payments can be reconciled.
