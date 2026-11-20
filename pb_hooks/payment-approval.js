@@ -19,6 +19,9 @@ function update(e) {
 
     if (previous !== requested && requested === "confirmed") {
       if (signal && cycle) {
+        if (tx.findRecordById("signal_cycles", cycle).getBool("is_draft")) {
+          throw new BadRequestError("Publish the signal cycle before approving its payment.");
+        }
         tx.findFirstRecordByFilter("users", "email = {:email}", { email });
         notice = ["Signal cycle approved", "Your account shows when this signal cycle starts and ends.", "payment_approved"];
       } else if (signal) {

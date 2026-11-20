@@ -6,7 +6,7 @@ function time(record, field) {
 }
 
 function windowOpen(cycle, now) {
-  return time(cycle, "renewals_at") <= now && time(cycle, "ends_at") > now &&
+  return !cycle.getBool("is_draft") && time(cycle, "renewals_at") <= now && time(cycle, "ends_at") > now &&
     (now < time(cycle, "starts_at") || cycle.getBool("allow_late_join"));
 }
 
@@ -16,7 +16,7 @@ function paused(cycle, now) {
 
 function schedule(app, email, now) {
   const stamp = new Date(now).toISOString().replace("T", " ");
-  const cycles = app.findRecordsByFilter("signal_cycles", "ends_at > {:now}", "starts_at", 100, 0, { now: stamp });
+  const cycles = app.findRecordsByFilter("signal_cycles", "is_draft = false && ends_at > {:now}", "starts_at", 100, 0, { now: stamp });
   const active = cycles.find((cycle) => time(cycle, "starts_at") <= now);
   const next = cycles.find((cycle) => time(cycle, "starts_at") > now);
   const eligible = cycles.filter((cycle) => windowOpen(cycle, now));

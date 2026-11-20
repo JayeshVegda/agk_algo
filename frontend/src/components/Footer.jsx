@@ -6,33 +6,33 @@ const LINK_GROUPS = [
   {
     title: 'Systems',
     links: [
-      { label: 'Trading Robots', tab: 'bots' },
-      { label: 'Signal Room', tab: 'signals' },
-      { label: 'Account Management', tab: 'connector' },
-      { label: 'Live Charts', tab: 'charts' },
+      { label: 'Trading Robots', tab: 'bots', href: '/bots' },
+      { label: 'Signal Room', tab: 'signals', href: '/signals' },
+      { label: 'Account Management', tab: 'connector', href: '/terminal-desk' },
+      { label: 'Live Charts', tab: 'charts', href: '/charts' },
     ],
   },
   {
     title: 'Desk',
     links: [
-      { label: 'Desk Briefings', tab: 'broadcasts' },
-      { label: 'Traders Kit', tab: 'resources' },
+      { label: 'Desk Briefings', tab: 'broadcasts', href: '/desk' },
+      { label: 'Traders Kit', tab: 'resources', href: '/kit' },
     ],
   },
   {
     title: 'Membership',
     links: [
-      { label: 'Signal Plans', tab: 'pricing' },
-      { label: 'My Account & Licenses', tab: 'account' },
+      { label: 'Signal Plans', tab: 'pricing', href: '/pricing' },
+      { label: 'My Account & Licenses', tab: 'account', href: '/account' },
     ],
   },
   {
     title: 'Legal',
     links: [
-      { label: 'Terms of Service', tab: 'terms' },
-      { label: 'Refund Policy', tab: 'refund' },
-      { label: 'Risk Disclosure', tab: 'risk' },
-      { label: 'Privacy Policy', tab: 'privacy' },
+      { label: 'Terms of Service', tab: 'terms', href: '/terms' },
+      { label: 'Refund Policy', tab: 'refund', href: '/refund' },
+      { label: 'Risk Disclosure', tab: 'risk', href: '/risk' },
+      { label: 'Privacy Policy', tab: 'privacy', href: '/privacy' },
     ],
   },
 ];
@@ -56,6 +56,8 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
           <div className="md:col-span-4">
             <img
               src="/assets/logos/akg-algo-crest-384.webp"
+              srcSet="/assets/logos/akg-algo-crest-96.webp 96w, /assets/logos/akg-algo-crest-384.webp 384w"
+              sizes="(min-width: 640px) 112px, 96px"
               alt="AKG ALGO"
               width={112}
               height={112}
@@ -70,7 +72,7 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
               {networks.map((n) => (
                 <span
                   key={n}
-                  className="rounded-md border border-akg-hairline bg-akg-surface px-2 py-0.5 font-mono text-[10px] text-akg-muted"
+                  className="rounded-md border border-akg-hairline bg-akg-card px-2 py-0.5 font-mono text-xs font-medium text-akg-text"
                 >
                   {n}
                 </span>
@@ -116,13 +118,18 @@ export function Footer({ onNavigate, user, onNavigateAdmin }) {
                 <ul className="mt-3.5 space-y-2.5">
                   {group.links.map((link) => (
                     <li key={link.label}>
-                      <button
-                        onClick={() => onNavigate(link.tab)}
+                      <a
+                        href={link.href}
+                        onClick={(event) => {
+                          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+                          event.preventDefault();
+                          onNavigate(link.tab);
+                        }}
                         className="group inline-flex items-center gap-1 text-left text-[13px] text-akg-muted transition-colors hover:text-akg-text cursor-pointer"
                       >
                         <span>{link.label}</span>
                         <ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100 text-akg-green" />
-                      </button>
+                      </a>
                     </li>
                   ))}
                 </ul>

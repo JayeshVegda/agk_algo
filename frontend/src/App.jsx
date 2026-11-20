@@ -5,6 +5,7 @@ import { LandingPage } from './components/LandingPage';
 import { AuthModal } from './components/AuthModal';
 import { ToastContainer } from './components/Toast';
 import { NewRobotModal } from './components/NewRobotModal';
+import { updatePageSeo } from './lib/siteSeo';
 import { useSignalSchedule } from './lib/signalCycles';
 import { Footer } from './components/Footer';
 import { Compass, Zap, Cpu, CreditCard, User } from 'lucide-react';
@@ -68,6 +69,8 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const { data: schedule } = useSignalSchedule(user?.id || '', ['home', 'signals', 'pricing', 'account'].includes(activeTab) && currentPath !== '/admin');
   const [toasts, setToasts] = useState([]);
+
+  useEffect(() => updatePageSeo(currentPath), [currentPath]);
 
   // Toast notification dispatcher
   const notify = useCallback((toast) => {

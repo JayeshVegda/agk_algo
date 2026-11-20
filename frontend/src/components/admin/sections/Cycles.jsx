@@ -6,7 +6,7 @@ import { Button } from '../../ui/Button';
 
 const empty = {
   name: '', starts_at: '', ends_at: '', renewals_at: '', pause_from: '', pause_until: '',
-  sr_price: 10, vip_price: 20, allow_late_join: false,
+  sr_price: 10, vip_price: 20, allow_late_join: false, is_draft: true,
 };
 const dates = [
   ['starts_at', 'Starts'], ['ends_at', 'Last day'], ['renewals_at', 'Renewals open'],
@@ -48,7 +48,7 @@ export default function Cycles() {
     setFeedback('');
     const payload = {
       name: form.name.trim() || `Signal cycle ${form.starts_at}`, sr_price: Number(form.sr_price), vip_price: Number(form.vip_price),
-      allow_late_join: form.allow_late_join,
+      allow_late_join: form.allow_late_join, is_draft: form.is_draft,
     };
     for (const [field] of dates) {
       const value = field === 'renewals_at' ? (form.renewals_at || new Date(Date.parse(form.starts_at + 'T00:00:00Z') - 7 * 86400000).toISOString().slice(0, 10)) : form[field];
@@ -60,7 +60,7 @@ export default function Cycles() {
       setCycles((previous) => [...previous.filter((cycle) => cycle.id !== saved.id), saved]
         .sort((a, b) => b.starts_at.localeCompare(a.starts_at)));
       setForm(empty);
-      setFeedback('Signal cycle saved.');
+      setFeedback(saved.is_draft ? 'Saved as a draft.' : 'Published cycle saved.');
     } catch (error) {
       setFeedback(error.message);
     } finally {
@@ -95,6 +95,10 @@ export default function Cycles() {
               </label>
             ))}
           </div>
+          <label className="flex items-start gap-2 text-sm">
+            <input type="checkbox" checked={!form.is_draft} onChange={(event) => set('is_draft', !event.target.checked)} />
+            <span>Publish this cycle and make it available when payments open</span>
+          </label>
           <details className="rounded-lg border border-akg-hairline bg-akg-raised p-3">
             <summary className="cursor-pointer text-sm font-semibold">More options</summary>
             <div className="mt-4 space-y-4">
@@ -137,7 +141,7 @@ export default function Cycles() {
           {cycles.map((cycle) => (
             <li key={cycle.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-akg-hairline bg-akg-card px-4 py-3">
               <div className="space-y-1">
-                <div className="flex items-center gap-2 font-semibold"><CalendarDays className="h-4 w-4 text-akg-accent" />{cycle.name}</div>
+                <div className="flex items-center gap-2 font-semibold"><CalendarDays className="h-4 w-4 text-akg-accent" />{cycle.name}{cycle.is_draft && <span className="text-xs text-akg-muted">Draft</span>}</div>
                 <p className="text-xs text-akg-muted">{cycleDay(cycle.starts_at)} – {cycleDay(cycle.ends_at, true)}</p>
                 <p className="text-xs text-akg-muted">SR {cycle.sr_price} USDT · Perfect {cycle.vip_price} USDT</p>
                 {cycle.pause_from && <p className="text-xs text-akg-muted">Pause {cycleDay(cycle.pause_from)} – {cycleDay(cycle.pause_until, true)}</p>}

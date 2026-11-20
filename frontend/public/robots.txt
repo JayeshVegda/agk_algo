@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://akgalgo.com/sitemap.xml

@@ -102,6 +102,19 @@ backend side. A `VITE_` variable is visible to browser users.
    use, and response times. The Traders screen currently shows up to 5,000
    accounts, and peak concurrent capacity needs a load test.
 
+## Check the public site after release
+
+- In Admin → Cycles, confirm the public cycle is published. The reported test
+  cycle moves to draft on upgrade if it has no pending or confirmed orders.
+  If it still has orders, review them before hiding the cycle.
+- Verify `/robots.txt`, `/sitemap.xml`, and `/llms.txt` return the expected
+  content. `/.well-known/ard.json` should return 404 until a manifest is
+  published. Check canonicals for `https://akgalgo.com` on the rendered pages.
+- If hosting on a VPS with a separate proxy configuration, apply the static
+  cache and noindex rules from the repo's Caddyfile to the active proxy. Verify
+  that hashed JS/CSS are cached and HTML and API responses retain their
+  existing cache policy.
+
 ## Roll back
 
 Keep the last working Vercel deployment and the pre-release PocketBase backup.

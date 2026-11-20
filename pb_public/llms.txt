@@ -1,0 +1,16 @@
+# AKG ALGO
+
+> AKG ALGO sells ready-made trading robots for MetaTrader 4 and 5 with one-time licenses. Signal Room subscriptions are sold separately by cycle.
+
+## Products
+
+- [Trading Robots](https://akgalgo.com/bots): Browse MetaTrader Expert Advisors and their requirements.
+- [Signal Plans](https://akgalgo.com/pricing): See current Signal Room tiers, cycle dates, and prices.
+- [Signal Room](https://akgalgo.com/signals): View the desk schedule and access options.
+
+## Policies
+
+- [Terms of Service](https://akgalgo.com/terms)
+- [Refund Policy](https://akgalgo.com/refund)
+- [Risk Disclosure](https://akgalgo.com/risk)
+- [Privacy Policy](https://akgalgo.com/privacy)

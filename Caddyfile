@@ -13,6 +13,18 @@
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
 	}
 
+	@privatePages path /admin /admin/* /account /checkout
+	header @privatePages X-Robots-Tag "noindex"
+
+	@hashedAssets path_regexp hashed ^/assets/[A-Za-z0-9._-]+-[A-Za-z0-9_-]{8}\.(js|css)$
+	reverse_proxy @hashedAssets pocketbase:8090 {
+		@assetOk status 200 206 304
+		handle_response @assetOk {
+			header Cache-Control "public, max-age=31536000, immutable"
+			copy_response
+		}
+	}
+
 	# SSE-friendly proxy: flush immediately so realtime signals stream instantly.
 	reverse_proxy pocketbase:8090 {
 		flush_interval -1

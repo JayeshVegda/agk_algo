@@ -180,7 +180,7 @@ onRecordCreateRequest((e) => {
     const id = e.record.getString("signal_cycle");
     const cycle = id ? e.app.findRecordById("signal_cycles", id) :
       isManager ? membership.schedule(e.app, e.record.getString("user_email"), now).checkout : null;
-    if (!cycle || membership.time(cycle, "renewals_at") > now) {
+    if (!cycle || cycle.getBool("is_draft") || membership.time(cycle, "renewals_at") > now) {
       throw new BadRequestError("Select a signal cycle that has opened for payments.");
     }
     e.record.set("signal_cycle", cycle.id);

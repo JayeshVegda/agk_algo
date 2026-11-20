@@ -412,6 +412,8 @@ export function LandingPage({ onNavigate, schedule }) {
 
             <img
               src="/assets/logos/akg-algo-crest-384.webp"
+              srcSet="/assets/logos/akg-algo-crest-96.webp 96w, /assets/logos/akg-algo-crest-384.webp 384w"
+              sizes="(min-width: 640px) 160px, 128px"
               alt="AKG ALGO"
               width={160}
               height={160}
