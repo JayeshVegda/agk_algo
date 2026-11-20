@@ -37,6 +37,11 @@ def main():
     fields = {field["name"] for field in payments["fields"]}
     if not {"license_key", "signal_cycle"} <= fields:
         raise SystemExit("Payment fields missing. Apply the bundled PocketBase migrations.")
+    owner_or_admin = '@request.auth.id!=""&&(@request.auth.role="admin"||user_email=@request.auth.email)'
+    for key in ("listRule", "viewRule"):
+        rule = payments.get(key) or ""
+        if "".join(rule.replace("'", '"').split()) != owner_or_admin:
+            raise SystemExit(f"Unexpected payments {key}. Apply the bundled PocketBase migrations.")
     for key in ("updateRule", "deleteRule"):
         rule = payments.get(key)
         if rule is None:

@@ -25,3 +25,20 @@ jobs:
       - name: Apply migrations to an empty database
         run: |
           ./bin/pocketbase migrate up --dir="$RUNNER_TEMP/akg-data" --migrationsDir="$PWD/pb_migrations" --hooksDir="$PWD/pb_hooks"
+      - name: Verify fresh payment schema
+        run: |
+          python3 - "$RUNNER_TEMP/akg-data/data.db" <<'PYTHON'
+          import sqlite3
+          import sys
+
+          with sqlite3.connect(f"file:{sys.argv[1]}?mode=ro", uri=True) as db:
+              expected = '@request.auth.id != "" && (@request.auth.role = "admin" || user_email = @request.auth.email)'
+              rules = db.execute("SELECT listRule, viewRule FROM _collections WHERE name = 'payments'").fetchone()
+              assert rules == (expected, expected), "Payment reads must be owner- or admin-only"
+              columns = {row[1] for row in db.execute("PRAGMA table_info(payments)")}
+              assert {"license_key", "signal_cycle", "bound_account", "bound_at"} <= columns
+              triggers = {row[0] for row in db.execute(
+                  "SELECT name FROM sqlite_master WHERE type = 'trigger' AND tbl_name = 'payments'"
+              )}
+              assert {"payments_reference_insert", "payments_reference_update"} <= triggers
+          PYTHON
